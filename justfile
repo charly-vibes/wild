@@ -23,10 +23,17 @@ pretender-gate:
 spec-lint:
     spk lint openspec
 
-# testaruda: hard gate — exec loop against the pushed base. Nonzero on
-# test failure or calibrate-gate red.
+# testaruda: hard gate — full exec loop (select → run → ingest → calibrate).
+# CI contract (TIA-CI-001..004): 0 = selection complete, 10 = full run,
+# 20 = nothing to run — all green. Any other code = runner failure or
+# hard error, red.
 testaruda-gate:
+    #!/usr/bin/env bash
+    set -uo pipefail
     git fetch origin main -q
-    # Select-only-affected tests and run them (suite-proven wiring, matches
-    # specodelic + espectacular; exec loop is the local dogfood pattern).
-    testaruda select --safe --base origin/main --head HEAD
+    code=0
+    testaruda exec --base origin/main --head HEAD || code=$?
+    case "$code" in
+      0|10|20) exit 0 ;;
+      *) echo "❌ testaruda gate failed (exit $code — test runner or hard error)" >&2; exit 1 ;;
+    esac
