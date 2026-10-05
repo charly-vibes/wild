@@ -1,0 +1,31 @@
+
+== A. rolling deploy overlap (20 instances, batch 2, 30% of calls hit the changed slot)
+  accretion (provides grow)          {'failed': 0, 'roll_min': 20.0, 'calendar_min': 20.0, 'extra_inst': 0}
+  break, uncoordinated               {'failed': 198000, 'roll_min': 20.0, 'calendar_min': 20.0, 'extra_inst': 0}
+  break -> new lineage + adapter     {'failed': 0, 'roll_min': 20.0, 'calendar_min': 20.0, 'extra_inst': 20}
+  break -> manual expand/contract    {'failed': 0, 'roll_min': 60.0, 'calendar_min': 1980.0, 'extra_inst': 0}
+
+== B. deploy-order constraints (12 services, 3000 random graphs)
+  baseline                           {'constraints': 7.4, 'lockstep_pct': 5.1, 'random_order_safe_pct': 2.5}
+  wild                               {'constraints': 5.0, 'lockstep_pct': 0.0, 'random_order_safe_pct': 8.5}
+
+== C. pipeline lead time, working hours (12.8 changes/day, 20 services)
+  gated                              {'median_h': 5.1, 'p95_h': 26.0, 'incidents_per_100': 9.7, 'impact_min_per_100': 1098}
+  canary                             {'median_h': 0.8, 'p95_h': 15.3, 'incidents_per_100': 17.1, 'impact_min_per_100': 820}
+  wild                               {'median_h': 0.8, 'p95_h': 2.4, 'incidents_per_100': 7.9, 'impact_min_per_100': 345}
+
+== C2. sensitivity (canary vs wild): median_h / p95_h / incidents per 100 / impact min per 100
+  shape=0.05 canary_catch=0.2      canary 0.8/1.7/12.5/701       wild 0.8/1.8/7.8/400
+  shape=0.05 canary_catch=0.4      canary 0.8/1.7/12.5/532       wild 0.8/1.8/7.8/290
+  shape=0.05 canary_catch=0.7      canary 0.8/1.7/12.5/291       wild 0.8/1.8/7.8/152
+  shape=0.15 canary_catch=0.2      canary 0.8/15.3/17.1/1070     wild 0.8/2.4/7.9/444
+  shape=0.15 canary_catch=0.4      canary 0.8/15.3/17.1/820      wild 0.8/2.4/7.9/345
+  shape=0.15 canary_catch=0.7      canary 0.8/15.3/17.1/425      wild 0.8/2.4/7.9/172
+  shape=0.30 canary_catch=0.2      canary 0.8/24.0/22.2/1235     wild 1.0/2.7/8.0/426
+  shape=0.30 canary_catch=0.4      canary 0.8/24.0/22.2/912      wild 1.0/2.7/8.0/322
+  shape=0.30 canary_catch=0.7      canary 0.8/24.0/22.2/439      wild 1.0/2.7/8.0/157
+
+== D. MEASURED checker cost (toy Python implementation)
+  {'slots': 1000, 'full_ms': 0.35, 'merkle_ms': 0.04, 'cache_hit_ms': 0.0006, 'same_verdict': True}
+  {'slots': 10000, 'full_ms': 3.8, 'merkle_ms': 0.069, 'cache_hit_ms': 0.0006, 'same_verdict': True}
+  {'slots': 100000, 'full_ms': 105.1, 'merkle_ms': 0.199, 'cache_hit_ms': 0.0005, 'same_verdict': True}

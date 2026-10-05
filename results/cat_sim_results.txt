@@ -1,0 +1,62 @@
+
+== 1. category laws (exhaustive, small scope)
+  states                         76
+  triples                        438976
+  reflexivity_failures           0
+  transitivity_violations        0
+  restriction_violations         0
+  note                           per-name check; the relation is a conjunction over names, so it extends to many slots
+
+== 2. substitutability theorem (30,000 random assemblies)
+  assemblies                     30000
+  global_ok                      10215
+  global_unsound                 0
+  global_reject                  19785
+  rescued                        4358
+  scoped_unsound                 0
+  rescued_pct_of_rejections      22.0
+
+== 3. resolution, share of breaking releases mislabelled as non-major = 0.0
+  semver                         {'no_solution_pct': 99.0, 'solved_but_broken_pct': 0.0, 'broken_edge_pct': 0.0, 'avg_search_nodes': 97.5}
+  semver_duplicates_allowed      {'solved_but_broken_pct': 0.0, 'broken_edge_pct': 0.0, 'copies_per_pkg': 1.51}
+  wild                           {'no_solution_pct': 0.0, 'broken_edges': 0, 'copies_per_pkg': 1.51, 'copies_per_pkg_after_scoped_merge': 1.3, 'checker_vs_generator_disagreements': 0, 'of_transitions': 42000}
+
+== 3. resolution, share of breaking releases mislabelled as non-major = 0.25
+  semver                         {'no_solution_pct': 95.0, 'solved_but_broken_pct': 4.0, 'broken_edge_pct': 6.4, 'avg_search_nodes': 291.5}
+  semver_duplicates_allowed      {'solved_but_broken_pct': 72.0, 'broken_edge_pct': 4.3, 'copies_per_pkg': 1.4}
+  wild                           {'no_solution_pct': 0.0, 'broken_edges': 0, 'copies_per_pkg': 1.51, 'copies_per_pkg_after_scoped_merge': 1.3, 'checker_vs_generator_disagreements': 0, 'of_transitions': 42000}
+
+== 3. resolution, share of breaking releases mislabelled as non-major = 0.5
+  semver                         {'no_solution_pct': 76.5, 'solved_but_broken_pct': 22.5, 'broken_edge_pct': 11.5, 'avg_search_nodes': 634.2}
+  semver_duplicates_allowed      {'solved_but_broken_pct': 93.0, 'broken_edge_pct': 9.7, 'copies_per_pkg': 1.28}
+  wild                           {'no_solution_pct': 0.0, 'broken_edges': 0, 'copies_per_pkg': 1.51, 'copies_per_pkg_after_scoped_merge': 1.3, 'checker_vs_generator_disagreements': 0, 'of_transitions': 42000}
+
+== 3. resolution, share of breaking releases mislabelled as non-major = 0.75
+  semver                         {'no_solution_pct': 47.5, 'solved_but_broken_pct': 51.5, 'broken_edge_pct': 16.4, 'avg_search_nodes': 1284.8}
+  semver_duplicates_allowed      {'solved_but_broken_pct': 99.0, 'broken_edge_pct': 15.4, 'copies_per_pkg': 1.14}
+  wild                           {'no_solution_pct': 0.0, 'broken_edges': 0, 'copies_per_pkg': 1.51, 'copies_per_pkg_after_scoped_merge': 1.3, 'checker_vs_generator_disagreements': 0, 'of_transitions': 42000}
+
+== 3b. lower break rate: 0.05 of releases break, 30% of those mislabelled
+  semver                         {'no_solution_pct': 16.5, 'solved_but_broken_pct': 20.5, 'broken_edge_pct': 1.1, 'avg_search_nodes': 963.9}
+  semver_duplicates_allowed      {'solved_but_broken_pct': 25.0, 'broken_edge_pct': 1.0, 'copies_per_pkg': 1.06}
+  wild                           {'no_solution_pct': 0.0, 'broken_edges': 0, 'copies_per_pkg': 1.09, 'copies_per_pkg_after_scoped_merge': 1.03, 'checker_vs_generator_disagreements': 0, 'of_transitions': 42000}
+
+== 3b. lower break rate: 0.1 of releases break, 30% of those mislabelled
+  semver                         {'no_solution_pct': 34.5, 'solved_but_broken_pct': 29.0, 'broken_edge_pct': 2.1, 'avg_search_nodes': 932.4}
+  semver_duplicates_allowed      {'solved_but_broken_pct': 49.5, 'broken_edge_pct': 2.2, 'copies_per_pkg': 1.12}
+  wild                           {'no_solution_pct': 0.0, 'broken_edges': 0, 'copies_per_pkg': 1.17, 'copies_per_pkg_after_scoped_merge': 1.08, 'checker_vs_generator_disagreements': 0, 'of_transitions': 42000}
+
+== 4. certificates and tamper tests
+  valid_accepted                 150
+  n                              150
+  bindings                       6166
+  swap_total                     750
+  swap_false_accept              0
+  swap_rejected                  292
+  swap_ok_still                  458
+  corrupt_total                  750
+  corrupt_rejected               750
+  drop_total                     750
+  drop_rejected                  750
+  avg_bindings                   41.1
+  avg_verify_ms                  1.055
