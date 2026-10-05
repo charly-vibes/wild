@@ -1,0 +1,16 @@
+id = "gates-wired-and-standard-true"
+description = "ah + pretender + testaruda gates are wired as hard gates: tool configs exist on disk, are parse-clean, carry the standard sections, follow the hardcoded-gate pattern, the openspec spec corpus is lint-clean and reference-closed, and the gated tests run clean"
+archetype = "RE"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/test_gate_wiring.py::test_tools_available", timeout_seconds = 60},
+  {flags = "tests/test_gate_wiring.py::test_configs_parse_clean", timeout_seconds = 60},
+  {flags = "tests/test_gate_wiring.py::test_justfile_gate_recipe", timeout_seconds = 60},
+  {flags = "tests/test_gate_wiring.py::test_configs_standard_sections", timeout_seconds = 60},
+  {flags = "tests/test_gate_wiring.py::test_gate_pattern", timeout_seconds = 60},
+  {flags = "tests/test_gate_wiring.py::test_openspec_corpus", timeout_seconds = 120},
+]
