@@ -1,0 +1,12 @@
+id = "spec-corpus-stays-lint-clean-and-reference-closed"
+description = "spk lint over openspec reports no issues/warnings across all nine files and specodelic graph reports no dangling references"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/test_spec_corpus.py::test_spec_corpus_lint_clean", timeout_seconds = 120},
+  {flags = "tests/test_spec_corpus.py::test_spec_graph_reference_closed", timeout_seconds = 120},
+]

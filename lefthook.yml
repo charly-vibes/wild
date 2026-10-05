@@ -1,0 +1,32 @@
+# lefthook.yml — hard gates for wild (ah, pretender, testaruda, specodelic).
+#
+# The global core.hooksPath (~/.git-hooks) is the user's lefthook shim and
+# chains to this config at runtime — no tool may claim core.hooksPath or
+# write .git/hooks directly (suite standard, see specodelic/lefthook.yml).
+# pretender doctor's hook-location findings reflect the same redirect quirk:
+# the PRETENDER managed block here is the sanctioned integration point.
+# The same gates run in CI via `just ci` (exactly one entry point per repo).
+
+pre-commit:
+  parallel: true
+  commands:
+# ah:managed:start
+    ah-check:
+      run: ah check
+# ah:managed:end
+    # <!-- SPK:START -->
+    specodelic-gates:
+      run: spk lint openspec
+    # <!-- SPK:END -->
+    # <!-- PRETENDER:START --> gate mode; pretender.toml ratchets only DOWN
+    pretender-gate:
+      run: pretender check --staged --mode gate
+    # <!-- PRETENDER:END -->
+    testaruda-config:
+      run: testaruda doctor
+
+pre-push:
+  # Full gate before pushing — same command CI runs (single entry point).
+  commands:
+    ci-gates:
+      run: just ci

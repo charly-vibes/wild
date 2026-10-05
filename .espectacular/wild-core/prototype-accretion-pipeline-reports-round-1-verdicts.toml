@@ -1,0 +1,9 @@
+id = "prototype-accretion-pipeline-reports-round-1-verdicts"
+description = "prototype/wild_sim.py runs the round-1 accretion scenarios and emits a JSON verdict record per scenario"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [{flags = "tests/test_prototype_smoke.py::test_wild_sim_round1_runs_clean", timeout_seconds = 300}]

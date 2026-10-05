@@ -1,0 +1,9 @@
+id = "prototype-deployment-simulation-runs-clean"
+description = "prototype/wild_cd_sim.py runs the deployment scenarios (gates, canaries, floors, rollbacks) and exits 0"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [{flags = "tests/test_prototype_smoke.py::test_wild_cd_sim_runs_clean", timeout_seconds = 300}]

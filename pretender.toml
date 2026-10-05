@@ -1,0 +1,50 @@
+# pretender.toml — wild project configuration
+#
+# wild is a design-stage repo: Python prototypes/experiments plus the
+# openspec spec corpus. mode = "gate" — pretender failures are hard gates
+# (see just ci / lefthook.yml).
+
+[pretender]
+mode = "gate"
+languages = ["python"]
+exclude = ["openspec/**", "superseded/**", ".espectacular/**"]
+
+[roles.test]
+paths = ["**/tests/**"]
+
+[roles.script]
+paths = ["**/prototype/**", "**/experiments/**"]
+
+# Thresholds are a hard ratchet anchored to the prototype baseline. The
+# exploration scripts predate this gate, and in pretender 0.6 script role
+# only overrides function/file lines — every other ceiling comes from the
+# global thresholds, which here ARE the script ratchet (observed maxima).
+# Everything new must clear them; tighten as refactoring progresses. Tests
+# are held to strict thresholds from day one.
+[thresholds]
+cyclomatic_max = 55      # worst: wild_proto items() = 52
+cognitive_max = 170      # worst: wild_proto items() = 167
+abc_max = 140            # worst: wild_proto items() = 138
+function_lines_max = 200
+file_lines_max = 1200
+nesting_max = 8          # worst: wild_proto _defs() = 8
+params_max = 8           # worst: wild_cd_sim pipeline() = 8
+duplication_pct_max = 15
+
+[thresholds.test]
+cyclomatic_max = 8
+cognitive_max = 12
+function_lines_max = 80
+min_assertions = 1
+
+# Script role overrides only these two; everything else inherits the
+# global ratchet above.
+[thresholds.script]
+function_lines_max = 200
+file_lines_max = 1200
+
+[scope]
+diff_only = false
+
+[output]
+formats = ["human"]

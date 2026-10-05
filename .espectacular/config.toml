@@ -1,0 +1,13 @@
+tool_version = "0.9.2"
+
+[paths]
+specs = "openspec/specs"
+changes = "openspec/changes"
+
+[runners]
+pytest = ["pytest"]
+
+# Pinned specodelic (spk) version: the corpus is derived/lint-checked by
+# this exact binary (specodelic is pre-1.0).
+[spk]
+version = "0.5.1"

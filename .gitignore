@@ -27,3 +27,13 @@ rustc-ice-*.txt
 __pycache__/
 *.py[cod]
 .venv/
+
+# Local agent/tool artifacts (suite convention)
+.testaruda/
+.espectacular/state/
+.pretender/
+.whisper/
+.genesis/
+.beads.gate.lock
+.beads-credential-key
+*.db
