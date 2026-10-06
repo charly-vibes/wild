@@ -1,0 +1,2324 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:wild:wire:v1",
+  "title": "Wild v1 wire documents",
+  "description": "Normative structural schema; docs/wild-formats-v1.md defines canonical bytes and semantic checks.",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_.:/-]*$",
+      "maxLength": 256
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "format": "date-time"
+    },
+    "base64": {
+      "type": "string",
+      "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+    },
+    "json_value": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/json_value"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/json_value"
+          }
+        }
+      ]
+    },
+    "lineage": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*(?:\\.[a-z][a-z0-9_-]*)+$",
+      "maxLength": 256
+    },
+    "facet": {
+      "enum": [
+        "api",
+        "abi",
+        "layout",
+        "serialization",
+        "behavior",
+        "dialect",
+        "environment",
+        "license"
+      ]
+    },
+    "assurance": {
+      "enum": [
+        "Reject",
+        "Unknown",
+        "PassDeclared"
+      ]
+    },
+    "method": {
+      "enum": [
+        "proof",
+        "exhaustive",
+        "sampled"
+      ]
+    },
+    "budgets": {
+      "type": "object",
+      "properties": {
+        "wall_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "memory_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "max_cases": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "wall_ms",
+        "memory_bytes",
+        "max_cases"
+      ],
+      "additionalProperties": false
+    },
+    "default": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "present": {
+              "const": false
+            }
+          },
+          "required": [
+            "present"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "present": {
+              "const": true
+            },
+            "value": {
+              "$ref": "#/$defs/json_value"
+            }
+          },
+          "required": [
+            "present",
+            "value"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "type": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "shape": {
+              "const": "scalar"
+            },
+            "name": {
+              "enum": [
+                "unit",
+                "boolean",
+                "string",
+                "bytes"
+              ]
+            }
+          },
+          "required": [
+            "shape",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "shape": {
+              "const": "scalar"
+            },
+            "name": {
+              "const": "integer"
+            },
+            "min": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "max": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "shape",
+            "name",
+            "min",
+            "max"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "shape": {
+              "const": "record"
+            },
+            "open": {
+              "type": "boolean"
+            },
+            "fields": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/id"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "$ref": "#/$defs/type"
+                  },
+                  "required": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "type",
+                  "required"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "shape",
+            "open",
+            "fields"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "shape": {
+              "const": "sum"
+            },
+            "open": {
+              "type": "boolean"
+            },
+            "variants": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/id"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/type"
+              }
+            }
+          },
+          "required": [
+            "shape",
+            "open",
+            "variants"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "shape": {
+              "const": "sequence"
+            },
+            "items": {
+              "$ref": "#/$defs/type"
+            },
+            "min": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "shape",
+            "items",
+            "min",
+            "max"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "shape": {
+              "const": "map"
+            },
+            "keys": {
+              "$ref": "#/$defs/type"
+            },
+            "values": {
+              "$ref": "#/$defs/type"
+            },
+            "min": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "shape",
+            "keys",
+            "values",
+            "min",
+            "max"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "shape": {
+              "const": "function"
+            },
+            "arguments": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/type"
+              }
+            },
+            "result": {
+              "$ref": "#/$defs/type"
+            }
+          },
+          "required": [
+            "shape",
+            "arguments",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "shape": {
+              "const": "opaque"
+            },
+            "fingerprint": {
+              "$ref": "#/$defs/digest"
+            }
+          },
+          "required": [
+            "shape",
+            "fingerprint"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "slot": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/id"
+        },
+        "meaning": {
+          "$ref": "#/$defs/id"
+        },
+        "polarity": {
+          "enum": [
+            "in",
+            "out"
+          ]
+        },
+        "facet": {
+          "$ref": "#/$defs/facet"
+        },
+        "type": {
+          "$ref": "#/$defs/type"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "default": {
+          "$ref": "#/$defs/default"
+        }
+      },
+      "required": [
+        "name",
+        "meaning",
+        "polarity",
+        "facet",
+        "type",
+        "required",
+        "default"
+      ],
+      "additionalProperties": false
+    },
+    "law": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "suite_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "slots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "suite_digest",
+        "slots"
+      ],
+      "additionalProperties": false
+    },
+    "relation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "operator": {
+          "enum": [
+            "equal",
+            "less_equal"
+          ]
+        },
+        "left": {
+          "$ref": "#/$defs/endpoint"
+        },
+        "right": {
+          "$ref": "#/$defs/endpoint"
+        }
+      },
+      "required": [
+        "id",
+        "operator",
+        "left",
+        "right"
+      ],
+      "additionalProperties": false
+    },
+    "contract": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "contract"
+        },
+        "slots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/slot"
+          }
+        },
+        "tombstones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/slot"
+          }
+        },
+        "laws": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/law"
+          }
+        },
+        "relations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/relation"
+          }
+        },
+        "sunsets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "$ref": "#/$defs/timestamp"
+              },
+              "slot": {
+                "$ref": "#/$defs/id"
+              }
+            },
+            "required": [
+              "at",
+              "slot"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "slots",
+        "tombstones",
+        "laws",
+        "relations",
+        "sunsets"
+      ],
+      "additionalProperties": false
+    },
+    "provider_requirement": {
+      "type": "object",
+      "properties": {
+        "instance_id": {
+          "$ref": "#/$defs/id"
+        },
+        "authority": {
+          "$ref": "#/$defs/id"
+        },
+        "lineage": {
+          "$ref": "#/$defs/lineage"
+        },
+        "demand_slots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "floor": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "instance_id",
+        "authority",
+        "lineage",
+        "demand_slots",
+        "floor"
+      ],
+      "additionalProperties": false
+    },
+    "manifest": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "manifest"
+        },
+        "contract": {
+          "$ref": "#/$defs/digest"
+        },
+        "artifact": {
+          "$ref": "#/$defs/digest"
+        },
+        "demand_complete": {
+          "type": "boolean"
+        },
+        "unresolved_usage": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "providers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/provider_requirement"
+          }
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "contract",
+        "artifact",
+        "demand_complete",
+        "unresolved_usage",
+        "providers"
+      ],
+      "additionalProperties": false
+    },
+    "component": {
+      "type": "object",
+      "properties": {
+        "instance_id": {
+          "$ref": "#/$defs/id"
+        },
+        "authority": {
+          "$ref": "#/$defs/id"
+        },
+        "lineage": {
+          "$ref": "#/$defs/lineage"
+        },
+        "singleton": {
+          "type": "boolean"
+        },
+        "contract": {
+          "$ref": "#/$defs/digest"
+        },
+        "artifact": {
+          "$ref": "#/$defs/digest"
+        },
+        "manifest": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "instance_id",
+        "authority",
+        "lineage",
+        "singleton",
+        "contract",
+        "artifact",
+        "manifest"
+      ],
+      "additionalProperties": false
+    },
+    "endpoint": {
+      "type": "object",
+      "properties": {
+        "instance_id": {
+          "$ref": "#/$defs/id"
+        },
+        "slot": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "instance_id",
+        "slot"
+      ],
+      "additionalProperties": false
+    },
+    "binding": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "consumer": {
+          "$ref": "#/$defs/endpoint"
+        },
+        "provider": {
+          "$ref": "#/$defs/endpoint"
+        },
+        "adapter": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "consumer",
+        "provider",
+        "adapter"
+      ],
+      "additionalProperties": false
+    },
+    "assembly": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "assembly"
+        },
+        "roots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/component"
+          }
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/binding"
+          }
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "roots",
+        "components",
+        "bindings"
+      ],
+      "additionalProperties": false
+    },
+    "lock_entry": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "entry_id": {
+              "$ref": "#/$defs/id"
+            },
+            "ecosystem": {
+              "$ref": "#/$defs/id"
+            },
+            "locator": {
+              "type": "string"
+            },
+            "status": {
+              "const": "contracted"
+            },
+            "authority": {
+              "$ref": "#/$defs/id"
+            },
+            "lineage": {
+              "$ref": "#/$defs/lineage"
+            },
+            "contract": {
+              "$ref": "#/$defs/digest"
+            },
+            "artifact": {
+              "$ref": "#/$defs/digest"
+            }
+          },
+          "required": [
+            "entry_id",
+            "ecosystem",
+            "locator",
+            "status",
+            "authority",
+            "lineage",
+            "contract",
+            "artifact"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "entry_id": {
+              "$ref": "#/$defs/id"
+            },
+            "ecosystem": {
+              "$ref": "#/$defs/id"
+            },
+            "locator": {
+              "type": "string"
+            },
+            "status": {
+              "const": "Unknown"
+            },
+            "artifact": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/digest"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "entry_id",
+            "ecosystem",
+            "locator",
+            "status",
+            "artifact",
+            "reason"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "lock": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "lock"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/lock_entry"
+          }
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "entries"
+      ],
+      "additionalProperties": false
+    },
+    "sidecar": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "sidecar"
+        },
+        "authority": {
+          "$ref": "#/$defs/id"
+        },
+        "lineage": {
+          "$ref": "#/$defs/lineage"
+        },
+        "ecosystem": {
+          "$ref": "#/$defs/id"
+        },
+        "locator": {
+          "type": "string"
+        },
+        "artifact": {
+          "$ref": "#/$defs/digest"
+        },
+        "contract": {
+          "$ref": "#/$defs/digest"
+        },
+        "extractor": {
+          "$ref": "#/$defs/digest"
+        },
+        "registry_sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "signer": {
+          "$ref": "#/$defs/id"
+        },
+        "signature_algorithm": {
+          "const": "ed25519"
+        },
+        "signature": {
+          "$ref": "#/$defs/base64"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "authority",
+        "lineage",
+        "ecosystem",
+        "locator",
+        "artifact",
+        "contract",
+        "extractor",
+        "registry_sequence",
+        "signer",
+        "signature_algorithm",
+        "signature"
+      ],
+      "additionalProperties": false
+    },
+    "law_result": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "law_result"
+        },
+        "law_id": {
+          "$ref": "#/$defs/id"
+        },
+        "suite": {
+          "$ref": "#/$defs/digest"
+        },
+        "contract": {
+          "$ref": "#/$defs/digest"
+        },
+        "artifact": {
+          "$ref": "#/$defs/digest"
+        },
+        "harness": {
+          "$ref": "#/$defs/digest"
+        },
+        "fixtures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          }
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "budgets": {
+          "$ref": "#/$defs/budgets"
+        },
+        "method": {
+          "$ref": "#/$defs/method"
+        },
+        "status": {
+          "enum": [
+            "pass",
+            "counterexample",
+            "inconclusive"
+          ]
+        },
+        "witness": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "proof_checker": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "law_id",
+        "suite",
+        "contract",
+        "artifact",
+        "harness",
+        "fixtures",
+        "seed",
+        "budgets",
+        "method",
+        "status",
+        "witness",
+        "proof_checker",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "observation": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "observation"
+        },
+        "contract": {
+          "$ref": "#/$defs/digest"
+        },
+        "artifact": {
+          "$ref": "#/$defs/digest"
+        },
+        "slots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "samples": {
+          "$ref": "#/$defs/digest"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "confidence_ppm": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "observed_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "signer": {
+          "$ref": "#/$defs/id"
+        },
+        "signature_algorithm": {
+          "const": "ed25519"
+        },
+        "signature": {
+          "$ref": "#/$defs/base64"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "contract",
+        "artifact",
+        "slots",
+        "samples",
+        "count",
+        "confidence_ppm",
+        "observed_at",
+        "expires_at",
+        "signer",
+        "signature_algorithm",
+        "signature"
+      ],
+      "additionalProperties": false
+    },
+    "attestation": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "attestation"
+        },
+        "authority": {
+          "$ref": "#/$defs/id"
+        },
+        "lineage": {
+          "$ref": "#/$defs/lineage"
+        },
+        "contract": {
+          "$ref": "#/$defs/digest"
+        },
+        "artifact": {
+          "$ref": "#/$defs/digest"
+        },
+        "slots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "claim": {
+          "type": "string"
+        },
+        "issued_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "signer": {
+          "$ref": "#/$defs/id"
+        },
+        "signature_algorithm": {
+          "const": "ed25519"
+        },
+        "signature": {
+          "$ref": "#/$defs/base64"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "authority",
+        "lineage",
+        "contract",
+        "artifact",
+        "slots",
+        "claim",
+        "issued_at",
+        "expires_at",
+        "signer",
+        "signature_algorithm",
+        "signature"
+      ],
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "policy"
+        },
+        "structural_minimum": {
+          "enum": [
+            "Unknown",
+            "PassDeclared"
+          ]
+        },
+        "required_laws": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "allowed_law_methods": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/method"
+          },
+          "uniqueItems": true
+        },
+        "min_observations": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "min_confidence_ppm": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "require_attestation": {
+          "type": "boolean"
+        },
+        "trusted_signers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "law_budgets": {
+          "$ref": "#/$defs/budgets"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "structural_minimum",
+        "required_laws",
+        "allowed_law_methods",
+        "min_observations",
+        "min_confidence_ppm",
+        "require_attestation",
+        "trusted_signers",
+        "law_budgets"
+      ],
+      "additionalProperties": false
+    },
+    "publication": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "publication"
+        },
+        "authority": {
+          "$ref": "#/$defs/id"
+        },
+        "lineage": {
+          "$ref": "#/$defs/lineage"
+        },
+        "contract": {
+          "$ref": "#/$defs/digest"
+        },
+        "artifact": {
+          "$ref": "#/$defs/digest"
+        },
+        "parents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "uniqueItems": true
+        },
+        "predecessor_lineage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/lineage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stability": {
+          "enum": [
+            "stable",
+            "experimental",
+            "deprecated"
+          ]
+        },
+        "bridge_status": {
+          "enum": [
+            "root",
+            "adapted",
+            "unbridged"
+          ]
+        },
+        "adapters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "authority",
+        "lineage",
+        "contract",
+        "artifact",
+        "parents",
+        "predecessor_lineage",
+        "stability",
+        "bridge_status",
+        "adapters"
+      ],
+      "additionalProperties": false
+    },
+    "certificate": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "certificate"
+        },
+        "assembly": {
+          "$ref": "#/$defs/digest"
+        },
+        "policy": {
+          "$ref": "#/$defs/digest"
+        },
+        "checker": {
+          "$ref": "#/$defs/digest"
+        },
+        "registry_head": {
+          "$ref": "#/$defs/digest"
+        },
+        "evaluated_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "proofs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "assembly",
+        "policy",
+        "checker",
+        "registry_head",
+        "evaluated_at",
+        "proofs"
+      ],
+      "additionalProperties": false
+    },
+    "bundle_document": {
+      "type": "object",
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "document": {
+          "$ref": "#/$defs/wire_document"
+        }
+      },
+      "required": [
+        "digest",
+        "document"
+      ],
+      "additionalProperties": false
+    },
+    "bundle_blob": {
+      "type": "object",
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "bytes": {
+          "$ref": "#/$defs/base64"
+        }
+      },
+      "required": [
+        "digest",
+        "bytes"
+      ],
+      "additionalProperties": false
+    },
+    "bundle": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "bundle"
+        },
+        "certificate": {
+          "$ref": "#/$defs/certificate"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/bundle_document"
+          }
+        },
+        "blobs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/bundle_blob"
+          }
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "certificate",
+        "documents",
+        "blobs"
+      ],
+      "additionalProperties": false
+    },
+    "adapter": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "adapter"
+        },
+        "source": {
+          "$ref": "#/$defs/digest"
+        },
+        "target": {
+          "$ref": "#/$defs/digest"
+        },
+        "artifact": {
+          "$ref": "#/$defs/digest"
+        },
+        "form": {
+          "enum": [
+            "facade_library",
+            "wire_proxy",
+            "data_upcaster",
+            "component_wrapper"
+          ]
+        },
+        "lossless": {
+          "type": "boolean"
+        },
+        "lost_slots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "reverse": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "laws": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "source",
+        "target",
+        "artifact",
+        "form",
+        "lossless",
+        "lost_slots",
+        "reverse",
+        "laws"
+      ],
+      "additionalProperties": false
+    },
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "numerator": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "denominator": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "ratio_ppm": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "numerator",
+        "denominator",
+        "ratio_ppm"
+      ],
+      "additionalProperties": false
+    },
+    "diagnostic": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/id"
+        },
+        "severity": {
+          "enum": [
+            "error",
+            "warning",
+            "info"
+          ]
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "slots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "source",
+        "slots",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "envelope": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "envelope"
+        },
+        "command": {
+          "$ref": "#/$defs/id"
+        },
+        "assurance": {
+          "$ref": "#/$defs/assurance"
+        },
+        "decision": {
+          "enum": [
+            "accept",
+            "refuse"
+          ]
+        },
+        "tier_reports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          }
+        },
+        "slots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "coverage": {
+          "$ref": "#/$defs/coverage"
+        },
+        "checker": {
+          "$ref": "#/$defs/digest"
+        },
+        "known_consumers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "undeclared_consumers_covered": {
+          "const": false
+        },
+        "deployment": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "stage": {
+                  "enum": [
+                    "committed",
+                    "checked",
+                    "gated",
+                    "canary",
+                    "rolling",
+                    "live",
+                    "rolled_back",
+                    "contracted"
+                  ]
+                },
+                "revisions": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/digest"
+                  },
+                  "uniqueItems": true
+                },
+                "gate_decision": {
+                  "enum": [
+                    "accept",
+                    "refuse"
+                  ]
+                },
+                "lease": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/digest"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "stage",
+                "revisions",
+                "gate_decision",
+                "lease"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diagnostic"
+          }
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "command",
+        "assurance",
+        "decision",
+        "tier_reports",
+        "slots",
+        "coverage",
+        "checker",
+        "known_consumers",
+        "undeclared_consumers_covered",
+        "deployment",
+        "diagnostics"
+      ],
+      "additionalProperties": false
+    },
+    "live_revision": {
+      "type": "object",
+      "properties": {
+        "instance_id": {
+          "$ref": "#/$defs/id"
+        },
+        "component_instance_id": {
+          "$ref": "#/$defs/id"
+        },
+        "contract": {
+          "$ref": "#/$defs/digest"
+        },
+        "artifact": {
+          "$ref": "#/$defs/digest"
+        },
+        "observed_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "ttl_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "instance_id",
+        "component_instance_id",
+        "contract",
+        "artifact",
+        "observed_at",
+        "ttl_seconds"
+      ],
+      "additionalProperties": false
+    },
+    "live_snapshot": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "live_snapshot"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "observed_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "reachable": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/live_revision"
+          }
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "consumer": {
+                "$ref": "#/$defs/id"
+              },
+              "provider": {
+                "$ref": "#/$defs/id"
+              },
+              "revisions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/id"
+                },
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "consumer",
+              "provider",
+              "revisions"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "in_flight_consumers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "uniqueItems": true
+        },
+        "irreversible_barriers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "generation",
+        "observed_at",
+        "reachable",
+        "routes",
+        "in_flight_consumers",
+        "irreversible_barriers"
+      ],
+      "additionalProperties": false
+    },
+    "write_barrier": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "write_barrier"
+        },
+        "writer": {
+          "$ref": "#/$defs/id"
+        },
+        "contract": {
+          "$ref": "#/$defs/digest"
+        },
+        "artifact": {
+          "$ref": "#/$defs/digest"
+        },
+        "minimum_readable_revision": {
+          "$ref": "#/$defs/digest"
+        },
+        "state": {
+          "enum": [
+            "committed",
+            "Unknown"
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "observed_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "signer": {
+          "$ref": "#/$defs/id"
+        },
+        "signature_algorithm": {
+          "const": "ed25519"
+        },
+        "signature": {
+          "$ref": "#/$defs/base64"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "writer",
+        "contract",
+        "artifact",
+        "minimum_readable_revision",
+        "state",
+        "sequence",
+        "observed_at",
+        "signer",
+        "signature_algorithm",
+        "signature"
+      ],
+      "additionalProperties": false
+    },
+    "lease": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "lease"
+        },
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "snapshot": {
+          "$ref": "#/$defs/digest"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "id",
+        "generation",
+        "snapshot",
+        "expires_at",
+        "scope"
+      ],
+      "additionalProperties": false
+    },
+    "acknowledgement": {
+      "type": "object",
+      "properties": {
+        "finding_id": {
+          "$ref": "#/$defs/id"
+        },
+        "owner": {
+          "$ref": "#/$defs/id"
+        },
+        "issued_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "signer": {
+          "$ref": "#/$defs/id"
+        },
+        "signature_algorithm": {
+          "const": "ed25519"
+        },
+        "signature": {
+          "$ref": "#/$defs/base64"
+        }
+      },
+      "required": [
+        "finding_id",
+        "owner",
+        "issued_at",
+        "expires_at",
+        "reason",
+        "signer",
+        "signature_algorithm",
+        "signature"
+      ],
+      "additionalProperties": false
+    },
+    "baseline": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "baseline"
+        },
+        "project": {
+          "$ref": "#/$defs/id"
+        },
+        "revision": {
+          "$ref": "#/$defs/digest"
+        },
+        "previous": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "acknowledgements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/acknowledgement"
+          }
+        },
+        "reason": {
+          "type": "string"
+        },
+        "signer": {
+          "$ref": "#/$defs/id"
+        },
+        "signature_algorithm": {
+          "const": "ed25519"
+        },
+        "signature": {
+          "$ref": "#/$defs/base64"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "project",
+        "revision",
+        "previous",
+        "acknowledgements",
+        "reason",
+        "signer",
+        "signature_algorithm",
+        "signature"
+      ],
+      "additionalProperties": false
+    },
+    "extractor_report": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "extractor_report"
+        },
+        "source_bundle": {
+          "$ref": "#/$defs/digest"
+        },
+        "extractor": {
+          "$ref": "#/$defs/digest"
+        },
+        "options": {
+          "$ref": "#/$defs/json_value"
+        },
+        "contract": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "opaque_constructs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "total_constructs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "adjudicated_breaks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "false_breaks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "false_break_rate_ppm": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "adjudication_source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "history_range": {
+          "type": "string"
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diagnostic"
+          }
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "source_bundle",
+        "extractor",
+        "options",
+        "contract",
+        "complete",
+        "opaque_constructs",
+        "total_constructs",
+        "adjudicated_breaks",
+        "false_breaks",
+        "false_break_rate_ppm",
+        "adjudication_source",
+        "history_range",
+        "diagnostics"
+      ],
+      "additionalProperties": false
+    },
+    "log_payload": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "event": {
+              "const": "bootstrap"
+            },
+            "authority": {
+              "$ref": "#/$defs/id"
+            },
+            "lineage": {
+              "$ref": "#/$defs/lineage"
+            },
+            "owner_id": {
+              "$ref": "#/$defs/id"
+            },
+            "owner_key": {
+              "$ref": "#/$defs/base64"
+            },
+            "recovery_id": {
+              "$ref": "#/$defs/id"
+            },
+            "recovery_key": {
+              "$ref": "#/$defs/base64"
+            }
+          },
+          "required": [
+            "event",
+            "authority",
+            "lineage",
+            "owner_id",
+            "owner_key",
+            "recovery_id",
+            "recovery_key"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "event": {
+              "const": "rotate"
+            },
+            "authority": {
+              "$ref": "#/$defs/id"
+            },
+            "lineage": {
+              "$ref": "#/$defs/lineage"
+            },
+            "new_owner_id": {
+              "$ref": "#/$defs/id"
+            },
+            "new_owner_key": {
+              "$ref": "#/$defs/base64"
+            },
+            "new_signature": {
+              "$ref": "#/$defs/base64"
+            }
+          },
+          "required": [
+            "event",
+            "authority",
+            "lineage",
+            "new_owner_id",
+            "new_owner_key",
+            "new_signature"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "event": {
+              "const": "recover"
+            },
+            "authority": {
+              "$ref": "#/$defs/id"
+            },
+            "lineage": {
+              "$ref": "#/$defs/lineage"
+            },
+            "new_owner_id": {
+              "$ref": "#/$defs/id"
+            },
+            "new_owner_key": {
+              "$ref": "#/$defs/base64"
+            },
+            "revoked_id": {
+              "$ref": "#/$defs/id"
+            },
+            "effective_sequence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "event",
+            "authority",
+            "lineage",
+            "new_owner_id",
+            "new_owner_key",
+            "revoked_id",
+            "effective_sequence"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "event": {
+              "enum": [
+                "publish",
+                "advisory",
+                "retract",
+                "override"
+              ]
+            },
+            "authority": {
+              "$ref": "#/$defs/id"
+            },
+            "lineage": {
+              "$ref": "#/$defs/lineage"
+            },
+            "document": {
+              "$ref": "#/$defs/digest"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "event",
+            "authority",
+            "lineage",
+            "document",
+            "reason"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "log_entry": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "log_entry"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "previous": {
+          "$ref": "#/$defs/digest"
+        },
+        "payload": {
+          "$ref": "#/$defs/log_payload"
+        },
+        "signer": {
+          "$ref": "#/$defs/id"
+        },
+        "signature_algorithm": {
+          "const": "ed25519"
+        },
+        "signature": {
+          "$ref": "#/$defs/base64"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "sequence",
+        "previous",
+        "payload",
+        "signer",
+        "signature_algorithm",
+        "signature"
+      ],
+      "additionalProperties": false
+    },
+    "registry_proof": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "registry_proof"
+        },
+        "head": {
+          "$ref": "#/$defs/digest"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/log_entry"
+          }
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "head",
+        "entries"
+      ],
+      "additionalProperties": false
+    },
+    "wire_document": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/write_barrier"
+        },
+        {
+          "$ref": "#/$defs/publication"
+        },
+        {
+          "$ref": "#/$defs/contract"
+        },
+        {
+          "$ref": "#/$defs/manifest"
+        },
+        {
+          "$ref": "#/$defs/assembly"
+        },
+        {
+          "$ref": "#/$defs/lock"
+        },
+        {
+          "$ref": "#/$defs/sidecar"
+        },
+        {
+          "$ref": "#/$defs/law_result"
+        },
+        {
+          "$ref": "#/$defs/observation"
+        },
+        {
+          "$ref": "#/$defs/attestation"
+        },
+        {
+          "$ref": "#/$defs/policy"
+        },
+        {
+          "$ref": "#/$defs/certificate"
+        },
+        {
+          "$ref": "#/$defs/adapter"
+        },
+        {
+          "$ref": "#/$defs/envelope"
+        },
+        {
+          "$ref": "#/$defs/live_snapshot"
+        },
+        {
+          "$ref": "#/$defs/lease"
+        },
+        {
+          "$ref": "#/$defs/baseline"
+        },
+        {
+          "$ref": "#/$defs/extractor_report"
+        },
+        {
+          "$ref": "#/$defs/log_entry"
+        },
+        {
+          "$ref": "#/$defs/registry_proof"
+        }
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/wire_document"
+    },
+    {
+      "$ref": "#/$defs/bundle"
+    }
+  ]
+}

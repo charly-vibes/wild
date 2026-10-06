@@ -1,0 +1,378 @@
+{
+  "contract": {
+    "schema_version": "1",
+    "kind": "contract",
+    "slots": [
+      {
+        "name": "result",
+        "meaning": "example.result",
+        "polarity": "out",
+        "facet": "api",
+        "type": {
+          "shape": "scalar",
+          "name": "integer",
+          "min": 0,
+          "max": 10
+        },
+        "required": true,
+        "default": {
+          "present": false
+        }
+      }
+    ],
+    "tombstones": [],
+    "laws": [],
+    "relations": [],
+    "sunsets": []
+  },
+  "manifest": {
+    "schema_version": "1",
+    "kind": "manifest",
+    "contract": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "artifact": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "demand_complete": true,
+    "unresolved_usage": [],
+    "providers": []
+  },
+  "assembly": {
+    "schema_version": "1",
+    "kind": "assembly",
+    "roots": [
+      "app"
+    ],
+    "components": [
+      {
+        "instance_id": "app",
+        "authority": "example.registry",
+        "lineage": "acme.billing",
+        "singleton": false,
+        "contract": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "artifact": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "manifest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      }
+    ],
+    "bindings": []
+  },
+  "lock": {
+    "schema_version": "1",
+    "kind": "lock",
+    "entries": [
+      {
+        "entry_id": "billing",
+        "ecosystem": "cargo",
+        "locator": "billing-1.0.0",
+        "status": "contracted",
+        "authority": "example.registry",
+        "lineage": "acme.billing",
+        "contract": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "artifact": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      {
+        "entry_id": "legacy",
+        "ecosystem": "cargo",
+        "locator": "legacy-0.1.0",
+        "status": "Unknown",
+        "artifact": null,
+        "reason": "No contract available"
+      }
+    ]
+  },
+  "sidecar": {
+    "schema_version": "1",
+    "kind": "sidecar",
+    "authority": "example.registry",
+    "lineage": "acme.billing",
+    "ecosystem": "cargo",
+    "locator": "billing-1.0.0",
+    "artifact": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "contract": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "extractor": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "registry_sequence": 0,
+    "signer": "example.owner",
+    "signature_algorithm": "ed25519",
+    "signature": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+  },
+  "law_result": {
+    "schema_version": "1",
+    "kind": "law_result",
+    "law_id": "example.range",
+    "suite": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "contract": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "artifact": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "harness": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "fixtures": [
+      "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    ],
+    "seed": 42,
+    "budgets": {
+      "wall_ms": 1000,
+      "memory_bytes": 1048576,
+      "max_cases": 100
+    },
+    "method": "sampled",
+    "status": "pass",
+    "witness": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "proof_checker": null,
+    "reason": "Recorded samples passed"
+  },
+  "observation": {
+    "schema_version": "1",
+    "kind": "observation",
+    "contract": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "artifact": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "slots": [
+      "result"
+    ],
+    "samples": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "count": 100,
+    "confidence_ppm": 900000,
+    "observed_at": "2026-10-06T15:00:00Z",
+    "expires_at": "2026-11-05T15:00:00Z",
+    "signer": "example.owner",
+    "signature_algorithm": "ed25519",
+    "signature": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+  },
+  "attestation": {
+    "schema_version": "1",
+    "kind": "attestation",
+    "authority": "example.registry",
+    "lineage": "acme.billing",
+    "contract": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "artifact": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "slots": [
+      "result"
+    ],
+    "claim": "publisher claim for the named scope",
+    "issued_at": "2026-10-06T15:00:00Z",
+    "expires_at": "2026-11-05T15:00:00Z",
+    "signer": "example.owner",
+    "signature_algorithm": "ed25519",
+    "signature": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+  },
+  "policy": {
+    "schema_version": "1",
+    "kind": "policy",
+    "structural_minimum": "PassDeclared",
+    "required_laws": [],
+    "allowed_law_methods": [
+      "exhaustive",
+      "proof",
+      "sampled"
+    ],
+    "min_observations": 0,
+    "min_confidence_ppm": 0,
+    "require_attestation": false,
+    "trusted_signers": [
+      "example.owner"
+    ],
+    "law_budgets": {
+      "wall_ms": 1000,
+      "memory_bytes": 1048576,
+      "max_cases": 100
+    }
+  },
+  "certificate": {
+    "schema_version": "1",
+    "kind": "certificate",
+    "assembly": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "policy": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "checker": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "registry_head": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "evaluated_at": "2026-10-06T15:00:00Z",
+    "proofs": []
+  },
+  "adapter": {
+    "schema_version": "1",
+    "kind": "adapter",
+    "source": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "target": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "artifact": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "form": "wire_proxy",
+    "lossless": false,
+    "lost_slots": [
+      "result"
+    ],
+    "reverse": null,
+    "laws": []
+  },
+  "envelope": {
+    "schema_version": "1",
+    "kind": "envelope",
+    "command": "verify",
+    "assurance": "Unknown",
+    "decision": "refuse",
+    "tier_reports": [],
+    "slots": [],
+    "coverage": {
+      "numerator": 0,
+      "denominator": 1,
+      "ratio_ppm": 0
+    },
+    "checker": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "diagnostics": [
+      {
+        "code": "missing_contract",
+        "severity": "error",
+        "source": null,
+        "slots": [],
+        "reason": "Required contract blob unavailable"
+      }
+    ],
+    "known_consumers": [],
+    "undeclared_consumers_covered": false,
+    "deployment": null
+  },
+  "live_snapshot": {
+    "schema_version": "1",
+    "kind": "live_snapshot",
+    "generation": 12,
+    "observed_at": "2026-10-06T15:00:00Z",
+    "reachable": [
+      {
+        "instance_id": "billing",
+        "contract": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "artifact": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "observed_at": "2026-10-06T15:00:00Z",
+        "ttl_seconds": 60,
+        "component_instance_id": "billing"
+      }
+    ],
+    "in_flight_consumers": [],
+    "irreversible_barriers": [],
+    "routes": [
+      {
+        "consumer": "app",
+        "provider": "billing",
+        "revisions": [
+          "billing"
+        ]
+      }
+    ]
+  },
+  "lease": {
+    "schema_version": "1",
+    "kind": "lease",
+    "id": "deploy.billing",
+    "generation": 12,
+    "snapshot": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "expires_at": "2026-11-05T15:00:00Z",
+    "scope": [
+      "billing"
+    ]
+  },
+  "baseline": {
+    "schema_version": "1",
+    "kind": "baseline",
+    "project": "acme.app",
+    "revision": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "previous": null,
+    "acknowledgements": [],
+    "reason": "Initial baseline",
+    "signer": "example.owner",
+    "signature_algorithm": "ed25519",
+    "signature": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+  },
+  "extractor_report": {
+    "schema_version": "1",
+    "kind": "extractor_report",
+    "source_bundle": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "extractor": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "options": {},
+    "contract": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "complete": true,
+    "opaque_constructs": 0,
+    "total_constructs": 1,
+    "adjudicated_breaks": 0,
+    "false_breaks": 0,
+    "adjudication_source": null,
+    "history_range": "release-a..release-b",
+    "diagnostics": [],
+    "false_break_rate_ppm": null
+  },
+  "publication": {
+    "schema_version": "1",
+    "kind": "publication",
+    "authority": "example.registry",
+    "lineage": "acme.billing",
+    "contract": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "artifact": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "parents": [],
+    "predecessor_lineage": null,
+    "stability": "stable",
+    "bridge_status": "root",
+    "adapters": []
+  },
+  "log_entry": {
+    "schema_version": "1",
+    "kind": "log_entry",
+    "sequence": 0,
+    "previous": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "payload": {
+      "event": "bootstrap",
+      "authority": "example.registry",
+      "lineage": "acme.billing",
+      "owner_id": "example.owner",
+      "owner_key": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+      "recovery_id": "example.recovery",
+      "recovery_key": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE="
+    },
+    "signer": "example.owner",
+    "signature_algorithm": "ed25519",
+    "signature": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+  },
+  "registry_proof": {
+    "schema_version": "1",
+    "kind": "registry_proof",
+    "head": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "entries": [
+      {
+        "schema_version": "1",
+        "kind": "log_entry",
+        "sequence": 0,
+        "previous": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "payload": {
+          "event": "bootstrap",
+          "authority": "example.registry",
+          "lineage": "acme.billing",
+          "owner_id": "example.owner",
+          "owner_key": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+          "recovery_id": "example.recovery",
+          "recovery_key": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE="
+        },
+        "signer": "example.owner",
+        "signature_algorithm": "ed25519",
+        "signature": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+      }
+    ]
+  },
+  "bundle": {
+    "schema_version": "1",
+    "kind": "bundle",
+    "certificate": {
+      "schema_version": "1",
+      "kind": "certificate",
+      "assembly": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "policy": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "checker": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "registry_head": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "evaluated_at": "2026-10-06T15:00:00Z",
+      "proofs": []
+    },
+    "documents": [],
+    "blobs": []
+  },
+  "write_barrier": {
+    "schema_version": "1",
+    "kind": "write_barrier",
+    "writer": "billing",
+    "contract": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "artifact": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "minimum_readable_revision": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "state": "committed",
+    "sequence": 0,
+    "observed_at": "2026-10-06T15:00:00Z",
+    "signer": "example.owner",
+    "signature_algorithm": "ed25519",
+    "signature": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+  }
+}

@@ -37,3 +37,8 @@ __pycache__/
 .beads.gate.lock
 .beads-credential-key
 *.db
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+.beads/proxieddb/
+*.gate.lock*

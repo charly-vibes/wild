@@ -2,7 +2,7 @@
 
 Machine-checked compatibility for software components, first-party or third-party.
 
-> **Status, read first.** wild is a design with a prototype, not a finished tool. What exists today: a nine-file specification suite (`specs/`, lint-clean), a toy checker (`wild_sim.py`), prototype extractors for Rust, Python, and command-line tools (`wild_proto.py`, `experiments/cli_extract.py`), and experiments on real projects. The `wild` command described below is the intended interface. Sections are marked **[prototype]** where code exists and **[designed]** where only the spec exists. File formats marked *illustrative* are not yet specified.
+> **Status, read first.** wild is a design with a prototype, not a finished tool. What exists today: a nine-file specification suite (`specs/`, lint-clean), a toy checker (`wild_sim.py`), prototype extractors for Rust, Python, and command-line tools (`wild_proto.py`, `experiments/cli_extract.py`), and experiments on real projects. The `wild` command described below is the intended interface. Sections are marked **[prototype]** where code exists and **[designed]** where only the spec exists. The normative [v1 formats](wild-formats-v1.md) and [JSON Schema](../schemas/wild-v1.schema.json) are specified; the older TOML sketch below is illustrative and is not the wire protocol.
 
 ---
 
@@ -23,9 +23,9 @@ You get three things:
 - A component's contract is a set of named **slots**. A slot is something it **provides** (an output, a function, a command, a field) or **requires** (an input a caller must supply).
 - Revision B is an **accretion** of revision A when it provides at least what A provided and requires no more than A required. Old users keep working.
 - Accretions compose and have identities, so they form a category (a preorder). This is what lets verdicts chain: if B accretes A and C accretes B, then C accretes A, with no re-check needed.
-- A change that is not an accretion is a **break**. A break must start a **new lineage** (a new name) and ship an **adapter** back to the old one. Nobody is silently moved across a break.
-- A consumer states its **demand**: the slots it actually uses. Compatibility is checked against the demand, so a break in a slot you never use does not affect you.
-- Checks run in **tiers** ordered by cost. The cheap, exact tiers can reject; expensive, statistical tiers can only raise confidence.
+- A change that is not an accretion is a **break**. A break must start a **new lineage** (a new name), with explicitly directed adapters or a disclosed unbridged boundary. Nobody is silently moved across a break.
+- A consumer states its **demand**: the slots it actually uses. Scoped replacement checks demanded outputs and every required dependency of the replacement. Incomplete dynamic demand prevents a scoped safety claim.
+- Checks run in **tiers** ordered by cost. Identity and shape check declared structure. Law results disclose proof, exhaustive, or sampled methods; evidence and signed attestations add separate scoped claims.
 
 ## 3. Concepts
 
@@ -35,15 +35,15 @@ You get three things:
 | **Slot** | A named provided or required item with a type. Outputs have *out* polarity, inputs *in*. |
 | **Openness** | Each record or sum is *open* (consumers must tolerate additions) or *closed* (default). Growing a closed output sum is a break. |
 | **Revision** | A contract identified by the hash of its canonical form. Never edited. |
-| **Lineage** | A chain of revisions where each accretes the previous one. A lineage has a version-free name. |
+| **Lineage** | An authority-qualified ancestry of accretive revisions with one accepted tip; unmerged forks refuse automatic selection. |
 | **Accretion** | The relation "this revision can replace that one". Reflexive and transitive. |
 | **Break** | Any change that is not an accretion. Starts a new lineage. |
 | **Adapter** | A checked bridge from one lineage to another (facade library, wire proxy, data upcaster, or component wrapper). |
 | **Demand** | The slots a consumer uses, derived from its code and tests. |
-| **Floor** | For each provider a consumer uses, the least revision whose provides cover the demand. |
+| **Floor** | The least covering revision on ordered ancestry; incomparable covering minima require an explicit pin. |
 | **Law** | A recorded property that must keep holding (for example idempotency). Laws accumulate across revisions. |
 | **Tombstone** | A record that a required slot was dropped, so its name can never return with a different meaning. |
-| **Certificate** | A list of bindings (consumer revision, provider revision, demanded slots) that a separate verifier can re-check. |
+| **Certificate** | A committed assembly, policy, and proof bundle checked offline against caller-supplied commitments, trust roots, checker allowlist, and evaluation time. |
 
 ### Tiers and verdicts
 
@@ -51,11 +51,11 @@ You get three things:
 |---|---|---|
 | 0 identity | Hashes and lineage names | exact, instant |
 | 1 shape | Provides, requires, polarity, openness, limits, defaults | exact, deterministic |
-| 2 laws | All accumulated laws against the new implementation | exact, seeded |
+| 2 laws | Accumulated laws against a digest-bound implementation and harness | proof, exhaustive, or sampled |
 | 3 evidence | Replayed traffic, consumer tests, canary | statistical |
 | 4 attestation | A signed human claim with scope and expiry | human |
 
-Verdicts form a lattice: `Reject < Unknown < PassDeclared < PassLawChecked < PassObserved`. A report always names the highest tier passed. The word "compatible" alone is never printed. A dependency with no contract is `Unknown`, not `Pass`.
+Structural assurance forms the lattice `Reject < Unknown < PassDeclared`. Reports separately name law methods/results, observation scope, attestation status, and the policy decision. Passing samples or version claims cannot establish structural assurance. Expired claims stop satisfying their policy requirement while independent checks remain valid. The word "compatible" alone is never printed.
 
 ## 4. How a change flows
 
@@ -67,7 +67,7 @@ source ──extract──▶ contract ──identify──▶ revision hash
                                    ▼
              accretion?  ──yes──▶ publish to lineage
                   │
-                  no ──▶ new lineage + adapter ──▶ publish
+                  no ──▶ new lineage + bridge status ──▶ publish
                                    │
 consumers: demand ─▶ resolve ─▶ certificate ─▶ verify (offline)
                                    │
@@ -84,12 +84,12 @@ wild adopts a project in four levels. Each adds enforcement; none changes your p
 wild init                # writes extractor config, a baseline, and a CI hook; no edits needed
 wild adopt observe       # read-only: rebuilds your release history from contracts
 wild adopt shadow        # CI reports verdicts but never fails a build
-wild adopt gate          # CI rejects only breaks introduced after the baseline
+wild adopt gate          # rejects new breaks and expired baseline acknowledgements
 wild adopt native        # publishes sidecar records next to your existing artifacts
 ```
 
-- **observe** extracts a contract at every past release and lists the releases whose declared version bump disagreed with what actually changed.
-- **baseline**: the first enforcement run records existing breaks and rejects none of them. An acknowledged break needs an owner and an expiry; expired acknowledgements reject.
+- **observe** extracts available historical releases, retains unavailable ones as Unknown, and lists disagreements between version labels and computed changes.
+- **baseline**: first enforcement atomically records existing findings with an owner and acknowledgements expiring in 30 days. Rerunning init or changing levels never resets it; replacement and renewal require signed audit events. Expired acknowledgements reject.
 - **native** adds a sidecar record that binds your host artifact's digest to a revision hash. Your package, tag, and version are never modified.
 
 ### 5.2 Publishing a release (provider) **[designed]**
@@ -105,22 +105,22 @@ wild publish             # signs and appends the revision to the registry log
 | You did | Verdict |
 |---|---|
 | Added an output slot or an optional input | accretion, publish |
-| Removed or retyped an output slot | break: new lineage and adapter required |
+| Removed an output or widened its value domain | break: new lineage with adapter or unbridged status |
 | Made an optional input required | break |
 | Added a variant to a closed output sum | break |
 | Changed a declared default or tightened a provided limit | break |
-| Dropped a required input, later re-added with a new type | rejected (tombstone) |
+| Reactivated a tombstoned input as required or with narrower acceptance | rejected |
 
 ### 5.3 Handling a break **[designed]**
 
 ```
-wild adapt acme.billing acme.billing2    # drafts an adapter, TODO on each slot it cannot map
+wild adapt acme.billing acme.payments    # drafts an adapter, TODO on each slot it cannot map
 wild check --adapter                      # round-trip laws on recorded samples
-wild publish --lineage acme.billing2
+wild publish --lineage acme.payments
 ```
 
 - A draft adapter has an explicit TODO for every slot the tool cannot derive.
-- An adapter must declare whether it is lossless or list what it loses. A lossless adapter needs a passing round-trip law.
+- An adapter declares its source/target hashes and losses. A lossless claim needs a reverse mapping and round-trip checks whose proof, exhaustive, or sampled method is disclosed. An infeasible adapter leaves an explicit unbridged boundary.
 - Consumers whose demand does not touch the broken slot may move to the new lineage without an adapter. Moving is always opt-in.
 
 ### 5.4 Consuming a component **[designed]**
@@ -131,21 +131,21 @@ wild lock import         # read your existing lockfile; unresolvable entries bec
 wild update              # advice only: per candidate version, are your slots still compatible?
 ```
 
-- `update` never overrides your package manager's choice. It reports changes restricted to your demand, so a change in a slot you do not use is reported but never blocks.
-- Lockfile entries are `lineage@hash`. Tags and aliases never resolve.
+- `update` reports compatibility advice without changing the host resolver choice. Scoped replacement also checks new required dependencies; unresolved dynamic calls prevent a complete-demand claim.
+- Contracted lock entries pin authority, lineage, contract hash, and artifact digest. Unresolved entries retain their host locator and Unknown status; aliases are provenance, never identities.
 
 ### 5.5 Composing components **[designed]**
 
 ```
-wild resolve             # newest revision per package and lineage; no search
+wild resolve             # unique accepted tip per lineage; refuse unresolved forks or constraints
 wild certify             # write the certificate
-wild verify cert.json    # offline; needs only the certificate and the content-addressed contracts
+wild verify bundle.json  # offline; expected assembly/policy, trust roots and time are explicit inputs
 ```
 
-- Resolution picks the newest revision in each lineage that satisfies demand. If two consumers need different lineages of one package, both copies are listed.
-- A component declared **singleton** may appear under one lineage only.
+- Resolution traverses finite dependency closure and selects each lineage's unique accepted tip. Forks, singleton conflicts, and failed relations refuse selection without backtracking. Different required lineages remain separate copies.
+- A component declared **singleton** has exactly one instance and one lineage per assembly.
 - Values that cross between lineages need an adapter; otherwise the boundary is reported as unbridged.
-- The assembly verdict is the minimum over its bindings, and the report shows the share of bindings verified per tier.
+- Assembly structural assurance is the meet of binding assurance; each binding must also satisfy law, evidence, and attestation policy. The report discloses coverage and method.
 
 ### 5.6 Deploying **[designed]**
 
@@ -156,17 +156,17 @@ wild deploy rollback     # refuses to roll a provider below any live consumer's 
 wild deploy retire       # retires an old lineage when no known consumer demands it
 ```
 
-- A cycle among floors is rejected and its members listed. Simultaneous deployment is not offered.
+- Only unsatisfied floor prerequisites contribute ordering edges. A cycle of satisfied dependencies is allowed; an unsatisfied prerequisite cycle is refused with its members listed.
 - A revision that writes data older revisions cannot read must declare itself **irreversible**; rollback past it is rejected after its first write.
-- A stale live-revision report counts as unknown and blocks the gate (fail closed).
-- An emergency override records signer, reason, and expiry in the registry log.
+- Every traffic-reachable provider revision must cover the floor. Reports expire at their TTL boundary (default 60 seconds); missing or future-dated reports block. A coordinator lease and snapshot generation are revalidated atomically at each route change, promotion, or rollback.
+- An emergency override records scope, signer, reason, and expiry. It cannot bypass structural Reject, Unknown reachability, coordination failure, or irreversible-write barriers. Retirement needs seven continuous days of fresh empty known demand and zero traffic by default.
 
 ### 5.7 Third-party software without contracts **[designed; extractors partly prototyped]**
 
 - **Overlay**: you may publish an overlay contract for an upstream package, bound to its artifact digest and labelled *inferred*.
 - **Tests as laws**: your passing integration tests against an uncontracted upstream are recorded as laws of your own component.
-- **Version claims**: the upstream's declared version bump is recorded at the attestation tier and never higher.
-- An edge to an uncontracted provider is `Unknown` unless an overlay or a law covers the slots you use.
+- **Version claims** remain metadata until a trusted publisher signs a scoped, expiring attestation; they never substitute for structural or law checks.
+- An uncontracted edge has Unknown structural assurance. An explicit digest-bound overlay can declare covered structure; integration tests provide sampled law evidence for their exercised domain.
 
 ## 6. Reading a report
 
@@ -182,9 +182,9 @@ check acme.billing  (rev 4f2a… → 91c0…)   checker 0.1
   known consumers: 3 declared. Undeclared consumers are not covered.
 ```
 
-## 7. Writing a contract *(illustrative; the format is not yet specified)*
+## 7. Writing a contract *(illustrative TOML sketch)*
 
-Most of a contract is extracted. You edit only what an extractor cannot know: laws, limits, defaults, and anything marked opaque.
+The wire format is versioned JSON in [wild v1 formats](wild-formats-v1.md), with [structural examples](../schemas/examples-v1.json). The TOML sketch below explains the concepts and is not accepted as v1 wire input. Extractors produce draft contracts; manual declarations fill semantic meaning, laws, limits, defaults, and unsupported constructs.
 
 ```toml
 lineage   = "acme.billing"
@@ -278,6 +278,6 @@ All from toy models or small real experiments; none from a production deployment
 | `wild.deploy` | Gate, canary, rollback, retirement |
 | `wild.extract` | Extractors and law harness |
 
-### Not yet specified
+### Format reference
 
-The Contract IR schema and canonical form, the consumer manifest and lockfile formats, and the sidecar record format. Each is planned as its own spec file.
+[Wild v1 formats](wild-formats-v1.md) defines canonical bytes, IR, manifests, locks, sidecars, policies, evidence, certificate bundles, registry proofs, and deployment coordination. [The schema](../schemas/wild-v1.schema.json) and [examples](../schemas/examples-v1.json) are structurally validated. Runtime conformance remains future work; current simulations exercise smaller models.

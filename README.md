@@ -53,6 +53,8 @@ The scripts in `experiments/` read data from `/tmp/proj` (genesis-vibes crates f
 - The real-project experiments are small (two Python pairs with 28 combinations, one Rust pair, three CLI releases). Two extractor fixes were made after seeing failures, so those numbers are optimistic.
 - Undeclared behavior is the known weak spot; the design reaches it only through laws and evidence.
 
-## Not yet specified
+## Wire formats and validation
 
-The Contract IR schema and canonical form, the consumer manifest and lockfile formats, and the sidecar record format.
+[Wild v1 formats](docs/wild-formats-v1.md) defines the normative design protocol; [the JSON Schema](schemas/wild-v1.schema.json) and [structural examples](schemas/examples-v1.json) cover contracts, manifests, locks, sidecars, policy and certificate bundles. The prototypes are smaller models and do not implement this protocol.
+
+Install document-test dependencies with `python3 -m pip install -r requirements-dev.txt`. Strict OpenSpec validation, specodelic lint/reference checks, schema validation, and expected round-1 prototype decisions are executable gates. Future runtime acceptance cases are labelled separately in each spec.

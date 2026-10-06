@@ -32,8 +32,20 @@ def test_wild_sim_round1_runs_clean():
     # Output must parse as JSON and carry per-scenario verdicts.
     verdicts = json.loads(proc.stdout)
     assert isinstance(verdicts, list) and len(verdicts) > 0
-    for scenario in verdicts:
-        assert "id" in scenario and "trace" in scenario, scenario
+    expected = {
+        "1": "rejected@shape", "3a": "rejected@shape", "3b": "rejected@laws",
+        "3c": "published", "3d": "repair_draft", "4a": "rejected@shape",
+        "4b": "rejected@laws", "4c": "published", "5a": "rejected@shape",
+        "5b": "published", "5c": "rejected@shape", "5d": "rejected@shape",
+    }
+    by_id = {scenario["id"]: scenario for scenario in verdicts}
+    assert len(by_id) == len(verdicts) and set(by_id) == set(expected)
+    for scenario_id, terminal in expected.items():
+        assert by_id[scenario_id]["trace"].split(" > ")[-1] == terminal
+    # Preserve the declared residual: no law/evidence means undeclared breaks can escape.
+    assert by_id["3c"]["consumers"]["C"]["tool"] == "BROKEN"
+    assert by_id["4c"]["consumers"]["App"]["tool"] == "BROKEN"
+    assert by_id["5b"]["consumers"]["C"]["tool"] == "ok"
 
 
 def test_wild_cd_sim_runs_clean():

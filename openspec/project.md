@@ -32,13 +32,16 @@ single-file drafts replaced by the nine-spec layout.
 - Python: stdlib-first; the prototype sims must stay dependency-free.
 
 ### Architecture Patterns
-- Design corpus first: spec changes land in `openspec/specs/`, verified by
+- Design corpus first: normative formats are in `docs/wild-formats-v1.md` and
+  `schemas/wild-v1.schema.json`; spec changes land in `openspec/specs/`, verified by
   `specodelic lint` / `specodelic graph` (no dangling references).
 
 ### Testing Strategy
 - `tests/test_spec_corpus.py` — spec corpus stays lint-clean and
-  reference-closed (gated by espectacular).
-- `tests/test_prototype_smoke.py` — prototype sims run clean and exit 0.
+  reference-closed, strict OpenSpec discovery, local design references, and
+  shared v1 schema/examples (gated by espectacular).
+- `tests/test_prototype_smoke.py` — prototype sims run clean; round-1 outcomes are asserted against declared
+  expected rejection, safe-widening, and known escape cases.
 
 ### Git Workflow
 - Direct commits to `main`; small, focused commits.

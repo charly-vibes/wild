@@ -9,4 +9,8 @@ authored_with = "0.9.2"
 pytest = [
   {flags = "tests/test_spec_corpus.py::test_spec_corpus_lint_clean", timeout_seconds = 120},
   {flags = "tests/test_spec_corpus.py::test_spec_graph_reference_closed", timeout_seconds = 120},
+  {flags = "tests/test_spec_corpus.py::test_openspec_strict_discovers_all_capabilities", timeout_seconds = 120},
+  {flags = "tests/test_spec_corpus.py::test_v1_examples_cover_every_document_kind", timeout_seconds = 120},
+  {flags = "tests/test_spec_corpus.py::test_v1_schema_refuses_invalid_identity_or_assurance", timeout_seconds = 120},
+  {flags = "tests/test_spec_corpus.py::test_v1_certificate_requires_commitments_and_refuses_unknown_fields", timeout_seconds = 120},
 ]

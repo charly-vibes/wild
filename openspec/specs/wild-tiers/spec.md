@@ -1,31 +1,35 @@
 ---
 id: spec
 kind: intent
-statement: THE wild tier pipeline SHALL decide each revision's verdict through checks ordered by cost, where exact deterministic tiers can reject and probabilistic tiers can only raise confidence.
+statement: THE wild tier pipeline SHALL decide each revision's verdict through checks ordered by cost, where structural checks can reject, executable law checks disclose their method, and observations and attestations never override structural rejection.
 ---
 
 # Wild tiers
 
-Five tiers in cost order: identity, shape, laws, evidence, attestation. The first three are pure and exact; evidence is statistical; attestation is human, signed, and expiring. Verdicts form a lattice, and policy states the minimum tier a context requires.
+## Purpose
+
+This is a normative design specification; only the prototype and corpus gate scenarios explicitly identified below are implemented. Shared wire formats and decision rules are defined in [wild v1 formats](../../../docs/wild-formats-v1.md) and [the v1 schema](../../../schemas/wild-v1.schema.json).
+
+Checks run in cost order: identity, shape, laws, evidence, attestation. Identity and shape decide declared structure. Law results distinguish proof, exhaustive finite enumeration, and sampling; a passing sample proves only that sample. Evidence and signed attestations are separate scoped claims. The verdict product and policy evaluation are defined in `docs/wild-formats-v1.md`.
 
 ## Constraints
 
 | id | kind | expr | traces_to |
 | -- | ---- | ---- | --------- |
 | fail_fast_ordering | invariant | `tiers run in order identity < shape < laws < evidence < attestation; a run stops at the first Reject` | [[spec]] |
-| exact_tiers_pure | invariant | `tiers identity, shape, and laws are pure: the same inputs give the same verdict, with no network or clock access` | [[spec]] |
-| verdict_lattice | invariant | `verdicts form a lattice Reject < Unknown < PassDeclared < PassLawChecked < PassObserved with meet and join` | [[spec]] |
-| policy_names_min_tier | invariant | `each context (publish, deploy, adopt) names the minimum tier it requires; a verdict below it is refused` | [[spec]] |
+| exact_tiers_pure | invariant | `identity and shape are pure functions of canonical contracts and checker version; law evaluation is reproducible only with the implementation digest, harness digest, seed, fixture digests, and resource limits in the v1 bundle` | [[spec]] |
+| verdict_lattice | invariant | `structural assurance forms the lattice Reject < Unknown < PassDeclared; executable laws, observations, and attestations are separate scoped records; assembly assurance is the structural meet and policy checks every binding as defined in docs/wild-formats-v1.md` | [[spec]] |
+| policy_names_min_tier | invariant | `each context has a v1 policy naming structural floor, allowed law methods, required law ids, evidence thresholds, and any required attestations; missing or failed required checks refuse the operation` | [[spec]] |
 | rejection_explains | invariant | `a Reject names the tier, the slot or law, and the rule that failed` | [[spec]] |
 | laws_cumulative | invariant | `laws(v') ⊇ ⋃ laws(ancestors); every ancestor law passes against the v' implementation` | [[spec]] |
-| law_runs_deterministic | invariant | `the same contract, implementation, and seed give the same law result; seeds are recorded in the report` | [[spec]] |
-| evidence_cannot_override_exact | invariant | `evidence may raise a Pass confidence; it never turns a Reject from an exact tier into Pass` | [[spec]] |
+| law_runs_deterministic | invariant | `the same complete harness inputs yield the same law result; seed, implementation and harness digests, fixtures, budgets, and method are recorded; timeout, crash, or nondeterminism is inconclusive and cannot pass required policy` | [[spec]] |
+| evidence_cannot_override_exact | invariant | `observations may add scoped evidence to a structural Pass; they cannot override a structural Reject or a law counterexample` | [[spec]] |
 | evidence_confidence_conservative | advisory | `reported confidence is the minimum over contributing observations, never a product` | [[spec]] |
 | contradiction_triggers_repair | invariant | `observed behavior contradicting the declared contract creates a repair draft; the contract is never edited silently` | [[spec]] |
 | attestation_scoped | invariant | `an attestation names its signer, its scope (lineage and slots), and its claim` | [[spec]] |
-| attestation_expiring | invariant | `an attestation carries an expiry; an expired attestation counts as Unknown` | [[spec]] |
-| verdict_cache_keyed | invariant | `cached verdicts are keyed by old hash, new hash, checker version, and policy` | [[spec]] |
-| verdict_recorded_immutable | invariant | `a recorded verdict for a key is never rewritten; a new checker version records a new verdict` | [[spec]] |
+| attestation_expiring | invariant | `an attestation carries issue time and expiry and is bound to artifact and contract digests; at evaluation_time ≥ expiry the attestation status is Unknown while independent checks remain unchanged` | [[spec]] |
+| verdict_cache_keyed | invariant | `structural cache keys include old and new contract hashes and checker version; law cache keys also include implementation, harness, fixtures, seed, method, and budgets; policy evaluation includes demand, policy digest, evidence digests, trust roots, and evaluation time and is never reused past claim expiry` | [[spec]] |
+| verdict_recorded_immutable | invariant | `recorded check results are immutable; new inputs append new records; current policy decisions are recomputed from those records and claim validity at evaluation time` | [[spec]] |
 
 ## Model
 
@@ -62,7 +66,7 @@ Five tiers in cost order: identity, shape, laws, evidence, attestation. The firs
 | -- | ---- | ------------ | --------- | --------- |
 | first_reject_stops_run | unit | [[spec.fail_fast_ordering]] | `revision_failing_identity_and_laws()` | `tiers_run == [identity] ∧ verdict == Reject` |
 | exact_tiers_ignore_side_inputs | unit | [[spec.exact_tiers_pure]] | `same_inputs_with_varied_clock_and_network()` | `verdict(a) == verdict(b)` |
-| verdict_lattice_laws | law | [[spec.verdict_lattice]] | `three_arbitrary_verdicts()` | **identity:** `meet(v, PassObserved) == v` **associativity:** `meet(meet(a, b), c) == meet(a, meet(b, c))` |
+| verdict_lattice_laws | law | [[spec.verdict_lattice]] | `three_arbitrary_verdicts()` | **identity:** `meet(v, PassDeclared) == v` **associativity:** `meet(meet(a, b), c) == meet(a, meet(b, c))` |
 | below_policy_refused | unit | [[spec.policy_names_min_tier]] | `verdict_PassDeclared_under_policy_requiring_laws()` | `decision == refused` |
 | reject_names_rule | unit | [[spec.rejection_explains]] | `arbitrary_rejected_revision()` | `report has tier ∧ slot_or_law ∧ rule` |
 | ancestor_law_failure_rejected | unit | [[spec.laws_cumulative]] | `revision_violating_an_ancestor_law()` | `law_check == failed` |
@@ -71,10 +75,173 @@ Five tiers in cost order: identity, shape, laws, evidence, attestation. The firs
 | confidence_is_minimum | unit | [[spec.evidence_confidence_conservative]] | `observations_with_confidences([0.99, 0.90])` | `confidence == 0.90` |
 | contradiction_creates_draft | unit | [[spec.contradiction_triggers_repair]] | `observed_behavior_outside_declared_contract()` | `repair_draft_created ∧ contract_unchanged` |
 | attestation_without_scope_rejected | unit | [[spec.attestation_scoped]] | `attestation_missing_scope()` | `check(a) == failed` |
-| expired_attestation_is_unknown | unit | [[spec.attestation_expiring]] | `attestation_with_past_expiry()` | `verdict(a) == Unknown` |
+| expired_attestation_is_unknown | unit | [[spec.attestation_expiring]] | `attestation_with_past_expiry()` | `attestation_status(a) == Unknown ∧ independent_assurance unchanged` |
 | cache_key_includes_checker | unit | [[spec.verdict_cache_keyed]] | `same_pair_under_two_checker_versions()` | `keys differ ∧ no cross-hit` |
 | recorded_verdict_unchanged | unit | [[spec.verdict_recorded_immutable]] | `verdict_recorded_then_rerun_under_new_checker()` | `old record unchanged ∧ new record appended` |
 
 ## Notes
 
 Evidence is graded because failures are correlated, so confidence is the minimum, never a product. Simulation round 1 (12 scenarios): six shape breaks were caught at tier 1, two behavior changes at tier 2 through laws, one at tier 3 through canary replay, one safe input widening was correctly passed, and two undeclared behavior changes escaped. Escapes of undeclared behavior are the known residual of this design.
+
+## Design acceptance cases
+
+These cases define future runtime behavior. They are not claims that the current prototypes implement the v1 protocol. Executable document and prototype gates are under Requirements.
+
+### Rule: Fail fast ordering
+
+The system SHALL satisfy `fail_fast_ordering` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: First reject stops run
+- **GIVEN** the fixture domain `revision_failing_identity_and_laws()`
+- **WHEN** the `fail_fast_ordering` check runs
+- **THEN** `tiers_run == [identity] ∧ verdict == Reject`
+
+### Rule: Exact tiers pure
+
+The system SHALL satisfy `exact_tiers_pure` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Exact tiers ignore side inputs
+- **GIVEN** the fixture domain `same_inputs_with_varied_clock_and_network()`
+- **WHEN** the `exact_tiers_pure` check runs
+- **THEN** `verdict(a) == verdict(b)`
+
+### Rule: Verdict lattice
+
+The system SHALL satisfy `verdict_lattice` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Verdict lattice laws
+- **GIVEN** the fixture domain `three_arbitrary_verdicts()`
+- **WHEN** the `verdict_lattice` check runs
+- **THEN** **identity:** `meet(v, PassDeclared) == v` **associativity:** `meet(meet(a, b), c) == meet(a, meet(b, c))`
+
+### Rule: Policy names min tier
+
+The system SHALL satisfy `policy_names_min_tier` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Below policy refused
+- **GIVEN** the fixture domain `verdict_PassDeclared_under_policy_requiring_laws()`
+- **WHEN** the `policy_names_min_tier` check runs
+- **THEN** `decision == refused`
+
+### Rule: Rejection explains
+
+The system SHALL satisfy `rejection_explains` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Reject names rule
+- **GIVEN** the fixture domain `arbitrary_rejected_revision()`
+- **WHEN** the `rejection_explains` check runs
+- **THEN** `report has tier ∧ slot_or_law ∧ rule`
+
+### Rule: Laws cumulative
+
+The system SHALL satisfy `laws_cumulative` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Ancestor law failure rejected
+- **GIVEN** the fixture domain `revision_violating_an_ancestor_law()`
+- **WHEN** the `laws_cumulative` check runs
+- **THEN** `law_check == failed`
+
+### Rule: Law runs deterministic
+
+The system SHALL satisfy `law_runs_deterministic` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Law run reproducible
+- **GIVEN** the fixture domain `(contract, impl, seed)` run twice
+- **WHEN** the `law_runs_deterministic` check runs
+- **THEN** `run(a) == run(b)`
+
+### Rule: Evidence cannot override exact
+
+The system SHALL satisfy `evidence_cannot_override_exact` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Evidence never overrides reject
+- **GIVEN** the fixture domain `shape_Reject_plus_clean_traffic_replay()`
+- **WHEN** the `evidence_cannot_override_exact` check runs
+- **THEN** `verdict == Reject`
+
+### Rule: Evidence confidence conservative
+
+The system SHALL satisfy `evidence_confidence_conservative` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Confidence is minimum
+- **GIVEN** the fixture domain `observations_with_confidences([0.99, 0.90])`
+- **WHEN** the `evidence_confidence_conservative` check runs
+- **THEN** `confidence == 0.90`
+
+### Rule: Contradiction triggers repair
+
+The system SHALL satisfy `contradiction_triggers_repair` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Contradiction creates draft
+- **GIVEN** the fixture domain `observed_behavior_outside_declared_contract()`
+- **WHEN** the `contradiction_triggers_repair` check runs
+- **THEN** `repair_draft_created ∧ contract_unchanged`
+
+### Rule: Attestation scoped
+
+The system SHALL satisfy `attestation_scoped` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Attestation without scope rejected
+- **GIVEN** the fixture domain `attestation_missing_scope()`
+- **WHEN** the `attestation_scoped` check runs
+- **THEN** `check(a) == failed`
+
+### Rule: Attestation expiring
+
+The system SHALL satisfy `attestation_expiring` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Expired attestation is unknown
+- **GIVEN** the fixture domain `attestation_with_past_expiry()`
+- **WHEN** the `attestation_expiring` check runs
+- **THEN** `attestation_status(a) == Unknown ∧ independent_assurance unchanged`
+
+### Rule: Verdict cache keyed
+
+The system SHALL satisfy `verdict_cache_keyed` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Cache key includes checker
+- **GIVEN** the fixture domain `same_pair_under_two_checker_versions()`
+- **WHEN** the `verdict_cache_keyed` check runs
+- **THEN** `keys differ ∧ no cross-hit`
+
+### Rule: Verdict recorded immutable
+
+The system SHALL satisfy `verdict_recorded_immutable` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Recorded verdict unchanged
+- **GIVEN** the fixture domain `verdict_recorded_then_rerun_under_new_checker()`
+- **WHEN** the `verdict_recorded_immutable` check runs
+- **THEN** `old record unchanged ∧ new record appended`
+
+#### Acceptance case: Same contract different implementation requires new law checks
+- **GIVEN** two implementation artifacts have the same contract hash but different bytes
+- **WHEN** a law result cached for the first artifact is requested for the second
+- **THEN** the law cache misses and policy cannot reuse the first acceptance
+
+#### Acceptance case: Expiry preserves independent structural checks
+- **GIVEN** a valid PassDeclared binding has an attestation expiring at 2026-10-06T15:00:00Z
+- **WHEN** evaluation occurs exactly at that timestamp
+- **THEN** attestation status is Unknown; structural assurance remains PassDeclared; policy requiring attestation refuses
+
+#### Acceptance case: Timeout never becomes law pass
+- **GIVEN** a required sampled law reaches its resource budget without completing
+- **WHEN** the harness returns a result
+- **THEN** status is inconclusive and policy refuses
+
+#### Acceptance case: Version claim cannot satisfy structural policy
+- **GIVEN** an uncontracted dependency has only a patch version label
+- **WHEN** policy requires PassDeclared
+- **THEN** the label remains metadata, assurance is Unknown, and policy refuses
+
+## Requirements
+
+### Requirement: Wild tiers design contract
+
+The design corpus SHALL expose this capability's constraints as normative, self-contained rules with acceptance cases, and SHALL link to a structurally valid shared v1 schema without claiming future runtime behavior is implemented.
+
+#### Scenario: Wild tiers design is self-contained
+- **GIVEN** this spec, `docs/wild-formats-v1.md`, and `schemas/wild-v1.schema.json`
+- **WHEN** the design contract gate checks normative rule coverage, local references, and the shared schema
+- **THEN** every constraint has a corresponding rule and acceptance case
+- **AND** both referenced files exist and the schema is valid JSON Schema draft 2020-12
+- **AND** this capability is discoverable by strict OpenSpec validation
