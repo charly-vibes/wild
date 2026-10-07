@@ -1,0 +1,4 @@
+[project]
+name = "wild"
+version = "0.1.0"
+description = "Design decisions for Wild; task tracking remains in Beads."
