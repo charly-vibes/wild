@@ -1,1 +1,1 @@
-Logs and test artifacts retain native formats; this approach defines no shared Wild claim format or cross-tool demand graph.
+Existing logs, test results, and build caches can be supplied to later sessions. Repeated work avoided, retrieval cost, and stale results accepted have not been compared with Wild on the same update tasks; relative reuse benefit is unmeasured.

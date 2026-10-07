@@ -1,0 +1,1 @@
+Compatible updates excluded by original compatibility ranges that are actually completed through authorized manifest changes; also compatible candidates falsely blocked. Give every approach equal range-change authority and preserve other constraints.

@@ -1,1 +1,1 @@
-Authored text cannot overwrite extracted facts. Candidate obligations are compared with the protected base; evidence invalidates when inputs change. Enforcement requires trusted external invocation.
+The same common trusted invocation protects accepted tests, policy, scope, miner/checker inputs, and authored obligations. Authored text cannot overwrite facts, and changed evidence inputs invalidate results. The combination adds no protection capability withheld from other arms.

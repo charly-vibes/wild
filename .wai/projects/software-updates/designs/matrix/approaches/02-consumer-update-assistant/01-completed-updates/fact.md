@@ -1,0 +1,1 @@
+The proposed workflow carries a named target from candidate assessment through real resolution, validation, and a pinned change. It does not count a compatibility report alone as completion; effectiveness remains unmeasured.

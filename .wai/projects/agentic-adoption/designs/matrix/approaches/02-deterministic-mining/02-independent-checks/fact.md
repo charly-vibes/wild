@@ -1,1 +1,1 @@
-Pinned miner and checker compare base and candidate source bundles. Completeness is limited to the declared analysis domain.
+The common trusted invocation protects accepted tests, policy, scope, and pinned miner/checker inputs. Source-derived structural checks use the declared analysis domain. Enforcement is identical to other arms; mining adds evidence, not extra authority or protection.

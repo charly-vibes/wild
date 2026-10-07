@@ -1,1 +1,1 @@
-Facts, provenance, obligations, coverage, results, and counterexamples bind explicit inputs; sharing can follow local adoption.
+Facts, obligations, coverage, results, and counterexamples bind explicit inputs. E6 compares repeated work avoided, retrieval cost, and stale acceptance with existing logs, tests, and caches under equal access and budgets. Relative reuse benefit is unmeasured.

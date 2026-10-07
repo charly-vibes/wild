@@ -1,0 +1,1 @@
+Incompatible candidates accepted / accepted candidates with adjudicated outcomes, plus raw counts, oracle-unknown acceptance, detection recall, abstention, and execution-error rates. A policy refusal is separate from incompatibility.

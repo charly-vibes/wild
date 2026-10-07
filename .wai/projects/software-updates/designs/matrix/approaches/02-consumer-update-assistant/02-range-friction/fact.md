@@ -1,0 +1,1 @@
+An opt-in path proposes out-of-range manifest changes and evaluates actual selected artifacts against consumer demand and required closure. Existing runtime/platform and policy constraints remain enforced; incremental update yield is unmeasured.

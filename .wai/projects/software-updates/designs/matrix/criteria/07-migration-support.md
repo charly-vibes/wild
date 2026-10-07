@@ -1,0 +1,1 @@
+Validated updates that require consumer-code changes or adapters, with their effort and preserved/intentionally changed obligations disclosed. Report separately from direct replacements and require independent intended-behavior checks.

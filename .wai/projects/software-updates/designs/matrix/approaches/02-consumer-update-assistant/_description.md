@@ -1,0 +1,1 @@
+Add a local consumer-specific update workflow to existing tools: discover explicit candidates, check contracts and full required closure, propose direct update or migration, run actual host resolution and independent validation, and emit a pinned reviewable change.

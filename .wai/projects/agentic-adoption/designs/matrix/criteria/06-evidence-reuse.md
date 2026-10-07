@@ -1,1 +1,1 @@
-Scoped, digest-bound claims and counterexamples transfer across agents, commits, and consumers without turning samples into proofs.
+Repeated investigation or execution avoided on a specified cross-session update task, measured with evidence-retrieval cost and stale results accepted. Compare native logs, tests, and caches with Wild records under equal access and budgets; representation alone earns no credit. Comparative benefit is unmeasured.

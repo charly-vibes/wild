@@ -1,0 +1,1 @@
+Implement the original native lineage resolver, publication/registry, assembly verification, and adapter workflow. Components use accepted lineage tips within the supported monotone model; host artifacts retain identities. This is the broader long-term alternative.

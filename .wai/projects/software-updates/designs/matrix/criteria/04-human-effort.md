@@ -1,0 +1,1 @@
+Total human active minutes and compute across all assigned attempts / independently valid updates delivered. Include authoring, review, blocked and abandoned work, and cold setup; zero successes yields undefined cost per success.

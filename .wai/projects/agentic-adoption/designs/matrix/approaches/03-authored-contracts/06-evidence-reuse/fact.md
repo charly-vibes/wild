@@ -1,1 +1,1 @@
-Accepted obligations and bound executable results can be reused; source-to-claim mapping requires authored maintenance.
+Accepted obligations and bound executable results can be supplied to later sessions; source-to-claim mapping requires maintenance. Compare repeated execution avoided, retrieval cost, and stale acceptance with existing test artifacts. Relative reuse benefit is unmeasured.

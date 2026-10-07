@@ -1,0 +1,1 @@
+Existing update automation, host resolver, type/API/schema checks, CI, and a coding agent that can write tests and propose authorized manifest or consumer changes. No Wild tool. This is a capable baseline.

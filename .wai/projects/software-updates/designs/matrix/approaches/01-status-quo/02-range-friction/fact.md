@@ -1,0 +1,1 @@
+Humans or agents may propose changes beyond current ranges and validate them with existing tools; range exclusion is not an absolute prohibition in this baseline. False blocks and successful out-of-range updates are unmeasured.

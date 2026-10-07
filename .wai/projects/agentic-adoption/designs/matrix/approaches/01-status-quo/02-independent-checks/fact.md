@@ -1,1 +1,1 @@
-Protected CI preserves existing tests and policy. No shared commitment to compatibility obligations across tools is defined.
+The common trusted invocation pins existing tests, native checker configuration, policy, and accepted scope. Candidate edits cannot weaken those inputs during checking. The same enforcement rule applies to all approaches; this arm adds no Wild obligations.

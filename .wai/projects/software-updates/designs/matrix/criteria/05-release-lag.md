@@ -1,0 +1,1 @@
+Elapsed time to a preregistered desired compatible revision under the same candidate catalog and target priorities, plus timeouts and non-completions. Version labels alone do not rank usefulness or establish compatibility.

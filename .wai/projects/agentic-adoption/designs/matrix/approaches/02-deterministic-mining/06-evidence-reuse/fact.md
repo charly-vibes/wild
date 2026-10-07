@@ -1,1 +1,1 @@
-Structural diagnostics bind source/build/checker inputs. Behavioral evidence remains in baseline tools.
+Structural diagnostics bind source/build/checker inputs; behavioral evidence remains in baseline tools. Compare retrieval cost, repeated analysis avoided, and stale acceptance against the same native artifacts. Relative reuse benefit is unmeasured.

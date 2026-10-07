@@ -1,0 +1,1 @@
+Add Wild patch diagnostics to the same existing update automation and coding agent. Mining and authored obligations can check arbitrary patches; existing tools and agents continue to own candidate discovery, manifest changes, and update delivery.

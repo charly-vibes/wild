@@ -1,1 +1,1 @@
-Protected base obligations constrain candidates. An authored document alone does not establish a complete interface or consumer inventory.
+The common trusted invocation protects accepted tests, policy, scope, and authored obligations against candidate weakening. Enforcement is identical to other arms. Authored predicates add evidence but do not establish a complete declaration inventory.

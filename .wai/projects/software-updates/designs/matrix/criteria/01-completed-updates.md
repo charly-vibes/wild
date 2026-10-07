@@ -1,0 +1,1 @@
+Independently valid, pinned updates delivered per assigned update task, with feasible-target and direct/migration strata reported separately. An interface verdict or correctly refused impossible target is not a completed update.
