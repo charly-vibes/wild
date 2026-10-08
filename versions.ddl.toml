@@ -1,0 +1,18 @@
+# Pinned ecosystem tool versions for this repo's CI and dev setup.
+# Standardization §4: installs are pinned, never `latest` — a broken release
+# of any tool must not break CI of the whole fleet.
+# Update deliberately; the conformance test (dulce-de-leche
+# tests/standard_conformance.rs) requires this file to exist.
+#
+# wild is a consumer project, not an in-org tool repo: its four hard gates
+# (`just ci`) ARE the ecosystem tools it consumes — espectacular (`ah`),
+# pretender, specodelic (`spk`) and testaruda (+ python/rust adapters).
+# Pins verified against this corpus on 2026-10-08: ah check --run-tests
+# 23 passed, pretender check green, testaruda doctor green, spk lint green.
+
+[tools]
+espectacular = "0.9.2"     # crates.io (bin: ah) — latest released
+pretender = "0.8.0"        # crates.io — latest released
+specodelic = "0.7.0"       # crates.io (bin: spk) — matches dev install
+testaruda = "0.5.2"        # GitHub release tarball (testaruda + python/rust adapters; adapters not on crates.io)
+openspec = "0.19.0"        # npm: @fission-ai/openspec — suite-wide pin
