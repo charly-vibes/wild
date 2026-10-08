@@ -1,0 +1,297 @@
+{
+  "schema": "wild-bootstrap-cases-v1",
+  "toolchain": {
+    "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)"
+  },
+  "catalog": {
+    "dept": [
+      "1.2.3",
+      "1.2.4",
+      "2.0.0"
+    ]
+  },
+  "cases": [
+    {
+      "id": "cargo-major-excluded-compatible",
+      "class": "native-range-refusal",
+      "description": "A compatible out-of-range major (dept 2.0.0 keeps every API the consumer uses) is refused by Cargo's resolver because the declared range excludes the major.",
+      "native_outcome": "resolution-refused-by-range",
+      "artifacts": [
+        {
+          "path": "registry/index/de/pt/dept",
+          "sha256": "af62dd84a280cbebaa8102c54adfbdc07a18aed788cd7cb652f2ad1507001bbe"
+        },
+        {
+          "path": "registry/index/config.json",
+          "sha256": "edec62f8831b0f8a8c8d635cf79e789fb034d4487fb124b0b73805db6b246e6b"
+        },
+        {
+          "path": "registry/index/dept/1.2.3/dept-1.2.3.crate",
+          "sha256": "85c3f1658fd8b26aaa5bb188277e0ccc6a587c082c9c828f3b95311019d513df"
+        },
+        {
+          "path": "registry/index/dept/1.2.4/dept-1.2.4.crate",
+          "sha256": "40b9c6d2f2e9bd72d6aa20f9ac29c43b64c37457332fe6bbfe174ee5c57f8440"
+        },
+        {
+          "path": "registry/index/dept/2.0.0/dept-2.0.0.crate",
+          "sha256": "81c52f6ab9ef1c628ac2f3ed4557c581f2c8c825317c45045e04a8b4a75368fc"
+        },
+        {
+          "path": "consumer/registry-mirror/index/de/pt/dept",
+          "sha256": "af62dd84a280cbebaa8102c54adfbdc07a18aed788cd7cb652f2ad1507001bbe"
+        },
+        {
+          "path": "consumer/registry-mirror/dept-1.2.3.crate",
+          "sha256": "85c3f1658fd8b26aaa5bb188277e0ccc6a587c082c9c828f3b95311019d513df"
+        },
+        {
+          "path": "consumer/registry-mirror/dept-1.2.4.crate",
+          "sha256": "40b9c6d2f2e9bd72d6aa20f9ac29c43b64c37457332fe6bbfe174ee5c57f8440"
+        },
+        {
+          "path": "consumer/registry-mirror/dept-2.0.0.crate",
+          "sha256": "81c52f6ab9ef1c628ac2f3ed4557c581f2c8c825317c45045e04a8b4a75368fc"
+        },
+        {
+          "path": "consumer/Cargo.toml",
+          "sha256": "36c8f8d605f98f9a1ed15b8e25fa60de417fdd29cc9655697c35623d74cbb40b"
+        },
+        {
+          "path": "consumer/Cargo.lock",
+          "sha256": "1950c5bcf0c33bb5f9906a419ce8820765f3e3fb607d1e714dbcdb566b439118"
+        },
+        {
+          "path": "consumer/.cargo/config.toml",
+          "sha256": "1fce34b38efe8a899434c1e74f6c8006aa0934971e6ace1fb061f40e83ad6105"
+        },
+        {
+          "path": "consumer/src/main.rs",
+          "sha256": "6706e6933e75ba828a540b2a1394d63730f73bad5b0dbd751a01d486b7d05de6"
+        },
+        {
+          "path": "consumer/tests/farewell.rs",
+          "sha256": "878e111808619ea8c5234e22404af22a62727d541cfb6b523a38aab36fd0c06d"
+        },
+        {
+          "path": "consumer/.gitignore",
+          "sha256": "b53ee26e6ff1da219b0563333a76d2c9ec19eec713d6ee54e11a1edacb0e9f3d"
+        }
+      ],
+      "target": "2.0.0"
+    },
+    {
+      "id": "cargo-patch-permitted-incompatible",
+      "class": "native-consumer-breakage",
+      "description": "A breaking in-range patch (dept 1.2.4 removes the farewell API the consumer's test uses) resolves under the declared range and then fails the consumer's own tests.",
+      "native_outcome": "resolved-then-consumer-tests-failed",
+      "artifacts": [
+        {
+          "path": "registry/index/de/pt/dept",
+          "sha256": "af62dd84a280cbebaa8102c54adfbdc07a18aed788cd7cb652f2ad1507001bbe"
+        },
+        {
+          "path": "registry/index/config.json",
+          "sha256": "edec62f8831b0f8a8c8d635cf79e789fb034d4487fb124b0b73805db6b246e6b"
+        },
+        {
+          "path": "registry/index/dept/1.2.3/dept-1.2.3.crate",
+          "sha256": "85c3f1658fd8b26aaa5bb188277e0ccc6a587c082c9c828f3b95311019d513df"
+        },
+        {
+          "path": "registry/index/dept/1.2.4/dept-1.2.4.crate",
+          "sha256": "40b9c6d2f2e9bd72d6aa20f9ac29c43b64c37457332fe6bbfe174ee5c57f8440"
+        },
+        {
+          "path": "registry/index/dept/2.0.0/dept-2.0.0.crate",
+          "sha256": "81c52f6ab9ef1c628ac2f3ed4557c581f2c8c825317c45045e04a8b4a75368fc"
+        },
+        {
+          "path": "consumer/registry-mirror/index/de/pt/dept",
+          "sha256": "af62dd84a280cbebaa8102c54adfbdc07a18aed788cd7cb652f2ad1507001bbe"
+        },
+        {
+          "path": "consumer/registry-mirror/dept-1.2.3.crate",
+          "sha256": "85c3f1658fd8b26aaa5bb188277e0ccc6a587c082c9c828f3b95311019d513df"
+        },
+        {
+          "path": "consumer/registry-mirror/dept-1.2.4.crate",
+          "sha256": "40b9c6d2f2e9bd72d6aa20f9ac29c43b64c37457332fe6bbfe174ee5c57f8440"
+        },
+        {
+          "path": "consumer/registry-mirror/dept-2.0.0.crate",
+          "sha256": "81c52f6ab9ef1c628ac2f3ed4557c581f2c8c825317c45045e04a8b4a75368fc"
+        },
+        {
+          "path": "consumer/Cargo.toml",
+          "sha256": "36c8f8d605f98f9a1ed15b8e25fa60de417fdd29cc9655697c35623d74cbb40b"
+        },
+        {
+          "path": "consumer/Cargo.lock",
+          "sha256": "1950c5bcf0c33bb5f9906a419ce8820765f3e3fb607d1e714dbcdb566b439118"
+        },
+        {
+          "path": "consumer/.cargo/config.toml",
+          "sha256": "1fce34b38efe8a899434c1e74f6c8006aa0934971e6ace1fb061f40e83ad6105"
+        },
+        {
+          "path": "consumer/src/main.rs",
+          "sha256": "6706e6933e75ba828a540b2a1394d63730f73bad5b0dbd751a01d486b7d05de6"
+        },
+        {
+          "path": "consumer/tests/farewell.rs",
+          "sha256": "878e111808619ea8c5234e22404af22a62727d541cfb6b523a38aab36fd0c06d"
+        },
+        {
+          "path": "consumer/.gitignore",
+          "sha256": "b53ee26e6ff1da219b0563333a76d2c9ec19eec713d6ee54e11a1edacb0e9f3d"
+        }
+      ],
+      "target": "1.2.4"
+    },
+    {
+      "id": "formatting-equivalence",
+      "class": "checker-declaration",
+      "description": "Declaration: a rustfmt-canonical candidate making no behavioral change should be accepted by the checker without weakening any accepted obligation.",
+      "declared": {
+        "outcome": "checker-accepts",
+        "expectation": "formatting-equivalent candidate accepted without weakening",
+        "verified": false
+      },
+      "artifacts": [
+        {
+          "path": "consumer/Cargo.toml",
+          "sha256": "36c8f8d605f98f9a1ed15b8e25fa60de417fdd29cc9655697c35623d74cbb40b"
+        },
+        {
+          "path": "consumer/Cargo.lock",
+          "sha256": "1950c5bcf0c33bb5f9906a419ce8820765f3e3fb607d1e714dbcdb566b439118"
+        },
+        {
+          "path": "consumer/src/main.rs",
+          "sha256": "6706e6933e75ba828a540b2a1394d63730f73bad5b0dbd751a01d486b7d05de6"
+        },
+        {
+          "path": "consumer/tests/farewell.rs",
+          "sha256": "878e111808619ea8c5234e22404af22a62727d541cfb6b523a38aab36fd0c06d"
+        },
+        {
+          "path": "registry/index/dept/1.2.3/dept-1.2.3.crate",
+          "sha256": "85c3f1658fd8b26aaa5bb188277e0ccc6a587c082c9c828f3b95311019d513df"
+        },
+        {
+          "path": "registry/index/dept/1.2.4/dept-1.2.4.crate",
+          "sha256": "40b9c6d2f2e9bd72d6aa20f9ac29c43b64c37457332fe6bbfe174ee5c57f8440"
+        }
+      ]
+    },
+    {
+      "id": "unresolved-macro-usage",
+      "class": "checker-declaration",
+      "description": "Declaration: a candidate whose behavioral surface depends on a macro that cannot be extracted should be reported by the checker as an unresolved gap, not silently accepted.",
+      "declared": {
+        "outcome": "checker-reports-gap",
+        "expectation": "macro-dependent surface reported as an unresolved gap",
+        "verified": false
+      },
+      "artifacts": [
+        {
+          "path": "consumer/Cargo.toml",
+          "sha256": "36c8f8d605f98f9a1ed15b8e25fa60de417fdd29cc9655697c35623d74cbb40b"
+        },
+        {
+          "path": "consumer/Cargo.lock",
+          "sha256": "1950c5bcf0c33bb5f9906a419ce8820765f3e3fb607d1e714dbcdb566b439118"
+        },
+        {
+          "path": "consumer/src/main.rs",
+          "sha256": "6706e6933e75ba828a540b2a1394d63730f73bad5b0dbd751a01d486b7d05de6"
+        },
+        {
+          "path": "consumer/tests/farewell.rs",
+          "sha256": "878e111808619ea8c5234e22404af22a62727d541cfb6b523a38aab36fd0c06d"
+        },
+        {
+          "path": "registry/index/dept/1.2.3/dept-1.2.3.crate",
+          "sha256": "85c3f1658fd8b26aaa5bb188277e0ccc6a587c082c9c828f3b95311019d513df"
+        },
+        {
+          "path": "registry/index/dept/1.2.4/dept-1.2.4.crate",
+          "sha256": "40b9c6d2f2e9bd72d6aa20f9ac29c43b64c37457332fe6bbfe174ee5c57f8440"
+        }
+      ]
+    },
+    {
+      "id": "unauthorized-obligation-weakening",
+      "class": "protection-declaration",
+      "description": "Declaration: a candidate edit that weakens an accepted obligation without authorization must be blocked by the protection mechanism.",
+      "declared": {
+        "outcome": "protection-blocks",
+        "expectation": "unauthorized weakening blocked before the candidate lands",
+        "verified": false
+      },
+      "artifacts": [
+        {
+          "path": "consumer/Cargo.toml",
+          "sha256": "36c8f8d605f98f9a1ed15b8e25fa60de417fdd29cc9655697c35623d74cbb40b"
+        },
+        {
+          "path": "consumer/Cargo.lock",
+          "sha256": "1950c5bcf0c33bb5f9906a419ce8820765f3e3fb607d1e714dbcdb566b439118"
+        },
+        {
+          "path": "consumer/src/main.rs",
+          "sha256": "6706e6933e75ba828a540b2a1394d63730f73bad5b0dbd751a01d486b7d05de6"
+        },
+        {
+          "path": "consumer/tests/farewell.rs",
+          "sha256": "878e111808619ea8c5234e22404af22a62727d541cfb6b523a38aab36fd0c06d"
+        },
+        {
+          "path": "registry/index/dept/1.2.3/dept-1.2.3.crate",
+          "sha256": "85c3f1658fd8b26aaa5bb188277e0ccc6a587c082c9c828f3b95311019d513df"
+        },
+        {
+          "path": "registry/index/dept/1.2.4/dept-1.2.4.crate",
+          "sha256": "40b9c6d2f2e9bd72d6aa20f9ac29c43b64c37457332fe6bbfe174ee5c57f8440"
+        }
+      ]
+    },
+    {
+      "id": "authorized-intent-transition",
+      "class": "protection-declaration",
+      "description": "Declaration: a candidate edit that transitions an obligation to a new authorized intent (transition recorded with justification) must be allowed by the protection mechanism.",
+      "declared": {
+        "outcome": "protection-allows-with-authorization",
+        "expectation": "authorized intent transition allowed with the transition recorded",
+        "verified": false
+      },
+      "artifacts": [
+        {
+          "path": "consumer/Cargo.toml",
+          "sha256": "36c8f8d605f98f9a1ed15b8e25fa60de417fdd29cc9655697c35623d74cbb40b"
+        },
+        {
+          "path": "consumer/Cargo.lock",
+          "sha256": "1950c5bcf0c33bb5f9906a419ce8820765f3e3fb607d1e714dbcdb566b439118"
+        },
+        {
+          "path": "consumer/src/main.rs",
+          "sha256": "6706e6933e75ba828a540b2a1394d63730f73bad5b0dbd751a01d486b7d05de6"
+        },
+        {
+          "path": "consumer/tests/farewell.rs",
+          "sha256": "878e111808619ea8c5234e22404af22a62727d541cfb6b523a38aab36fd0c06d"
+        },
+        {
+          "path": "registry/index/dept/1.2.3/dept-1.2.3.crate",
+          "sha256": "85c3f1658fd8b26aaa5bb188277e0ccc6a587c082c9c828f3b95311019d513df"
+        },
+        {
+          "path": "registry/index/dept/1.2.4/dept-1.2.4.crate",
+          "sha256": "40b9c6d2f2e9bd72d6aa20f9ac29c43b64c37457332fe6bbfe174ee5c57f8440"
+        }
+      ]
+    }
+  ]
+}

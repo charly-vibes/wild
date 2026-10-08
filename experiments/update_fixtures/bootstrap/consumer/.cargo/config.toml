@@ -1,0 +1,11 @@
+# Purpose: Hermetic offline resolution for the consumer fixture replay.
+# Responsibilities: Replace the crates-io source with the committed
+#   local-registry mirror so Cargo's own resolver enforces version ranges.
+# Rationale: A fresh CARGO_HOME cannot fetch any index offline; the
+#   local-registry source is pure filesystem yet keeps full registry
+#   semantics (checksums, range enforcement, --precise refusal).
+[source.crates-io]
+replace-with = "wild-lr"
+
+[source.wild-lr]
+local-registry = "registry-mirror"

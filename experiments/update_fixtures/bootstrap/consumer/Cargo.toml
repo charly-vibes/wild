@@ -1,0 +1,14 @@
+# Purpose: Consumer fixture crate replayed by tests/test_initial_update_fixtures.py.
+# Responsibilities: Depend on `dept = "~1.2"` through the replaced crates-io
+#   source and exercise the API surface whose changes the catalog records.
+# Rationale: Replays must run offline against the committed registry-mirror
+#   (a byte-identical projection of the frozen catalog in ../registry) with
+#   real Cargo range enforcement; `~1.2` is rewritten by the test harness
+#   only to pin exact baseline/target versions.
+[package]
+name = "consumer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dept = "~1.2"
