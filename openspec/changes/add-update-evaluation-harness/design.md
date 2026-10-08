@@ -2,7 +2,7 @@
 
 ## Delivery order and causal comparison
 
-Prepare records, trusted fixture inputs, and independently specified expected outcomes before developing the miner against them. Use a development fixture set for E1/E4 and a separate frozen evaluation set for E5. Connect a single actual update as soon as local checking and Cargo execution exist. Expand language coverage based on observed gaps, then preregister E3; do not build the native platform first.
+Prepare trusted development fixture inputs and independently specified expected outcomes before developing the miner against them. Begin with the narrow E1/E4 corpus and native Cargo update pair in Beads wild-aoq.5; it has no dependency on the full metric engine or E5 cohort. The first extractor and host adapter can consume these immutable development fixtures. Expand the E5 corpus separately in wild-aoq.2 and freeze its held-out membership, expected outcomes, catalog and environment before comparative trials. Do not expose sealed evaluation inputs to miners or generating agents. Connect a single actual update as soon as local checking and Cargo execution exist. Expand language coverage based on development gaps, then preregister E3; do not build the native platform first.
 
 | Arm | Additional feedback beyond the common existing-tool baseline |
 | --- | --- |
@@ -79,3 +79,5 @@ E2 semantic-authoring usefulness, E6 cross-session reuse, and E7 adoption use th
 ## Integration and rollback
 
 Keep a new evaluation capability separate from product semantics. At implementation, give wild-evaluate a full dual-format Purpose/Constraints/Model/Properties/Design acceptance cases layout and executable Requirements, preserving repository corpus tests. Register spectacular contracts only when the harness and meaningful tests exist. No study record can change its committed inputs in place; corrected records append a revision and invalidate affected summaries. Removing the experimental runner does not affect existing product/prototype behavior.
+
+Beads wild-aoq.4 owns release integration, scenario registration and post-delivery archive. The independent audit in wild-aoq.6 inspects that delivered output; it does not implement missing behavior or archive the change. Fixture expectations for dynamic gaps belong to wild-aoq.2, while wild-aoq.3 owns the actual treatment-result retention scenario through execution, grading and summary.

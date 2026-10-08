@@ -8,6 +8,8 @@ tracks:
 
 # Issue tracker review
 
+Historical findings below were corrected in the tracker. See the [resolution record](2026-10-08-issue-review-resolution.md) for the revised dependencies, integration/review ownership, and verification. The original review is preserved as evidence of the changes requested.
+
 System: Beads. Scope: 14 implementation/review tickets and their three parent epics, wild-mh5, wild-nic and wild-aoq. Reviewed repository anchor: bca2ec11bb63bc11b75765847c784e301ecfb003. Tracker contents were collected directly with bd show, including descriptions, acceptance criteria, metadata and dependencies.
 
 Sources: [local checking](../../../../openspec/changes/add-local-contract-checking/proposal.md), [consumer updates](../../../../openspec/changes/add-consumer-update-workflow/proposal.md), and [evaluation harness](../../../../openspec/changes/add-update-evaluation-harness/proposal.md), including their designs, tasks and deltas.
