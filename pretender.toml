@@ -7,7 +7,7 @@
 [pretender]
 mode = "gate"
 languages = ["python"]
-exclude = ["openspec/**", "superseded/**", ".espectacular/**"]
+exclude = ["openspec/**", "superseded/**", ".espectacular/**", "**/.devenv/**"]
 
 [roles.test]
 paths = ["**/tests/**"]
