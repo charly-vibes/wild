@@ -1,0 +1,65 @@
+# DDL standardization §1: exactly one `ci.yml` — single job `ci`, name
+# `Test & Build`, runs `just ci` (the repo's single QA entry point, the same
+# command lefthook pre-push runs: ah → pretender → spk lint → testaruda).
+#
+# wild's gates are ecosystem tools, installed pinned from `versions.ddl.toml`
+# (§4: installs are pinned, never `latest` — a broken release must not break
+# CI of the whole fleet). testaruda's adapters ship in its GitHub release
+# tarball, not on crates.io. Rust is pinned to the fixture toolchain identity
+# (wild-aoq.5 commits exact `rustc --version` output; a CI drift is a red
+# fixture test by design — the identity is immutable, not upgradeable).
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  ci:
+    name: Test & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Rust (pinned fixture toolchain)
+        uses: dtolnay/rust-toolchain@1.98.1
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Cache gate tools
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo-gates
+          key: gates-${{ runner.os }}-${{ hashFiles('versions.ddl.toml') }}
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install gate tools (§4 dogfood matrix, pinned)
+        run: |
+          if [ ! -x ~/.cargo-gates/bin/ah ]; then
+            CARGO_HOME=~/.cargo-gates cargo install --locked \
+              espectacular@0.9.2 pretender@0.8.0 specodelic@0.7.0 \
+              --root ~/.cargo-gates
+          fi
+          echo "$HOME/.cargo-gates/bin" >> "$GITHUB_PATH"
+          tmp=$(mktemp -d)
+          curl -fsSL "https://github.com/charly-vibes/testaruda/releases/download/v0.5.2/testaruda_0.5.2_linux_amd64.tar.gz" \
+            -o "$tmp/t.tgz"
+          tar -xzf "$tmp/t.tgz" -C "$HOME/.cargo-gates/bin" \
+            testaruda testaruda-adapter-rust testaruda-adapter-python
+          npm install -g @fission-ai/openspec@0.19.0
+          pip install --break-system-packages -r requirements-dev.txt
+
+      - name: Run CI pipeline
+        run: just ci
