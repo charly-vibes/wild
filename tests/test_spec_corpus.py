@@ -80,7 +80,8 @@ def test_openspec_strict_discovers_all_capabilities():
     )
     report = json.loads(proc.stdout)
     expected = {p.parent.name for p in (CORPUS / "specs").glob("*/spec.md")}
-    assert {item["id"] for item in report["items"]} == expected
+    expected_changes = {p.parent.name for p in (CORPUS / "changes").glob("*/proposal.md")}
+    assert {item["id"] for item in report["items"]} == expected | expected_changes
     assert report["summary"]["totals"]["failed"] == 0
     for capability in sorted(expected):
         shown = subprocess.run(
