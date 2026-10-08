@@ -55,6 +55,7 @@ def _sha256(path: Path) -> str:
 
 def _cargo_home(tmp: Path) -> Path:
     home = tmp / "cargo-home"
+    home.mkdir(parents=True)
     (home / "config.toml").write_text(
         '[registries.wild-fixtures]\nindex = "file://{index}"\n'.replace(
             "{index}", str(FIXTURES / "registry" / "index")
