@@ -1,5 +1,5 @@
 ---
-id: spec
+id: wild.tiers
 kind: intent
 statement: THE wild tier pipeline SHALL decide each revision's verdict through checks ordered by cost, where structural checks can reject, executable law checks disclose their method, and observations and attestations never override structural rejection.
 ---
@@ -16,20 +16,20 @@ Checks run in cost order: identity, shape, laws, evidence, attestation. Identity
 
 | id | kind | expr | traces_to |
 | -- | ---- | ---- | --------- |
-| fail_fast_ordering | invariant | `tiers run in order identity < shape < laws < evidence < attestation; a run stops at the first Reject` | [[spec]] |
-| exact_tiers_pure | invariant | `identity and shape are pure functions of canonical contracts and checker version; law evaluation is reproducible only with the implementation digest, harness digest, seed, fixture digests, and resource limits in the v1 bundle` | [[spec]] |
-| verdict_lattice | invariant | `structural assurance forms the lattice Reject < Unknown < PassDeclared; executable laws, observations, and attestations are separate scoped records; assembly assurance is the structural meet and policy checks every binding as defined in docs/wild-formats-v1.md` | [[spec]] |
-| policy_names_min_tier | invariant | `each context has a v1 policy naming structural floor, allowed law methods, required law ids, evidence thresholds, and any required attestations; missing or failed required checks refuse the operation` | [[spec]] |
-| rejection_explains | invariant | `a Reject names the tier, the slot or law, and the rule that failed` | [[spec]] |
-| laws_cumulative | invariant | `laws(v') ⊇ ⋃ laws(ancestors); every ancestor law passes against the v' implementation` | [[spec]] |
-| law_runs_deterministic | invariant | `the same complete harness inputs yield the same law result; seed, implementation and harness digests, fixtures, budgets, and method are recorded; timeout, crash, or nondeterminism is inconclusive and cannot pass required policy` | [[spec]] |
-| evidence_cannot_override_exact | invariant | `observations may add scoped evidence to a structural Pass; they cannot override a structural Reject or a law counterexample` | [[spec]] |
-| evidence_confidence_conservative | advisory | `reported confidence is the minimum over contributing observations, never a product` | [[spec]] |
-| contradiction_triggers_repair | invariant | `observed behavior contradicting the declared contract creates a repair draft; the contract is never edited silently` | [[spec]] |
-| attestation_scoped | invariant | `an attestation names its signer, its scope (lineage and slots), and its claim` | [[spec]] |
-| attestation_expiring | invariant | `an attestation carries issue time and expiry and is bound to artifact and contract digests; at evaluation_time ≥ expiry the attestation status is Unknown while independent checks remain unchanged` | [[spec]] |
-| verdict_cache_keyed | invariant | `structural cache keys include old and new contract hashes and checker version; law cache keys also include implementation, harness, fixtures, seed, method, and budgets; policy evaluation includes demand, policy digest, evidence digests, trust roots, and evaluation time and is never reused past claim expiry` | [[spec]] |
-| verdict_recorded_immutable | invariant | `recorded check results are immutable; new inputs append new records; current policy decisions are recomputed from those records and claim validity at evaluation time` | [[spec]] |
+| fail_fast_ordering | invariant | `tiers run in order identity < shape < laws < evidence < attestation; a run stops at the first Reject` | [[wild.tiers]] |
+| exact_tiers_pure | invariant | `identity and shape are pure functions of canonical contracts and checker version; law evaluation is reproducible only with the implementation digest, harness digest, seed, fixture digests, and resource limits in the v1 bundle` | [[wild.tiers]] |
+| verdict_lattice | invariant | `structural assurance forms the lattice Reject < Unknown < PassDeclared; executable laws, observations, and attestations are separate scoped records; assembly assurance is the structural meet and policy checks every binding as defined in docs/wild-formats-v1.md` | [[wild.tiers]] |
+| policy_names_min_tier | invariant | `each context has a v1 policy naming structural floor, allowed law methods, required law ids, evidence thresholds, and any required attestations; missing or failed required checks refuse the operation` | [[wild.tiers]] |
+| rejection_explains | invariant | `a Reject names the tier, the slot or law, and the rule that failed` | [[wild.tiers]] |
+| laws_cumulative | invariant | `laws(v') ⊇ ⋃ laws(ancestors); every ancestor law passes against the v' implementation` | [[wild.tiers]] |
+| law_runs_deterministic | invariant | `the same complete harness inputs yield the same law result; seed, implementation and harness digests, fixtures, budgets, and method are recorded; timeout, crash, or nondeterminism is inconclusive and cannot pass required policy` | [[wild.tiers]] |
+| evidence_cannot_override_exact | invariant | `observations may add scoped evidence to a structural Pass; they cannot override a structural Reject or a law counterexample` | [[wild.tiers]] |
+| evidence_confidence_conservative | advisory | `reported confidence is the minimum over contributing observations, never a product` | [[wild.tiers]] |
+| contradiction_triggers_repair | invariant | `observed behavior contradicting the declared contract creates a repair draft; the contract is never edited silently` | [[wild.tiers]] |
+| attestation_scoped | invariant | `an attestation names its signer, its scope (lineage and slots), and its claim` | [[wild.tiers]] |
+| attestation_expiring | invariant | `an attestation carries issue time and expiry and is bound to artifact and contract digests; at evaluation_time ≥ expiry the attestation status is Unknown while independent checks remain unchanged` | [[wild.tiers]] |
+| verdict_cache_keyed | invariant | `structural cache keys include old and new contract hashes and checker version; law cache keys also include implementation, harness, fixtures, seed, method, and budgets; policy evaluation includes demand, policy digest, evidence digests, trust roots, and evaluation time and is never reused past claim expiry` | [[wild.tiers]] |
+| verdict_recorded_immutable | invariant | `recorded check results are immutable; new inputs append new records; current policy decisions are recomputed from those records and claim validity at evaluation time` | [[wild.tiers]] |
 
 ## Model
 
@@ -48,36 +48,36 @@ Checks run in cost order: identity, shape, laws, evidence, attestation. Identity
 
 | id | from | to | guard |
 | -- | ---- | -- | ----- |
-| identify | draft | identified | [[spec.exact_tiers_pure]] |
-| shape_check | identified | shape_checked | [[spec.fail_fast_ordering]] ∧ preserves wild-core `accretion_monotone` |
-| law_check | shape_checked | law_checked | [[spec.laws_cumulative]] |
-| publish | law_checked | published | [[spec.policy_names_min_tier]] ∧ requires wild-registry `registry_append_only` |
-| observe | published | observed | [[spec.evidence_cannot_override_exact]] |
-| attest | observed | attested | [[spec.attestation_expiring]] |
-| repair | observed | draft | [[spec.contradiction_triggers_repair]] |
-| reject_identity | identified | rejected | [[spec.rejection_explains]] |
-| reject_shape | shape_checked | rejected | [[spec.rejection_explains]] |
-| reject_laws | law_checked | rejected | [[spec.rejection_explains]] |
-| revise | rejected | draft | [[spec.verdict_recorded_immutable]] |
+| identify | draft | identified | [[wild.tiers.exact_tiers_pure]] |
+| shape_check | identified | shape_checked | [[wild.tiers.fail_fast_ordering]] ∧ preserves wild-core `accretion_monotone` |
+| law_check | shape_checked | law_checked | [[wild.tiers.laws_cumulative]] |
+| publish | law_checked | published | [[wild.tiers.policy_names_min_tier]] ∧ requires wild-registry `registry_append_only` |
+| observe | published | observed | [[wild.tiers.evidence_cannot_override_exact]] |
+| attest | observed | attested | [[wild.tiers.attestation_expiring]] |
+| repair | observed | draft | [[wild.tiers.contradiction_triggers_repair]] |
+| reject_identity | identified | rejected | [[wild.tiers.rejection_explains]] |
+| reject_shape | shape_checked | rejected | [[wild.tiers.rejection_explains]] |
+| reject_laws | law_checked | rejected | [[wild.tiers.rejection_explains]] |
+| revise | rejected | draft | [[wild.tiers.verdict_recorded_immutable]] |
 
 ## Properties
 
 | id | kind | derives_from | generator | predicate |
 | -- | ---- | ------------ | --------- | --------- |
-| first_reject_stops_run | unit | [[spec.fail_fast_ordering]] | `revision_failing_identity_and_laws()` | `tiers_run == [identity] ∧ verdict == Reject` |
-| exact_tiers_ignore_side_inputs | unit | [[spec.exact_tiers_pure]] | `same_inputs_with_varied_clock_and_network()` | `verdict(a) == verdict(b)` |
-| verdict_lattice_laws | law | [[spec.verdict_lattice]] | `three_arbitrary_verdicts()` | **identity:** `meet(v, PassDeclared) == v` **associativity:** `meet(meet(a, b), c) == meet(a, meet(b, c))` |
-| below_policy_refused | unit | [[spec.policy_names_min_tier]] | `verdict_PassDeclared_under_policy_requiring_laws()` | `decision == refused` |
-| reject_names_rule | unit | [[spec.rejection_explains]] | `arbitrary_rejected_revision()` | `report has tier ∧ slot_or_law ∧ rule` |
-| ancestor_law_failure_rejected | unit | [[spec.laws_cumulative]] | `revision_violating_an_ancestor_law()` | `law_check == failed` |
-| law_run_reproducible | unit | [[spec.law_runs_deterministic]] | `(contract, impl, seed)` run twice | `run(a) == run(b)` |
-| evidence_never_overrides_reject | unit | [[spec.evidence_cannot_override_exact]] | `shape_Reject_plus_clean_traffic_replay()` | `verdict == Reject` |
-| confidence_is_minimum | unit | [[spec.evidence_confidence_conservative]] | `observations_with_confidences([0.99, 0.90])` | `confidence == 0.90` |
-| contradiction_creates_draft | unit | [[spec.contradiction_triggers_repair]] | `observed_behavior_outside_declared_contract()` | `repair_draft_created ∧ contract_unchanged` |
-| attestation_without_scope_rejected | unit | [[spec.attestation_scoped]] | `attestation_missing_scope()` | `check(a) == failed` |
-| expired_attestation_is_unknown | unit | [[spec.attestation_expiring]] | `attestation_with_past_expiry()` | `attestation_status(a) == Unknown ∧ independent_assurance unchanged` |
-| cache_key_includes_checker | unit | [[spec.verdict_cache_keyed]] | `same_pair_under_two_checker_versions()` | `keys differ ∧ no cross-hit` |
-| recorded_verdict_unchanged | unit | [[spec.verdict_recorded_immutable]] | `verdict_recorded_then_rerun_under_new_checker()` | `old record unchanged ∧ new record appended` |
+| first_reject_stops_run | unit | [[wild.tiers.fail_fast_ordering]] | `revision_failing_identity_and_laws()` | `tiers_run == [identity] ∧ verdict == Reject` |
+| exact_tiers_ignore_side_inputs | unit | [[wild.tiers.exact_tiers_pure]] | `same_inputs_with_varied_clock_and_network()` | `verdict(a) == verdict(b)` |
+| verdict_lattice_laws | law | [[wild.tiers.verdict_lattice]] | `three_arbitrary_verdicts()` | **identity:** `meet(v, PassDeclared) == v` **associativity:** `meet(meet(a, b), c) == meet(a, meet(b, c))` |
+| below_policy_refused | unit | [[wild.tiers.policy_names_min_tier]] | `verdict_PassDeclared_under_policy_requiring_laws()` | `decision == refused` |
+| reject_names_rule | unit | [[wild.tiers.rejection_explains]] | `arbitrary_rejected_revision()` | `report has tier ∧ slot_or_law ∧ rule` |
+| ancestor_law_failure_rejected | unit | [[wild.tiers.laws_cumulative]] | `revision_violating_an_ancestor_law()` | `law_check == failed` |
+| law_run_reproducible | unit | [[wild.tiers.law_runs_deterministic]] | `(contract, impl, seed)` run twice | `run(a) == run(b)` |
+| evidence_never_overrides_reject | unit | [[wild.tiers.evidence_cannot_override_exact]] | `shape_Reject_plus_clean_traffic_replay()` | `verdict == Reject` |
+| confidence_is_minimum | unit | [[wild.tiers.evidence_confidence_conservative]] | `observations_with_confidences([0.99, 0.90])` | `confidence == 0.90` |
+| contradiction_creates_draft | unit | [[wild.tiers.contradiction_triggers_repair]] | `observed_behavior_outside_declared_contract()` | `repair_draft_created ∧ contract_unchanged` |
+| attestation_without_scope_rejected | unit | [[wild.tiers.attestation_scoped]] | `attestation_missing_scope()` | `check(a) == failed` |
+| expired_attestation_is_unknown | unit | [[wild.tiers.attestation_expiring]] | `attestation_with_past_expiry()` | `attestation_status(a) == Unknown ∧ independent_assurance unchanged` |
+| cache_key_includes_checker | unit | [[wild.tiers.verdict_cache_keyed]] | `same_pair_under_two_checker_versions()` | `keys differ ∧ no cross-hit` |
+| recorded_verdict_unchanged | unit | [[wild.tiers.verdict_recorded_immutable]] | `verdict_recorded_then_rerun_under_new_checker()` | `old record unchanged ∧ new record appended` |
 
 ## Notes
 

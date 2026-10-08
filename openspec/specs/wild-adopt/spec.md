@@ -1,5 +1,5 @@
 ---
-id: spec
+id: wild.adopt
 kind: intent
 statement: THE wild adoption layer SHALL let an existing project adopt contract versioning in stages, without changing its package manager, registry, or release process.
 ---
@@ -16,22 +16,22 @@ How existing, uncontracted software joins. The ladder is observe, shadow, gate, 
 
 | id | kind | expr | traces_to |
 | -- | ---- | ---- | --------- |
-| history_reconstructed | invariant | `adopt(project) extracts each available historical release; missing source or extraction failure is preserved as an Unknown history node and cannot establish an accretion edge; version strings never establish edges` | [[spec]] |
-| past_claims_audited | invariant | `each historical release reports declared version bump against computed verdict; disagreements are listed` | [[spec]] |
-| adoption_levels_ordered | invariant | `levels are ordered observe < shadow < gate < native; a project enters level n+1 only from level n` | [[spec]] |
-| observe_is_read_only | invariant | `level observe writes nothing to source, manifest, registry, or CI configuration` | [[spec]] |
-| shadow_never_blocks | invariant | `level shadow emits verdicts but never changes a build exit status` | [[spec]] |
-| gate_scoped_to_new_changes | invariant | `level gate rejects newly introduced breaks and expired baseline acknowledgements; baseline ids are immutable and cannot be reset implicitly by init, retries, or stepping down and up` | [[spec]] |
-| baseline_ack_expires | invariant | `each baseline break has an owner, issue time, expiry, and stable finding id; default expiry is 30 days; renewal requires a signed reason and new expiry and appends an audit event rather than replacing history` | [[spec]] |
-| first_run_is_baseline | invariant | `first enforcement atomically records a baseline digest, existing findings, and 30-day acknowledgements owned by the initiating identity; it tolerates existing breaks only after baseline persistence succeeds; persistence failure refuses enforcement activation` | [[spec]] |
-| lock_import_lossless | invariant | `importing a host lockfile yields one lineage and hash per resolved dependency; unresolvable entries become Unknown, never dropped` | [[spec]] |
-| demand_derived_from_code | invariant | `demand includes statically resolved usage and declared dynamic usage; unresolved reflection, plugins, or dynamic calls mark demand incomplete and block safe-removal and scoped-substitution claims; manual reductions require signed scoped expiring overrides and remain disclosed` | [[spec]] |
-| safe_update_advice | invariant | `for a host version range, wild reports per candidate version whether demanded slots stay compatible; it never overrides the host resolver's choice` | [[spec]] |
-| consumer_demand_trackable | invariant | `per slot, wild reports known consumers; removal_candidate(slot) is derived only when known demand is empty and all known demand manifests are complete and fresh; it is advisory and never authorizes removal within a stable lineage` | [[spec]] |
-| integration_points_share_core | invariant | `CLI, CI action, pre-commit hook, and ecosystem plugins call one core and emit the same envelope` | [[spec]] |
-| init_needs_no_edits | invariant | `init in a supported ecosystem produces extractor configuration, a baseline, and a CI hook without user edits` | [[spec]] |
-| unsupported_ecosystem_degrades | invariant | `unsupported extraction yields Unknown assurance with scoped observations or metadata claims when available; observe and shadow succeed with diagnostics, while gate/native refuse any unmet required policy` | [[spec]] |
-| adoption_progress_reported | advisory | `status reports level, share of dependencies per tier, and open acknowledgements` | [[spec]] |
+| history_reconstructed | invariant | `adopt(project) extracts each available historical release; missing source or extraction failure is preserved as an Unknown history node and cannot establish an accretion edge; version strings never establish edges` | [[wild.adopt]] |
+| past_claims_audited | invariant | `each historical release reports declared version bump against computed verdict; disagreements are listed` | [[wild.adopt]] |
+| adoption_levels_ordered | invariant | `levels are ordered observe < shadow < gate < native; a project enters level n+1 only from level n` | [[wild.adopt]] |
+| observe_is_read_only | invariant | `level observe writes nothing to source, manifest, registry, or CI configuration` | [[wild.adopt]] |
+| shadow_never_blocks | invariant | `level shadow emits verdicts but never changes a build exit status` | [[wild.adopt]] |
+| gate_scoped_to_new_changes | invariant | `level gate rejects newly introduced breaks and expired baseline acknowledgements; baseline ids are immutable and cannot be reset implicitly by init, retries, or stepping down and up` | [[wild.adopt]] |
+| baseline_ack_expires | invariant | `each baseline break has an owner, issue time, expiry, and stable finding id; default expiry is 30 days; renewal requires a signed reason and new expiry and appends an audit event rather than replacing history` | [[wild.adopt]] |
+| first_run_is_baseline | invariant | `first enforcement atomically records a baseline digest, existing findings, and 30-day acknowledgements owned by the initiating identity; it tolerates existing breaks only after baseline persistence succeeds; persistence failure refuses enforcement activation` | [[wild.adopt]] |
+| lock_import_lossless | invariant | `importing a host lockfile yields one lineage and hash per resolved dependency; unresolvable entries become Unknown, never dropped` | [[wild.adopt]] |
+| demand_derived_from_code | invariant | `demand includes statically resolved usage and declared dynamic usage; unresolved reflection, plugins, or dynamic calls mark demand incomplete and block safe-removal and scoped-substitution claims; manual reductions require signed scoped expiring overrides and remain disclosed` | [[wild.adopt]] |
+| safe_update_advice | invariant | `for a host version range, wild reports per candidate version whether demanded slots stay compatible; it never overrides the host resolver's choice` | [[wild.adopt]] |
+| consumer_demand_trackable | invariant | `per slot, wild reports known consumers; removal_candidate(slot) is derived only when known demand is empty and all known demand manifests are complete and fresh; it is advisory and never authorizes removal within a stable lineage` | [[wild.adopt]] |
+| integration_points_share_core | invariant | `CLI, CI action, pre-commit hook, and ecosystem plugins call one core and emit the same envelope` | [[wild.adopt]] |
+| init_needs_no_edits | invariant | `init in a supported ecosystem produces extractor configuration, a baseline, and a CI hook without user edits` | [[wild.adopt]] |
+| unsupported_ecosystem_degrades | invariant | `unsupported extraction yields Unknown assurance with scoped observations or metadata claims when available; observe and shadow succeed with diagnostics, while gate/native refuse any unmet required policy` | [[wild.adopt]] |
+| adoption_progress_reported | advisory | `status reports level, share of dependencies per tier, and open acknowledgements` | [[wild.adopt]] |
 
 ## Model
 
@@ -47,32 +47,32 @@ How existing, uncontracted software joins. The ladder is observe, shadow, gate, 
 
 | id | from | to | guard |
 | -- | ---- | -- | ----- |
-| observe | unmanaged | observed | [[spec.observe_is_read_only]] ∧ [[spec.history_reconstructed]] |
-| shadow | observed | shadowed | [[spec.shadow_never_blocks]] |
-| gate | shadowed | gated | [[spec.gate_scoped_to_new_changes]] ∧ [[spec.first_run_is_baseline]] |
-| go_native | gated | native | [[spec.init_needs_no_edits]] ∧ preserves wild-registry `ecosystem_untouched` and `sidecar_binds_artifact_digest` |
-| step_down | gated | shadowed | [[spec.adoption_levels_ordered]] |
+| observe | unmanaged | observed | [[wild.adopt.observe_is_read_only]] ∧ [[wild.adopt.history_reconstructed]] |
+| shadow | observed | shadowed | [[wild.adopt.shadow_never_blocks]] |
+| gate | shadowed | gated | [[wild.adopt.gate_scoped_to_new_changes]] ∧ [[wild.adopt.first_run_is_baseline]] |
+| go_native | gated | native | [[wild.adopt.init_needs_no_edits]] ∧ preserves wild-registry `ecosystem_untouched` and `sidecar_binds_artifact_digest` |
+| step_down | gated | shadowed | [[wild.adopt.adoption_levels_ordered]] |
 
 ## Properties
 
 | id | kind | derives_from | generator | predicate |
 | -- | ---- | ------------ | --------- | --------- |
-| history_graph_from_contracts | unit | [[spec.history_reconstructed]] | `git_history_with_mislabeled_semver()` | `lineage_graph == computed_accretion_graph` |
-| semver_disagreement_listed | unit | [[spec.past_claims_audited]] | `release_tagged_patch_that_removes_a_slot()` | `audit lists the release` |
-| level_skip_rejected | unit | [[spec.adoption_levels_ordered]] | `project_at_observe_requesting_gate()` | `transition == rejected` |
-| observe_writes_nothing | unit | [[spec.observe_is_read_only]] | `repo_snapshot_before_and_after_observe()` | `snapshot(before) == snapshot(after)` |
-| shadow_exit_status_unchanged | unit | [[spec.shadow_never_blocks]] | `build_with_a_computed_break_in_shadow()` | `exit_status == host_exit_status` |
-| baseline_break_tolerated_new_rejected | unit | [[spec.gate_scoped_to_new_changes]] | `repo_with_old_break_then_new_break()` | `old == tolerated ∧ new == rejected` |
-| expired_ack_rejects | unit | [[spec.baseline_ack_expires]] | `acknowledged_break_past_expiry()` | `check(ack) == rejected` |
-| first_run_rejects_nothing_old | unit | [[spec.first_run_is_baseline]] | `repo_with_many_latent_breaks_first_run()` | `rejections == 0 ∧ baseline lists all` |
-| lock_entries_all_accounted | unit | [[spec.lock_import_lossless]] | `lockfile_with_unresolvable_entry()` | `count(imported) == count(lock) ∧ entry.verdict == Unknown` |
-| demand_matches_usage | unit | [[spec.demand_derived_from_code]] | `consumer_using_slots([a, b])` | `demand == {a, b}` |
-| advice_leaves_resolver_alone | unit | [[spec.safe_update_advice]] | `range_with_one_incompatible_candidate()` | `advice flags candidate ∧ host_choice unchanged` |
-| zero_demand_slot_removable | unit | [[spec.consumer_demand_trackable]] | `slot_with_no_known_consumers()` | `removal_candidate(slot) == true ∧ advisory_only ∧ no stored flag` |
-| same_envelope_everywhere | unit | [[spec.integration_points_share_core]] | `same_change_via_cli_action_and_hook()` | `envelope(cli) == envelope(action) == envelope(hook)` |
-| init_works_unedited | unit | [[spec.init_needs_no_edits]] | `fresh_repo_in_supported_ecosystem()` | `init leaves a runnable baseline and CI hook` |
-| unsupported_degrades_not_errors | unit | [[spec.unsupported_ecosystem_degrades]] | `project_in_unsupported_language()` | `result.assurance == Unknown ∧ observe_exit_status == ok` |
-| status_lists_tier_shares | unit | [[spec.adoption_progress_reported]] | `project_with_mixed_dependencies()` | `status lists level ∧ per-tier shares ∧ open acknowledgements` |
+| history_graph_from_contracts | unit | [[wild.adopt.history_reconstructed]] | `git_history_with_mislabeled_semver()` | `lineage_graph == computed_accretion_graph` |
+| semver_disagreement_listed | unit | [[wild.adopt.past_claims_audited]] | `release_tagged_patch_that_removes_a_slot()` | `audit lists the release` |
+| level_skip_rejected | unit | [[wild.adopt.adoption_levels_ordered]] | `project_at_observe_requesting_gate()` | `transition == rejected` |
+| observe_writes_nothing | unit | [[wild.adopt.observe_is_read_only]] | `repo_snapshot_before_and_after_observe()` | `snapshot(before) == snapshot(after)` |
+| shadow_exit_status_unchanged | unit | [[wild.adopt.shadow_never_blocks]] | `build_with_a_computed_break_in_shadow()` | `exit_status == host_exit_status` |
+| baseline_break_tolerated_new_rejected | unit | [[wild.adopt.gate_scoped_to_new_changes]] | `repo_with_old_break_then_new_break()` | `old == tolerated ∧ new == rejected` |
+| expired_ack_rejects | unit | [[wild.adopt.baseline_ack_expires]] | `acknowledged_break_past_expiry()` | `check(ack) == rejected` |
+| first_run_rejects_nothing_old | unit | [[wild.adopt.first_run_is_baseline]] | `repo_with_many_latent_breaks_first_run()` | `rejections == 0 ∧ baseline lists all` |
+| lock_entries_all_accounted | unit | [[wild.adopt.lock_import_lossless]] | `lockfile_with_unresolvable_entry()` | `count(imported) == count(lock) ∧ entry.verdict == Unknown` |
+| demand_matches_usage | unit | [[wild.adopt.demand_derived_from_code]] | `consumer_using_slots([a, b])` | `demand == {a, b}` |
+| advice_leaves_resolver_alone | unit | [[wild.adopt.safe_update_advice]] | `range_with_one_incompatible_candidate()` | `advice flags candidate ∧ host_choice unchanged` |
+| zero_demand_slot_removable | unit | [[wild.adopt.consumer_demand_trackable]] | `slot_with_no_known_consumers()` | `removal_candidate(slot) == true ∧ advisory_only ∧ no stored flag` |
+| same_envelope_everywhere | unit | [[wild.adopt.integration_points_share_core]] | `same_change_via_cli_action_and_hook()` | `envelope(cli) == envelope(action) == envelope(hook)` |
+| init_works_unedited | unit | [[wild.adopt.init_needs_no_edits]] | `fresh_repo_in_supported_ecosystem()` | `init leaves a runnable baseline and CI hook` |
+| unsupported_degrades_not_errors | unit | [[wild.adopt.unsupported_ecosystem_degrades]] | `project_in_unsupported_language()` | `result.assurance == Unknown ∧ observe_exit_status == ok` |
+| status_lists_tier_shares | unit | [[wild.adopt.adoption_progress_reported]] | `project_with_mixed_dependencies()` | `status lists level ∧ per-tier shares ∧ open acknowledgements` |
 
 ## Notes
 

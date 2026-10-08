@@ -1,5 +1,5 @@
 ---
-id: spec
+id: wild.registry
 kind: intent
 statement: THE wild registry SHALL record revisions in an append-only, signed, auditable log and bind them to host ecosystem artifacts without altering those artifacts.
 ---
@@ -16,18 +16,18 @@ The shared memory of the system: a authenticated hash-chained log with full v1 p
 
 | id | kind | expr | traces_to |
 | -- | ---- | ---- | --------- |
-| registry_append_only | invariant | `the registry is a authenticated hash-chained log with full v1 prefix proofs; no revision is deleted or mutated after append` | [[spec]] |
-| consistency_proofs | invariant | `any two log heads can be checked for consistency by a proof, so a mirror can be audited` | [[spec]] |
-| signature_required | invariant | `every submitted revision carries a signature by the lineage owner key` | [[spec]] |
-| namespace_ownership | invariant | `each authority-qualified lineage name maps to one active owner key at a log sequence; bootstrap requires a trusted namespace authority signature and public names never shadow a configured private authority` | [[spec]] |
-| key_rotation_signed | invariant | `normal key rotation requires outgoing and incoming key signatures; compromise recovery requires the recovery key designated at namespace bootstrap, revokes the compromised key at an explicit sequence, and never rewrites historical entries` | [[spec]] |
-| lock_pins_hashes | invariant | `every contracted v1 lock entry pins authority, lineage, contract hash, and artifact digest; unresolved host entries preserve their locator with Unknown status; tags and aliases are not identities` | [[spec]] |
-| sidecar_binds_artifact_digest | invariant | `a signed v1 sidecar binds host ecosystem, artifact locator, artifact digest, contract hash, extractor digest, and registry sequence; fetching bytes with a different artifact digest is rejected even if the contract is unchanged` | [[spec]] |
-| ecosystem_untouched | invariant | `wild never replaces or mutates the host ecosystem's package, tag, or version; it adds a sidecar record` | [[spec]] |
-| advisories_never_delete | invariant | `yanking or flagging a revision appends an advisory edge; the revision stays resolvable by hash` | [[spec]] |
-| retraction_only_experimental | invariant | `experimental retraction appends a notice and removes the revision from new tip selection; hash lookup retains bytes and notice; stable retraction is refused; no candidate yields Unknown` | [[spec]] |
-| mirror_equivalence | invariant | `a mirror serving the same authenticated snapshot yields the same verdicts and certificates as the origin for identical caller policy, trust roots, and evaluation time` | [[spec]] |
-| verification_needs_no_write | invariant | `reading, resolving, and verifying never require write access to the registry` | [[spec]] |
+| registry_append_only | invariant | `the registry is a authenticated hash-chained log with full v1 prefix proofs; no revision is deleted or mutated after append` | [[wild.registry]] |
+| consistency_proofs | invariant | `any two log heads can be checked for consistency by a proof, so a mirror can be audited` | [[wild.registry]] |
+| signature_required | invariant | `every submitted revision carries a signature by the lineage owner key` | [[wild.registry]] |
+| namespace_ownership | invariant | `each authority-qualified lineage name maps to one active owner key at a log sequence; bootstrap requires a trusted namespace authority signature and public names never shadow a configured private authority` | [[wild.registry]] |
+| key_rotation_signed | invariant | `normal key rotation requires outgoing and incoming key signatures; compromise recovery requires the recovery key designated at namespace bootstrap, revokes the compromised key at an explicit sequence, and never rewrites historical entries` | [[wild.registry]] |
+| lock_pins_hashes | invariant | `every contracted v1 lock entry pins authority, lineage, contract hash, and artifact digest; unresolved host entries preserve their locator with Unknown status; tags and aliases are not identities` | [[wild.registry]] |
+| sidecar_binds_artifact_digest | invariant | `a signed v1 sidecar binds host ecosystem, artifact locator, artifact digest, contract hash, extractor digest, and registry sequence; fetching bytes with a different artifact digest is rejected even if the contract is unchanged` | [[wild.registry]] |
+| ecosystem_untouched | invariant | `wild never replaces or mutates the host ecosystem's package, tag, or version; it adds a sidecar record` | [[wild.registry]] |
+| advisories_never_delete | invariant | `yanking or flagging a revision appends an advisory edge; the revision stays resolvable by hash` | [[wild.registry]] |
+| retraction_only_experimental | invariant | `experimental retraction appends a notice and removes the revision from new tip selection; hash lookup retains bytes and notice; stable retraction is refused; no candidate yields Unknown` | [[wild.registry]] |
+| mirror_equivalence | invariant | `a mirror serving the same authenticated snapshot yields the same verdicts and certificates as the origin for identical caller policy, trust roots, and evaluation time` | [[wild.registry]] |
+| verification_needs_no_write | invariant | `reading, resolving, and verifying never require write access to the registry` | [[wild.registry]] |
 
 ## Model
 
@@ -43,27 +43,27 @@ The shared memory of the system: a authenticated hash-chained log with full v1 p
 
 | id | from | to | guard |
 | -- | ---- | -- | ----- |
-| sign | submitted | signed | [[spec.signature_required]] ∧ [[spec.namespace_ownership]] |
-| append | signed | appended | [[spec.registry_append_only]] |
-| advise | appended | advised | [[spec.advisories_never_delete]] |
-| retract | appended | retracted | [[spec.retraction_only_experimental]] ∧ per wild-core `stability_tiers` |
+| sign | submitted | signed | [[wild.registry.signature_required]] ∧ [[wild.registry.namespace_ownership]] |
+| append | signed | appended | [[wild.registry.registry_append_only]] |
+| advise | appended | advised | [[wild.registry.advisories_never_delete]] |
+| retract | appended | retracted | [[wild.registry.retraction_only_experimental]] ∧ per wild-core `stability_tiers` |
 
 ## Properties
 
 | id | kind | derives_from | generator | predicate |
 | -- | ---- | ------------ | --------- | --------- |
-| rewrite_of_appended_rejected | unit | [[spec.registry_append_only]] | `log_with_attempted_rewrite()` | `append(log, rewrite) == rejected` |
-| inconsistent_heads_detected | unit | [[spec.consistency_proofs]] | `two_heads_from_forked_logs()` | `consistency_check == failed` |
-| unsigned_revision_rejected | unit | [[spec.signature_required]] | `submission_without_signature()` | `sign == rejected` |
-| foreign_owner_rejected | unit | [[spec.namespace_ownership]] | `publish_to_lineage_with_different_key()` | `sign == rejected` |
-| rotation_needs_outgoing_key | unit | [[spec.key_rotation_signed]] | `rotation_signed_with_new_key_only()` | `rotation == rejected` |
-| alias_in_lock_rejected | unit | [[spec.lock_pins_hashes]] | `lockfile_entry_using_tag("latest")` | `check(lock) == failed` |
-| digest_mismatch_rejected | unit | [[spec.sidecar_binds_artifact_digest]] | `sidecar_pointing_at_a_different_artifact()` | `check(sidecar) == rejected` |
-| host_artifact_unchanged | unit | [[spec.ecosystem_untouched]] | `publish_with_wild_enabled()` | `host_artifact(before) == host_artifact(after)` |
-| yanked_revision_still_resolves | unit | [[spec.advisories_never_delete]] | `yanked_revision()` | `resolve_by_hash == found ∧ advisory attached` |
-| stable_retraction_rejected | unit | [[spec.retraction_only_experimental]] | `retract_request_on_stable_lineage()` | `retract == rejected` |
-| mirror_matches_origin | unit | [[spec.mirror_equivalence]] | `same_log_served_by_origin_and_mirror()` | `verdicts(origin) == verdicts(mirror)` |
-| read_only_credentials_suffice | unit | [[spec.verification_needs_no_write]] | `resolve_and_verify_with_read_only_access()` | `completes` |
+| rewrite_of_appended_rejected | unit | [[wild.registry.registry_append_only]] | `log_with_attempted_rewrite()` | `append(log, rewrite) == rejected` |
+| inconsistent_heads_detected | unit | [[wild.registry.consistency_proofs]] | `two_heads_from_forked_logs()` | `consistency_check == failed` |
+| unsigned_revision_rejected | unit | [[wild.registry.signature_required]] | `submission_without_signature()` | `sign == rejected` |
+| foreign_owner_rejected | unit | [[wild.registry.namespace_ownership]] | `publish_to_lineage_with_different_key()` | `sign == rejected` |
+| rotation_needs_outgoing_key | unit | [[wild.registry.key_rotation_signed]] | `rotation_signed_with_new_key_only()` | `rotation == rejected` |
+| alias_in_lock_rejected | unit | [[wild.registry.lock_pins_hashes]] | `lockfile_entry_using_tag("latest")` | `check(lock) == failed` |
+| digest_mismatch_rejected | unit | [[wild.registry.sidecar_binds_artifact_digest]] | `sidecar_pointing_at_a_different_artifact()` | `check(sidecar) == rejected` |
+| host_artifact_unchanged | unit | [[wild.registry.ecosystem_untouched]] | `publish_with_wild_enabled()` | `host_artifact(before) == host_artifact(after)` |
+| yanked_revision_still_resolves | unit | [[wild.registry.advisories_never_delete]] | `yanked_revision()` | `resolve_by_hash == found ∧ advisory attached` |
+| stable_retraction_rejected | unit | [[wild.registry.retraction_only_experimental]] | `retract_request_on_stable_lineage()` | `retract == rejected` |
+| mirror_matches_origin | unit | [[wild.registry.mirror_equivalence]] | `same_log_served_by_origin_and_mirror()` | `verdicts(origin) == verdicts(mirror)` |
+| read_only_credentials_suffice | unit | [[wild.registry.verification_needs_no_write]] | `resolve_and_verify_with_read_only_access()` | `completes` |
 
 ## Notes
 

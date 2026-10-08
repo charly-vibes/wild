@@ -1,5 +1,5 @@
 ---
-id: spec
+id: wild.compose
 kind: intent
 statement: THE wild composer SHALL decide whether components at given revisions compose into a well-formed assembly, select revisions by deterministic lineage lookup within the supported model, and emit a certificate an independent verifier can re-check.
 ---
@@ -16,26 +16,26 @@ An assembly is components plus bindings from required slots to provided slots. I
 
 | id | kind | expr | traces_to |
 | -- | ---- | ---- | --------- |
-| assembly_is_bindings | invariant | `an assembly is a set of component revisions plus bindings from each required slot to a provided slot` | [[spec]] |
-| binding_well_formed | invariant | `a binding is well-formed iff the v1 subtype relation holds for provider output and consumer input, limits and defaults satisfy demand, and facets and relations pass; an open provider sum binds only to an open consumer` | [[spec]] |
-| required_slots_bound | invariant | `every required input of every component is bound by a well-formed binding` | [[spec]] |
-| substitution_preserves_assembly | invariant | `replacing a component with an accretion of itself keeps a well-formed assembly well-formed` | [[spec]] |
-| scoped_substitution | invariant | `scoped replacement preserves every demanded output AND validates all required inputs of the replacement and its transitive dependency closure; restricting demand never hides newly introduced required inputs` | [[spec]] |
-| resolution_by_lineage | invariant | `for a finite registry snapshot with one accepted tip per lineage, resolve traverses dependency closure using deterministic newest-tip lookup; missing tips, unmerged forks, singleton conflicts, or relation failures refuse selection without backtracking; dependency cycles reach a fixed point and are checked as a whole` | [[spec]] |
-| resolver_deterministic | invariant | `the same registry snapshot and demand yield the same selection and certificate` | [[spec]] |
-| lineage_copies_listed | invariant | `when consumers demand different lineages of one package, each lineage is resolved separately and the copies are listed` | [[spec]] |
-| scoped_merge_proposed | invariant | `a consumer may be proposed a newer lineage when its demand accretes there; the move is a proposal and is never applied automatically` | [[spec]] |
-| boundary_needs_adapter | invariant | `values crossing between lineages need a registered adapter; otherwise the boundary is reported unbridged` | [[spec]] |
-| singleton_declared | invariant | `a component declared singleton appears under exactly one lineage per assembly; a violation is a composition failure` | [[spec]] |
-| relation_slots | invariant | `v1 equal and less_equal relations over declared scalar slots are checked after closure; missing values, incomparable types, and failed relations refuse composition; the resolver does not search older revisions to satisfy relations` | [[spec]] |
-| certificate_lists_bindings | invariant | `the v1 certificate names the assembly commitment, component instances, bindings, demanded slots, policy, checker, and content-addressed proof records; the bundle contains every referenced contract and proof` | [[spec]] |
-| certificate_complete | invariant | `verification compares the certificate assembly hash to the caller-supplied expected commitment, reconstructs closure from all component manifests, and rejects missing roots, components, demands, or required bindings` | [[spec]] |
-| certificate_tamper_evident | invariant | `a corrupted hash or dropped binding fails verification; a substituted provider verifies only if it is compatible with the consumer's demand` | [[spec]] |
-| verifier_reads_only_certificate | invariant | `the verifier reads the v1 bundle, caller-supplied assembly commitment, policy, trust roots, and evaluation time; it never calls the resolver or network` | [[spec]] |
-| verification_linear | advisory | `verification performs O(B + S + P) indexed visits over bindings B, reachable contract/schema nodes S, and proof bytes P, excluding explicitly budgeted proof execution; benchmarking reports all three sizes and checker version` | [[spec]] |
-| coverage_reported | invariant | `a composition verdict reports the share of bindings verified per tier; bindings to uncontracted providers are Unknown` | [[spec]] |
-| verdict_is_meet | invariant | `assembly structural assurance is the meet of binding assurance; required law, evidence, and attestation policy is evaluated for every binding; empty assemblies have PassDeclared assurance and vacuous coverage` | [[spec]] |
-| composition_is_category | invariant | `compose is disjoint union of component instances and bindings with matching exposed interfaces; it is defined only when bindings, singleton constraints, and relations pass; empty assembly is identity and associativity holds where both sides are defined` | [[spec]] |
+| assembly_is_bindings | invariant | `an assembly is a set of component revisions plus bindings from each required slot to a provided slot` | [[wild.compose]] |
+| binding_well_formed | invariant | `a binding is well-formed iff the v1 subtype relation holds for provider output and consumer input, limits and defaults satisfy demand, and facets and relations pass; an open provider sum binds only to an open consumer` | [[wild.compose]] |
+| required_slots_bound | invariant | `every required input of every component is bound by a well-formed binding` | [[wild.compose]] |
+| substitution_preserves_assembly | invariant | `replacing a component with an accretion of itself keeps a well-formed assembly well-formed` | [[wild.compose]] |
+| scoped_substitution | invariant | `scoped replacement preserves every demanded output AND validates all required inputs of the replacement and its transitive dependency closure; restricting demand never hides newly introduced required inputs` | [[wild.compose]] |
+| resolution_by_lineage | invariant | `for a finite registry snapshot with one accepted tip per lineage, resolve traverses dependency closure using deterministic newest-tip lookup; missing tips, unmerged forks, singleton conflicts, or relation failures refuse selection without backtracking; dependency cycles reach a fixed point and are checked as a whole` | [[wild.compose]] |
+| resolver_deterministic | invariant | `the same registry snapshot and demand yield the same selection and certificate` | [[wild.compose]] |
+| lineage_copies_listed | invariant | `when consumers demand different lineages of one package, each lineage is resolved separately and the copies are listed` | [[wild.compose]] |
+| scoped_merge_proposed | invariant | `a consumer may be proposed a newer lineage when its demand accretes there; the move is a proposal and is never applied automatically` | [[wild.compose]] |
+| boundary_needs_adapter | invariant | `values crossing between lineages need a registered adapter; otherwise the boundary is reported unbridged` | [[wild.compose]] |
+| singleton_declared | invariant | `a component declared singleton appears under exactly one lineage per assembly; a violation is a composition failure` | [[wild.compose]] |
+| relation_slots | invariant | `v1 equal and less_equal relations over declared scalar slots are checked after closure; missing values, incomparable types, and failed relations refuse composition; the resolver does not search older revisions to satisfy relations` | [[wild.compose]] |
+| certificate_lists_bindings | invariant | `the v1 certificate names the assembly commitment, component instances, bindings, demanded slots, policy, checker, and content-addressed proof records; the bundle contains every referenced contract and proof` | [[wild.compose]] |
+| certificate_complete | invariant | `verification compares the certificate assembly hash to the caller-supplied expected commitment, reconstructs closure from all component manifests, and rejects missing roots, components, demands, or required bindings` | [[wild.compose]] |
+| certificate_tamper_evident | invariant | `a corrupted hash or dropped binding fails verification; a substituted provider verifies only if it is compatible with the consumer's demand` | [[wild.compose]] |
+| verifier_reads_only_certificate | invariant | `the verifier reads the v1 bundle, caller-supplied assembly commitment, policy, trust roots, and evaluation time; it never calls the resolver or network` | [[wild.compose]] |
+| verification_linear | advisory | `verification performs O(B + S + P) indexed visits over bindings B, reachable contract/schema nodes S, and proof bytes P, excluding explicitly budgeted proof execution; benchmarking reports all three sizes and checker version` | [[wild.compose]] |
+| coverage_reported | invariant | `a composition verdict reports the share of bindings verified per tier; bindings to uncontracted providers are Unknown` | [[wild.compose]] |
+| verdict_is_meet | invariant | `assembly structural assurance is the meet of binding assurance; required law, evidence, and attestation policy is evaluated for every binding; empty assemblies have PassDeclared assurance and vacuous coverage` | [[wild.compose]] |
+| composition_is_category | invariant | `compose is disjoint union of component instances and bindings with matching exposed interfaces; it is defined only when bindings, singleton constraints, and relations pass; empty assembly is identity and associativity holds where both sides are defined` | [[wild.compose]] |
 
 ## Model
 
@@ -52,38 +52,38 @@ An assembly is components plus bindings from required slots to provided slots. I
 
 | id | from | to | guard |
 | -- | ---- | -- | ----- |
-| resolve | demanded | resolved | [[spec.resolution_by_lineage]] ∧ [[spec.resolver_deterministic]] |
-| certify | resolved | certified | [[spec.certificate_lists_bindings]] |
-| verify | certified | verified | [[spec.certificate_complete]] ∧ [[spec.verifier_reads_only_certificate]] |
-| flag_boundary | resolved | unbridged | [[spec.boundary_needs_adapter]] |
-| bridge | unbridged | certified | [[spec.certificate_lists_bindings]] ∧ requires a wild-bridge `adapter_is_morphism` |
-| refuse_unbound | resolved | refused | [[spec.required_slots_bound]] |
-| refuse_invalid | certified | refused | [[spec.binding_well_formed]] |
+| resolve | demanded | resolved | [[wild.compose.resolution_by_lineage]] ∧ [[wild.compose.resolver_deterministic]] |
+| certify | resolved | certified | [[wild.compose.certificate_lists_bindings]] |
+| verify | certified | verified | [[wild.compose.certificate_complete]] ∧ [[wild.compose.verifier_reads_only_certificate]] |
+| flag_boundary | resolved | unbridged | [[wild.compose.boundary_needs_adapter]] |
+| bridge | unbridged | certified | [[wild.compose.certificate_lists_bindings]] ∧ requires a wild-bridge `adapter_is_morphism` |
+| refuse_unbound | resolved | refused | [[wild.compose.required_slots_bound]] |
+| refuse_invalid | certified | refused | [[wild.compose.binding_well_formed]] |
 
 ## Properties
 
 | id | kind | derives_from | generator | predicate |
 | -- | ---- | ------------ | --------- | --------- |
-| assembly_lists_every_binding | unit | [[spec.assembly_is_bindings]] | `arbitrary_assembly()` | `bindings cover all required slots` |
-| open_provider_needs_open_consumer | unit | [[spec.binding_well_formed]] | `open_provider_sum_bound_to_closed_consumer()` | `well_formed == false` |
-| unbound_required_slot_rejected | unit | [[spec.required_slots_bound]] | `assembly_with_one_unbound_required_input()` | `well_formed == false` |
-| accretion_substitution_sound | unit | [[spec.substitution_preserves_assembly]] | `well_formed_assembly_and_accepted_accretion()` | `well_formed(after) == true` |
-| scoped_substitution_sound | unit | [[spec.scoped_substitution]] | `assembly_and_change_accreting_on_used_slots()` | `well_formed(after) == true` |
-| resolution_is_chain_max | unit | [[spec.resolution_by_lineage]] | `finite_snapshot_with_unique_tips_and_demand()` | `selection == accepted tips ∧ backtracking_nodes == 0 or refusal lists violated constraints` |
-| resolution_reproducible | unit | [[spec.resolver_deterministic]] | `same_snapshot_resolved_twice()` | `selection(a) == selection(b) ∧ cert(a) == cert(b)` |
-| copies_are_listed | unit | [[spec.lineage_copies_listed]] | `consumers_on_two_lineages_of_one_package()` | `report lists both copies` |
-| merge_is_a_proposal | unit | [[spec.scoped_merge_proposed]] | `consumer_whose_demand_accretes_in_newer_lineage()` | `proposal listed ∧ selection unchanged` |
-| unbridged_boundary_reported | unit | [[spec.boundary_needs_adapter]] | `value_crossing_lineages_without_adapter()` | `status == unbridged` |
-| second_lineage_of_singleton_fails | unit | [[spec.singleton_declared]] | `singleton_resolved_under_two_lineages()` | `composition == failed` |
-| timeout_relation_checked | unit | [[spec.relation_slots]] | `backend_idle_timeout_below_balancer_timeout()` | `composition == failed` |
-| certificate_names_all_fields | unit | [[spec.certificate_lists_bindings]] | `arbitrary_certificate()` | `each binding has consumer ∧ provider ∧ demand` |
-| missing_binding_rejected | unit | [[spec.certificate_complete]] | `certificate_with_one_binding_dropped()` | `verify == rejected` |
-| corruption_detected | unit | [[spec.certificate_tamper_evident]] | `certificate_with_last_hash_digit_changed()` | `verify == rejected` |
-| verifier_has_no_resolver_dependency | unit | [[spec.verifier_reads_only_certificate]] | `verifier_module_dependency_graph()` | `no edge to resolver` |
-| verification_cost_linear | unit | [[spec.verification_linear]] | `certificates_of_size([100, 1000, 10000])` | `indexed visits ≤ k * (bindings + schema_nodes + proof_bytes) for recorded checker constant k` |
-| uncontracted_binding_is_unknown | unit | [[spec.coverage_reported]] | `assembly_with_one_uncontracted_provider()` | `binding.verdict == Unknown ∧ coverage lists it` |
-| verdict_equals_meet | unit | [[spec.verdict_is_meet]] | `bindings_with_mixed_verdicts()` | `assembly.assurance == meet(binding.assurance) ∧ policy checks each binding` |
-| assembly_composition_laws | law | [[spec.composition_is_category]] | `three_assemblies_with_jointly_compatible_interfaces()` | **identity:** `compose(empty, a) == a` **associativity:** `compose(compose(a, b), c) == compose(a, compose(b, c))` |
+| assembly_lists_every_binding | unit | [[wild.compose.assembly_is_bindings]] | `arbitrary_assembly()` | `bindings cover all required slots` |
+| open_provider_needs_open_consumer | unit | [[wild.compose.binding_well_formed]] | `open_provider_sum_bound_to_closed_consumer()` | `well_formed == false` |
+| unbound_required_slot_rejected | unit | [[wild.compose.required_slots_bound]] | `assembly_with_one_unbound_required_input()` | `well_formed == false` |
+| accretion_substitution_sound | unit | [[wild.compose.substitution_preserves_assembly]] | `well_formed_assembly_and_accepted_accretion()` | `well_formed(after) == true` |
+| scoped_substitution_sound | unit | [[wild.compose.scoped_substitution]] | `assembly_and_change_accreting_on_used_slots()` | `well_formed(after) == true` |
+| resolution_is_chain_max | unit | [[wild.compose.resolution_by_lineage]] | `finite_snapshot_with_unique_tips_and_demand()` | `selection == accepted tips ∧ backtracking_nodes == 0 or refusal lists violated constraints` |
+| resolution_reproducible | unit | [[wild.compose.resolver_deterministic]] | `same_snapshot_resolved_twice()` | `selection(a) == selection(b) ∧ cert(a) == cert(b)` |
+| copies_are_listed | unit | [[wild.compose.lineage_copies_listed]] | `consumers_on_two_lineages_of_one_package()` | `report lists both copies` |
+| merge_is_a_proposal | unit | [[wild.compose.scoped_merge_proposed]] | `consumer_whose_demand_accretes_in_newer_lineage()` | `proposal listed ∧ selection unchanged` |
+| unbridged_boundary_reported | unit | [[wild.compose.boundary_needs_adapter]] | `value_crossing_lineages_without_adapter()` | `status == unbridged` |
+| second_lineage_of_singleton_fails | unit | [[wild.compose.singleton_declared]] | `singleton_resolved_under_two_lineages()` | `composition == failed` |
+| timeout_relation_checked | unit | [[wild.compose.relation_slots]] | `backend_idle_timeout_below_balancer_timeout()` | `composition == failed` |
+| certificate_names_all_fields | unit | [[wild.compose.certificate_lists_bindings]] | `arbitrary_certificate()` | `each binding has consumer ∧ provider ∧ demand` |
+| missing_binding_rejected | unit | [[wild.compose.certificate_complete]] | `certificate_with_one_binding_dropped()` | `verify == rejected` |
+| corruption_detected | unit | [[wild.compose.certificate_tamper_evident]] | `certificate_with_last_hash_digit_changed()` | `verify == rejected` |
+| verifier_has_no_resolver_dependency | unit | [[wild.compose.verifier_reads_only_certificate]] | `verifier_module_dependency_graph()` | `no edge to resolver` |
+| verification_cost_linear | unit | [[wild.compose.verification_linear]] | `certificates_of_size([100, 1000, 10000])` | `indexed visits ≤ k * (bindings + schema_nodes + proof_bytes) for recorded checker constant k` |
+| uncontracted_binding_is_unknown | unit | [[wild.compose.coverage_reported]] | `assembly_with_one_uncontracted_provider()` | `binding.verdict == Unknown ∧ coverage lists it` |
+| verdict_equals_meet | unit | [[wild.compose.verdict_is_meet]] | `bindings_with_mixed_verdicts()` | `assembly.assurance == meet(binding.assurance) ∧ policy checks each binding` |
+| assembly_composition_laws | law | [[wild.compose.composition_is_category]] | `three_assemblies_with_jointly_compatible_interfaces()` | **identity:** `compose(empty, a) == a` **associativity:** `compose(compose(a, b), c) == compose(a, compose(b, c))` |
 
 ## Notes
 
