@@ -1,0 +1,11 @@
+id = "candidate-edits-its-own-judge"
+description = "Trusted enforcement retains the accepted context when the candidate deletes a law, narrows demand, or changes the policy or checker, and cannot accept via weaker candidate settings"
+archetype = "NR"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_protected_context.py::test_candidate_supplied_context_selects_nothing", timeout_seconds = 300},
+]

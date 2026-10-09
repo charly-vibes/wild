@@ -1,0 +1,11 @@
+id = "same-contract-but-changed-implementation"
+description = "Evidence from a previous artifact cannot satisfy a new artifact's law requirement when implementation bytes change without changing the extracted contract"
+archetype = "NR"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_authored_laws.py::test_same_contract_changed_implementation_receives_fresh_evaluation", timeout_seconds = 300},
+]

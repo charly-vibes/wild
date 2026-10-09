@@ -1,0 +1,12 @@
+id = "unsupported-law-isolation"
+description = "A runner that cannot enforce the required isolation yields inconclusive law evidence and an unknown local outcome, while other obligations still evaluate and any definite failure still rejects"
+archetype = "NR"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_authored_laws.py::test_unsupported_law_is_isolated_and_other_obligations_still_evaluate", timeout_seconds = 300},
+  {flags = "tests/runtime/test_authored_laws.py::test_ambient_access_attempt_yields_inconclusive", timeout_seconds = 300},
+]

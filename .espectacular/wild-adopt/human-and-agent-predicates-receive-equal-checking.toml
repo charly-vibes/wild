@@ -1,0 +1,11 @@
+id = "human-and-agent-predicates-receive-equal-checking"
+description = "Otherwise identical executable obligations with human and agent origin labels receive identical assurance and law results, with provenance retaining the different origins"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_authored_laws.py::test_human_and_agent_predicates_receive_identical_checking", timeout_seconds = 300},
+]

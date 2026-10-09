@@ -1,0 +1,11 @@
+id = "authorized-bug-fix-changes-an-old-obligation"
+description = "An externally authorized old-to-new obligation transition for a bug fix yields the accepted-intentional-change disposition with affected consumers recorded, never backward-compatible success"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_protected_context.py::test_authorized_transition_yields_intentional_change_disposition", timeout_seconds = 300},
+]

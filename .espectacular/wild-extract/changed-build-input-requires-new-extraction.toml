@@ -1,0 +1,11 @@
+id = "changed-build-input-requires-new-extraction"
+description = "A prior extraction report submitted against a bundle with changed feature selection, target, toolchain, or dependency source fails input binding and demands a fresh extraction"
+archetype = "NR"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_changed_build_input_requires_fresh_extraction", timeout_seconds = 300},
+]

@@ -1,0 +1,11 @@
+id = "generated-export-cannot-disappear"
+description = "A macro or build script construct that can generate exports is reported with incomplete inventory; the extractor never invents a complete contract"
+archetype = "NR"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_macro_generated_export_is_incomplete_inventory", timeout_seconds = 300},
+]

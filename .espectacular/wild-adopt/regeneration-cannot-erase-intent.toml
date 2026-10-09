@@ -1,0 +1,12 @@
+id = "regeneration-cannot-erase-intent"
+description = "An accepted law is still evaluated when a candidate regenerates its contracts without it, and the proposed deletion is reported separately rather than silently accepted"
+archetype = "NR"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_protected_context.py::test_deleted_law_is_still_evaluated_and_reported_as_proposed_deletion", timeout_seconds = 300},
+  {flags = "tests/runtime/test_protected_context.py::test_regenerated_weaker_contract_cannot_erase_intent", timeout_seconds = 300},
+]

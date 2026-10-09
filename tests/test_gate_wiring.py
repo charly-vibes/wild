@@ -85,13 +85,13 @@ def test_gate_pattern() -> None:
         d = tomllib.loads(gate.read_text())
         for field in ("id", "description", "archetype", "status", "authored_with"):
             assert field in d, f"{gate.name} missing '{field}'"
-        assert d["archetype"] in ("PF", "SA", "RE"), f"{gate.name} bad archetype"
+        assert d["archetype"] in ("PF", "SA", "BP", "CE", "NR"), f"{gate.name} bad archetype"
         assert d["status"] == "active", f"{gate.name} not active"
         assert "tests" in d, f"{gate.name} missing [tests]"
         tests = d["tests"].get("pytest") or []
         assert tests, f"{gate.name} [tests.pytest] empty"
         for t in tests:
-            assert "tests/test_" in t.get("flags", ""), (
+            assert t.get("flags", "").startswith("tests/"), (
                 f"{gate.name} [tests.pytest] entry does not point at tests/"
             )
 

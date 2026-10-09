@@ -1,0 +1,11 @@
+id = "first-result-in-an-existing-repository"
+description = "wild check evaluates a named boundary from supplied bundles with no Wild registry or adoption history, reporting structural assurance, law methods, scope, coverage, and diagnostics while leaving project files and adoption level unchanged"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_scoped_check.py::TestScopedCheck::test_first_result_reports_scope_without_registry", timeout_seconds = 300},
+]
