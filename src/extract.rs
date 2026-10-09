@@ -440,6 +440,23 @@ impl<'a> SourceWalk<'a> {
             }
         } else if self.dep_names.iter().any(|d| d == head) {
             resolved = Some(callee.to_string());
+        } else if !rest.is_empty()
+            && head != "crate"
+            && head != "self"
+            && head != "super"
+            && head != self.crate_name
+        {
+            // multi-segment path whose head is neither an explicit alias nor
+            // a declared dependency: the demand mechanism is outside the
+            // supported profile, so the inventory is incomplete (never
+            // silently dropped)
+            self.gap(
+                "incomplete-demand",
+                format!(
+                    "demand `{callee}` cannot resolve: `{head}` is not a declared dependency of this crate"
+                ),
+                true,
+            );
         }
         if let Some(target) = resolved {
             if let Some(provider_slot) = self.meaning_of(&target) {
