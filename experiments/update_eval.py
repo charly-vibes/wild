@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
-# Purpose: Deterministic validation and summary CLI for the controlled
-#   update evaluation harness (beads wild-aoq.1).
+# Purpose: Deterministic validation, summary, and fixture-replay CLI for the
+#   controlled update evaluation harness (beads wild-aoq.1, wild-aoq.2).
 # Responsibilities: Validate committed protocol and run records against
 #   experiments/update-protocol.schema.json plus cross-record semantics
 #   (unique ids, artifact commitments, cost honesty, confirmatory
 #   preregistration); summarize candidate outcomes and task completions
 #   with the exact denominators from the change design — never inflating
-#   successes, hiding failed effort, or substituting zero for null.
+#   successes, hiding failed effort, or substituting zero for null; replay
+#   frozen e5 fixture cases through real offline Cargo resolution/build/test,
+#   classifying observed outcomes from process exit codes and lockfile
+#   content only.
 # Rationale: The harness's first acceptance is a working measurement
 #   pipeline (design.md 'Commands and records', 'Outcomes and exact
 #   denominators'). Validation and summary are deterministic functions of
-#   committed records; experimental execution (arms, agents, oracles) is
-#   intentionally out of scope here and arrives in later slices. Records
-#   are append-only in spirit: a defective record invalidates summaries
-#   rather than being corrected in place.
+#   committed records; replay (aoq.2) proves fixture expectations with the
+#   native toolchain so original range exclusion is never a handwritten
+#   semver oracle or a path-replacement bypass. Experimental execution
+#   (arms, agents, oracles) stays out of scope here and arrives in later
+#   slices. Records are append-only in spirit: a defective record
+#   invalidates summaries rather than being corrected in place.
 
 from __future__ import annotations
 
