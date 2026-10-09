@@ -1,0 +1,4 @@
+{
+  "dl": "{crate}/{version}/{crate}-{version}.crate",
+  "note": "Frozen e5 catalog; the dl template mirrors the committed store layout. Offline replays consume the byte-identical local-registry mirror under consumer-mirror/."
+}

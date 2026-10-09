@@ -1,0 +1,2 @@
+{"name":"deputil","vers":"1.0.0","deps":[],"cksum":"162ab42df6c1455b5d7d227ec5e4c5e631da55299291903c7057b79934f78c2d","features":{},"yanked":false}
+{"name":"deputil","vers":"2.0.0","deps":[{"name":"dept","req":"=1.2.3","features":[],"default_features":true,"optional":false}],"cksum":"2c3d9a482e91a0994880275f4f440c9660f4082af4fcda5f4aa95ca72f37953b","features":{},"yanked":false}

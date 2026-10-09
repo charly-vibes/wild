@@ -1,0 +1,9 @@
+{"name":"dept","vers":"1.2.3","deps":[],"cksum":"396fb8791f60c90c61f6ceb8242f0c4dbf2b6b22801fc1d167c1b2b7664877de","features":{},"yanked":false}
+{"name":"dept","vers":"1.2.4","deps":[],"cksum":"15c4f2767ad220a7cca1ae4dbea5803ae5b833179382bc4fd34ae028d25a7ab7","features":{},"yanked":false}
+{"name":"dept","vers":"2.0.0","deps":[],"cksum":"b25dfde32d218677a0c999c5d3adb90c2fbd11133a2c4a51e468f10347ebad59","features":{},"yanked":false}
+{"name":"dept","vers":"1.2.5","deps":[],"cksum":"64ea15f02b646e0aedc06e72d1bccfd9622150cafe7b7d6c6681316d007402a4","features":{},"yanked":false}
+{"name":"dept","vers":"3.0.0","deps":[],"cksum":"a4019171a98da0ce0129bf10766b61a4bf643b19f2671c2d9ff88bebfb86998f","features":{},"yanked":false}
+{"name":"dept","vers":"1.9.0","deps":[{"name":"deputil","req":"1.0.0","features":[],"optional":false,"default_features":true,"target":null,"kind":"normal"}],"cksum":"7a3a4d14e7d48932f4c0f080fe943c344b94b45d47fd23f15d5ea62e2abe11a1","features":{},"yanked":false}
+{"name":"dept","vers":"1.8.0","deps":[],"cksum":"99254589406752cf17a952e83d85b56c3a2c485f568167892bbd259e6a6645b1","features":{},"yanked":false}
+{"name":"dept","vers":"1.7.0","deps":[],"cksum":"e24ac755bdfb086925c3e143e7c4cb6ef2eef50c72fe158ca0d031f54e5a5b9b","features":{},"yanked":false}
+{"name":"dept","vers":"2.1.0","deps":[],"cksum":"1faadc9e6529e843369477797d3a276e57b66332ffdcb23490186fc1a7a5fdaf","features":{},"yanked":false}

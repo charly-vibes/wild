@@ -20,6 +20,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -437,6 +440,249 @@ def cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
+# ---------------------------------------------------------------------------
+# Replay: native fixture replay through real Cargo (beads wild-aoq.2)
+# ---------------------------------------------------------------------------
+
+KNOWN_OUTCOMES = {
+    "resolution-refused-by-range", "resolution-conflict",
+    "resolved-and-consumer-tests-passed", "resolved-then-consumer-tests-failed",
+    "resolved-then-consumer-build-failed", "resolved-but-selected-target-mismatch",
+    "resolved-and-selected-target-matches", "baseline-tests-passed",
+    "baseline-tests-failed", "resolved",
+}
+
+
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _cargo_home(tmp: Path) -> Path:
+    home = tmp / "cargo-home"
+    home.mkdir(parents=True)
+    (home / "config.toml").write_text(
+        '[registries.wild-fixtures]\nindex = "file://{index}"\n'.replace(
+            "{index}", str(tmp / "fixtures" / "registry" / "index")
+        ),
+        encoding="utf-8",
+    )
+    return home
+
+
+def _cargo(cmd: list[str], cwd: Path, home: Path) -> subprocess.CompletedProcess[str]:
+    import os
+    env = dict(os.environ)
+    env["CARGO_HOME"] = str(home)
+    return subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=900)
+
+
+def _lock_dept_version(workspace: Path) -> str | None:
+    lock = workspace / "Cargo.lock"
+    if not lock.is_file():
+        return None
+    current: dict[str, str] = {}
+    for line in lock.read_text(encoding="utf-8").splitlines():
+        if line.startswith("[[package]]"):
+            if current.get("name") == "dept":
+                return current.get("version")
+            current = {}
+        elif line.startswith("name = "):
+            current["name"] = line.split("= ", 1)[1].strip().strip('"')
+        elif line.startswith("version = "):
+            current["version"] = line.split("= ", 1)[1].strip().strip('"')
+    return current.get("version") if current.get("name") == "dept" else None
+
+
+def _pin_dept(workspace: Path, target: str) -> None:
+    """Authorized manifest edit: rewrite the dept requirement to the exact
+    target. This is fixture-scope authority, never a path replacement."""
+    manifest = workspace / "Cargo.toml"
+    text = manifest.read_text(encoding="utf-8")
+    new = re.sub(r'(dept\s*=\s*)"[^"]*"', lambda m: f'{m.group(1)}"={target}"', text)
+    manifest.write_text(new, encoding="utf-8")
+
+
+def _replay_verify_manifest(fixtures: Path, errors: RecordErrors) -> dict:
+    manifest_path = fixtures / "cases.json"
+    try:
+        manifest = load_json(manifest_path)
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.add(f"cannot read e5 manifest {manifest_path}: {exc}")
+        return {}
+    if manifest.get("schema") != "wild-e5-cases-v1":
+        errors.add(f"unexpected e5 manifest schema {manifest.get('schema')!r}")
+    for artifact in manifest.get("artifacts", []):
+        path = fixtures / artifact["path"]
+        if not path.is_file():
+            errors.add(f"e5 missing artifact: {artifact['path']}")
+        elif _sha256_file(path) != artifact["sha256"]:
+            errors.add(f"e5 drifted artifact: {artifact['path']}")
+    split = manifest.get("split", {})
+    ids = [c["id"] for c in manifest.get("cases", [])]
+    if len(ids) != len(set(ids)):
+        errors.add("e5 manifest has duplicate case ids")
+    if set(split.get("development", [])) & set(split.get("evaluation", [])):
+        errors.add("e5 development/evaluation split overlaps")
+    if set(split.get("development", [])) | set(split.get("evaluation", [])) != set(ids):
+        errors.add("e5 split does not cover the full frozen membership")
+    return manifest
+
+
+def _replay_phase(fixtures: Path, case: dict, phase_spec: dict, tmp: Path) -> dict:
+    """Replay one phase against real Cargo; classify the observed outcome
+    from process exit codes and lockfile content — never from a canned
+    success response."""
+    consumer = fixtures / case.get("consumer", "consumer-base")
+    fixtures_copy = tmp / "fixtures"
+    shutil.copytree(fixtures, fixtures_copy,
+                    ignore=shutil.ignore_patterns("cases", "consumer-base", "*.json"))
+    workspace = tmp / "workspace"
+    shutil.copytree(consumer, workspace)
+    # Cargo's local-registry source needs one directory holding the sparse
+    # index under index/ and the .crate files flat at the root. The committed
+    # corpus stores those pieces separately (registry/index/ carries the
+    # index; consumer-mirror/ carries the byte-identical flat .crate mirror),
+    # so the replay assembles the working copy from them — artifacts stay
+    # committed and digest-verified, the merge is temp-scope only.
+    index_src = fixtures / "registry" / "index"
+    local_reg = fixtures_copy / "local-registry"
+    shutil.copytree(index_src, local_reg / "index")
+    shutil.copy2(index_src / "config.json", local_reg / "config.json")
+    for crate in sorted((fixtures_copy / "consumer-mirror").glob("*.crate")):
+        shutil.copy2(crate, local_reg / crate.name)
+    (workspace / ".cargo").mkdir(exist_ok=True)
+    (workspace / ".cargo" / "config.toml").write_text(
+        '[source.crates-io]\nreplace-with = "wild-lr"\n\n'
+        f'[source.wild-lr]\nlocal-registry = "{local_reg}"\n', encoding="utf-8")
+    home = _cargo_home(tmp)
+    target = case["target"]
+    phase = phase_spec["phase"]
+    evidence: dict = {"requested": phase_spec.get("requested", target),
+                      "migration_applied": False, "without_migration": None}
+
+    def classify(update_result, build_result=None, test_result=None) -> str:
+        if update_result is not None and update_result.returncode != 0:
+            return "resolution-conflict" if phase == "authorized" else "resolved"
+        if phase == "no-update":
+            selected = _lock_dept_version(workspace) or "none"
+            evidence["selected"] = selected
+            if selected != evidence["requested"]:
+                return "resolved-but-selected-target-mismatch"
+            return "resolved-and-selected-target-matches"
+        if build_result is not None and build_result.returncode != 0:
+            return "resolved-then-consumer-build-failed"
+        if test_result is not None and test_result.returncode != 0:
+            return "resolved-then-consumer-tests-failed"
+        return "resolved-and-consumer-tests-passed"
+
+    if phase == "original-range":
+        result = _cargo(["cargo", "update", "--package", "dept", "--precise", target,
+                          "--offline"], workspace, home)
+        observed = "resolution-refused-by-range" if result.returncode != 0 else "resolved"
+    elif phase == "baseline":
+        # Baseline is the pre-update state: the committed lockfile pins the
+        # original version, so no cargo update may run — updating here would
+        # silently turn the baseline into an unauthorized update.
+        tests = _cargo(["cargo", "test", "--offline"], workspace, home)
+        observed = "baseline-tests-passed" if tests.returncode == 0 else "baseline-tests-failed"
+    elif phase == "no-update":
+        build = _cargo(["cargo", "build", "--offline"], workspace, home)
+        observed = classify(None, build_result=build)
+    else:  # authorized
+        _pin_dept(workspace, target)
+        update = _cargo(["cargo", "update", "--offline"], workspace, home)
+        migration_rel = phase_spec.get("migration")
+        if update.returncode != 0:
+            observed = "resolution-conflict"
+        else:
+            build = _cargo(["cargo", "build", "--offline"], workspace, home)
+            if migration_rel:
+                pre = _cargo(["cargo", "test", "--offline"], workspace, home)
+                evidence["without_migration"] = classify(
+                    None, build_result=build, test_result=pre)
+                migration_src = fixtures / migration_rel
+                shutil.copy2(migration_src, workspace / phase_spec["migration_target"])
+                evidence["migration_applied"] = True
+                build = _cargo(["cargo", "build", "--offline"], workspace, home)
+            tests = _cargo(["cargo", "test", "--offline"], workspace, home)
+            observed = classify(None, build_result=build, test_result=tests)
+
+    evidence["lock_dept_version"] = _lock_dept_version(workspace)
+    evidence["combined_output"] = (result.stdout + result.stderr) if phase == "original-range" else (
+        (update.stdout + update.stderr) if phase == "authorized" else
+        (build.stdout + build.stderr) if phase == "no-update" else
+        (tests.stdout + tests.stderr) if phase == "baseline" else "")
+    return {"observed_outcome": observed, "evidence": evidence}
+
+
+def cmd_replay(args: argparse.Namespace) -> int:
+    import shutil
+    import tempfile
+
+    fixtures = Path(args.fixtures)
+    errors = RecordErrors()
+    manifest = _replay_verify_manifest(fixtures, errors)
+    if not errors.ok:
+        print(f"replay refused: invalid fixture corpus ({len(errors.items)} error(s)):", file=sys.stderr)
+        print(errors.report(), file=sys.stderr)
+        return 1
+    cases = {c["id"]: c for c in manifest["cases"]}
+
+    if args.expect_only:
+        wanted = [cid for cid in cases
+                  if (args.case and cid == args.case)
+                  or (args.split and cases[cid].get("consumer") and
+                      cases[cid]["id"] in manifest["split"].get(args.split, []))]
+        report = {"record_type": "replay_report", "schema_version": SCHEMA_VERSION,
+                  "cases": {}}
+        invalid = 0
+        for cid in wanted:
+            case = cases[cid]
+            problems: list[str] = []
+            if not (fixtures / case.get("consumer", "consumer-base")).is_dir():
+                problems.append(f"missing consumer tree {case['consumer']}")
+            for spec in case["phases"]:
+                if spec["expected_outcome"] not in KNOWN_OUTCOMES:
+                    problems.append(f"unknown expected outcome {spec['expected_outcome']}")
+                if spec.get("migration") and not (fixtures / spec["migration"]).is_file():
+                    problems.append(f"missing migration {spec['migration']}")
+            report["cases"][cid] = {"expectation_valid": not problems,
+                                     "problems": problems}
+            invalid += bool(problems)
+        text = json.dumps(report, indent=2, sort_keys=True)
+        (print(text) if (args.output or "-") == "-" else Path(args.output).write_text(text + "\n"))
+        return 1 if invalid else 0
+
+    if not args.case:
+        print("replay requires --case (or --split with --expect-only)", file=sys.stderr)
+        return 2
+    case = cases.get(args.case)
+    if case is None:
+        print(f"unknown case {args.case!r}", file=sys.stderr)
+        return 2
+    phase_spec = next((p for p in case["phases"] if p["phase"] == args.phase), None)
+    if phase_spec is None:
+        print(f"case {args.case!r} has no phase {args.phase!r}", file=sys.stderr)
+        return 2
+    with tempfile.TemporaryDirectory(prefix="wild-replay-") as raw:
+        tmp = Path(raw)
+        outcome = _replay_phase(fixtures, case, phase_spec, tmp)
+    record = {
+        "record_type": "replay_record",
+        "schema_version": SCHEMA_VERSION,
+        "case_id": case["id"],
+        "phase": args.phase,
+        "expected_outcome": phase_spec["expected_outcome"],
+        "observed_outcome": outcome["observed_outcome"],
+        "match": outcome["observed_outcome"] == phase_spec["expected_outcome"],
+        "independent_verdict": case["independent_verdict"],
+        "origin": case["origin"],
+        "evidence": outcome["evidence"],
+    }
+    print(json.dumps(record, indent=2, sort_keys=True))
+    return 0 if record["match"] else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="update_eval.py", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -456,6 +702,16 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--protocol", required=True)
     p_run.add_argument("--output", required=True)
     p_run.set_defaults(func=cmd_run)
+
+    p_replay = sub.add_parser("replay", help="replay e5 fixture cases through real Cargo")
+    p_replay.add_argument("--fixtures", required=True)
+    p_replay.add_argument("--case")
+    p_replay.add_argument("--phase", help="which committed phase to replay")
+    p_replay.add_argument("--split", help="with --expect-only: structurally validate a split")
+    p_replay.add_argument("--expect-only", action="store_true",
+                          help="validate replayable expectations without executing cargo")
+    p_replay.add_argument("--output", default="-")
+    p_replay.set_defaults(func=cmd_replay)
 
     args = parser.parse_args(argv)
     return args.func(args)

@@ -1,0 +1,678 @@
+{
+  "artifacts": [
+    {
+      "path": "cases/baseline-failure/consumer/.gitignore",
+      "role": "e5 fixture artifact",
+      "sha256": "b53ee26e6ff1da219b0563333a76d2c9ec19eec713d6ee54e11a1edacb0e9f3d"
+    },
+    {
+      "path": "cases/baseline-failure/consumer/Cargo.lock",
+      "role": "e5 fixture artifact",
+      "sha256": "1950c5bcf0c33bb5f9906a419ce8820765f3e3fb607d1e714dbcdb566b439118"
+    },
+    {
+      "path": "cases/baseline-failure/consumer/Cargo.toml",
+      "role": "e5 fixture artifact",
+      "sha256": "36c8f8d605f98f9a1ed15b8e25fa60de417fdd29cc9655697c35623d74cbb40b"
+    },
+    {
+      "path": "cases/baseline-failure/consumer/src/main.rs",
+      "role": "e5 fixture artifact",
+      "sha256": "6706e6933e75ba828a540b2a1394d63730f73bad5b0dbd751a01d486b7d05de6"
+    },
+    {
+      "path": "cases/baseline-failure/consumer/tests/farewell.rs",
+      "role": "e5 fixture artifact",
+      "sha256": "a490eca3f65ebbb3c46d31b465444824fd5cdddb9d7b54fb72128892d59b2229"
+    },
+    {
+      "path": "cases/cell-excluded-compatible-major/consumer/.gitignore",
+      "role": "e5 fixture artifact",
+      "sha256": "b53ee26e6ff1da219b0563333a76d2c9ec19eec713d6ee54e11a1edacb0e9f3d"
+    },
+    {
+      "path": "cases/cell-excluded-compatible-major/consumer/Cargo.lock",
+      "role": "e5 fixture artifact",
+      "sha256": "1950c5bcf0c33bb5f9906a419ce8820765f3e3fb607d1e714dbcdb566b439118"
+    },
+    {
+      "path": "cases/cell-excluded-compatible-major/consumer/Cargo.toml",
+      "role": "e5 fixture artifact",
+      "sha256": "36c8f8d605f98f9a1ed15b8e25fa60de417fdd29cc9655697c35623d74cbb40b"
+    },
+    {
+      "path": "cases/cell-excluded-compatible-major/consumer/src/main.rs",
+      "role": "e5 fixture artifact",
+      "sha256": "1b1047d0e5c1b1b99a2bfbc72332c7251153169f5c44ee8da40f70eea8cce220"
+    },
+    {
+      "path": "cases/cell-excluded-compatible-major/consumer/tests/greet.rs",
+      "role": "e5 fixture artifact",
+      "sha256": "711e166800fdc8e7422f8c02991921c40e39469c70f6c48b939ad8591f6e970a"
+    },
+    {
+      "path": "cases/dynamic-usage-unresolved/consumer/.gitignore",
+      "role": "e5 fixture artifact",
+      "sha256": "b53ee26e6ff1da219b0563333a76d2c9ec19eec713d6ee54e11a1edacb0e9f3d"
+    },
+    {
+      "path": "cases/dynamic-usage-unresolved/consumer/Cargo.lock",
+      "role": "e5 fixture artifact",
+      "sha256": "1950c5bcf0c33bb5f9906a419ce8820765f3e3fb607d1e714dbcdb566b439118"
+    },
+    {
+      "path": "cases/dynamic-usage-unresolved/consumer/Cargo.toml",
+      "role": "e5 fixture artifact",
+      "sha256": "36c8f8d605f98f9a1ed15b8e25fa60de417fdd29cc9655697c35623d74cbb40b"
+    },
+    {
+      "path": "cases/dynamic-usage-unresolved/consumer/src/main.rs",
+      "role": "e5 fixture artifact",
+      "sha256": "6706e6933e75ba828a540b2a1394d63730f73bad5b0dbd751a01d486b7d05de6"
+    },
+    {
+      "path": "cases/dynamic-usage-unresolved/consumer/tests/dynamic.rs",
+      "role": "e5 fixture artifact",
+      "sha256": "c8ee3135114578e49cc7484c0bbfe4572f3dfa8eb534081ddd0f24950088c6ae"
+    },
+    {
+      "path": "cases/dynamic-usage-unresolved/consumer/tests/farewell.rs",
+      "role": "e5 fixture artifact",
+      "sha256": "878e111808619ea8c5234e22404af22a62727d541cfb6b523a38aab36fd0c06d"
+    },
+    {
+      "path": "cases/intent-change/consumer/.gitignore",
+      "role": "e5 fixture artifact",
+      "sha256": "b53ee26e6ff1da219b0563333a76d2c9ec19eec713d6ee54e11a1edacb0e9f3d"
+    },
+    {
+      "path": "cases/intent-change/consumer/Cargo.lock",
+      "role": "e5 fixture artifact",
+      "sha256": "1950c5bcf0c33bb5f9906a419ce8820765f3e3fb607d1e714dbcdb566b439118"
+    },
+    {
+      "path": "cases/intent-change/consumer/Cargo.toml",
+      "role": "e5 fixture artifact",
+      "sha256": "36c8f8d605f98f9a1ed15b8e25fa60de417fdd29cc9655697c35623d74cbb40b"
+    },
+    {
+      "path": "cases/intent-change/consumer/src/main.rs",
+      "role": "e5 fixture artifact",
+      "sha256": "6706e6933e75ba828a540b2a1394d63730f73bad5b0dbd751a01d486b7d05de6"
+    },
+    {
+      "path": "cases/intent-change/consumer/tests/farewell.rs",
+      "role": "e5 fixture artifact",
+      "sha256": "63fea3006e62d31265a76068f43383e93017170b21ae309c6c59f70ec165eb6f"
+    },
+    {
+      "path": "cases/migration-supplied/consumer/.gitignore",
+      "role": "e5 fixture artifact",
+      "sha256": "b53ee26e6ff1da219b0563333a76d2c9ec19eec713d6ee54e11a1edacb0e9f3d"
+    },
+    {
+      "path": "cases/migration-supplied/consumer/Cargo.lock",
+      "role": "e5 fixture artifact",
+      "sha256": "1950c5bcf0c33bb5f9906a419ce8820765f3e3fb607d1e714dbcdb566b439118"
+    },
+    {
+      "path": "cases/migration-supplied/consumer/Cargo.toml",
+      "role": "e5 fixture artifact",
+      "sha256": "36c8f8d605f98f9a1ed15b8e25fa60de417fdd29cc9655697c35623d74cbb40b"
+    },
+    {
+      "path": "cases/migration-supplied/consumer/migration/farewell.rs.v2",
+      "role": "e5 fixture artifact",
+      "sha256": "4f6d1f428247861cfc4e6986024e6d1bf210c95fc0fd6e37697bc5e8f9fa8aee"
+    },
+    {
+      "path": "cases/migration-supplied/consumer/src/main.rs",
+      "role": "e5 fixture artifact",
+      "sha256": "6706e6933e75ba828a540b2a1394d63730f73bad5b0dbd751a01d486b7d05de6"
+    },
+    {
+      "path": "cases/migration-supplied/consumer/tests/farewell.rs",
+      "role": "e5 fixture artifact",
+      "sha256": "878e111808619ea8c5234e22404af22a62727d541cfb6b523a38aab36fd0c06d"
+    },
+    {
+      "path": "cases/singleton-conflict/consumer/.gitignore",
+      "role": "e5 fixture artifact",
+      "sha256": "b53ee26e6ff1da219b0563333a76d2c9ec19eec713d6ee54e11a1edacb0e9f3d"
+    },
+    {
+      "path": "cases/singleton-conflict/consumer/Cargo.lock",
+      "role": "e5 fixture artifact",
+      "sha256": "1950c5bcf0c33bb5f9906a419ce8820765f3e3fb607d1e714dbcdb566b439118"
+    },
+    {
+      "path": "cases/singleton-conflict/consumer/Cargo.toml",
+      "role": "e5 fixture artifact",
+      "sha256": "840c99c8a7202a8a23fff0ac96bd66aaa2edf1ae7be6173d1f8f88d72772940a"
+    },
+    {
+      "path": "cases/singleton-conflict/consumer/src/main.rs",
+      "role": "e5 fixture artifact",
+      "sha256": "6706e6933e75ba828a540b2a1394d63730f73bad5b0dbd751a01d486b7d05de6"
+    },
+    {
+      "path": "cases/singleton-conflict/consumer/tests/farewell.rs",
+      "role": "e5 fixture artifact",
+      "sha256": "878e111808619ea8c5234e22404af22a62727d541cfb6b523a38aab36fd0c06d"
+    },
+    {
+      "path": "consumer-base/.gitignore",
+      "role": "e5 fixture artifact",
+      "sha256": "b53ee26e6ff1da219b0563333a76d2c9ec19eec713d6ee54e11a1edacb0e9f3d"
+    },
+    {
+      "path": "consumer-base/Cargo.lock",
+      "role": "e5 fixture artifact",
+      "sha256": "1950c5bcf0c33bb5f9906a419ce8820765f3e3fb607d1e714dbcdb566b439118"
+    },
+    {
+      "path": "consumer-base/Cargo.toml",
+      "role": "e5 fixture artifact",
+      "sha256": "36c8f8d605f98f9a1ed15b8e25fa60de417fdd29cc9655697c35623d74cbb40b"
+    },
+    {
+      "path": "consumer-base/src/main.rs",
+      "role": "e5 fixture artifact",
+      "sha256": "6706e6933e75ba828a540b2a1394d63730f73bad5b0dbd751a01d486b7d05de6"
+    },
+    {
+      "path": "consumer-base/tests/farewell.rs",
+      "role": "e5 fixture artifact",
+      "sha256": "878e111808619ea8c5234e22404af22a62727d541cfb6b523a38aab36fd0c06d"
+    },
+    {
+      "path": "consumer-mirror/dept-1.2.3.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "396fb8791f60c90c61f6ceb8242f0c4dbf2b6b22801fc1d167c1b2b7664877de"
+    },
+    {
+      "path": "consumer-mirror/dept-1.2.4.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "15c4f2767ad220a7cca1ae4dbea5803ae5b833179382bc4fd34ae028d25a7ab7"
+    },
+    {
+      "path": "consumer-mirror/dept-1.2.5.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "64ea15f02b646e0aedc06e72d1bccfd9622150cafe7b7d6c6681316d007402a4"
+    },
+    {
+      "path": "consumer-mirror/dept-1.7.0.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "e24ac755bdfb086925c3e143e7c4cb6ef2eef50c72fe158ca0d031f54e5a5b9b"
+    },
+    {
+      "path": "consumer-mirror/dept-1.8.0.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "99254589406752cf17a952e83d85b56c3a2c485f568167892bbd259e6a6645b1"
+    },
+    {
+      "path": "consumer-mirror/dept-1.9.0.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "7a3a4d14e7d48932f4c0f080fe943c344b94b45d47fd23f15d5ea62e2abe11a1"
+    },
+    {
+      "path": "consumer-mirror/dept-2.0.0.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "b25dfde32d218677a0c999c5d3adb90c2fbd11133a2c4a51e468f10347ebad59"
+    },
+    {
+      "path": "consumer-mirror/dept-2.1.0.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "1faadc9e6529e843369477797d3a276e57b66332ffdcb23490186fc1a7a5fdaf"
+    },
+    {
+      "path": "consumer-mirror/dept-3.0.0.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "a4019171a98da0ce0129bf10766b61a4bf643b19f2671c2d9ff88bebfb86998f"
+    },
+    {
+      "path": "consumer-mirror/deputil-1.0.0.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "162ab42df6c1455b5d7d227ec5e4c5e631da55299291903c7057b79934f78c2d"
+    },
+    {
+      "path": "consumer-mirror/deputil-2.0.0.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "2c3d9a482e91a0994880275f4f440c9660f4082af4fcda5f4aa95ca72f37953b"
+    },
+    {
+      "path": "registry/index/config.json",
+      "role": "e5 fixture artifact",
+      "sha256": "da0bad04241c77bc3aa4ece5b42bf2b499c65fd74ca9e24ec1ce01ecf09b136b"
+    },
+    {
+      "path": "registry/index/de/pt/dept",
+      "role": "e5 fixture artifact",
+      "sha256": "434d467bb42db1e35f71b386a370c80fa8233aa6eb7e8afe770f7db39d0e5e38"
+    },
+    {
+      "path": "registry/index/de/pu/deputil",
+      "role": "e5 fixture artifact",
+      "sha256": "b40c68457469777e9a61d154e222fcd5712116fda7970d669e2487495aacc599"
+    },
+    {
+      "path": "registry/index/dept/1.2.3/dept-1.2.3.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "396fb8791f60c90c61f6ceb8242f0c4dbf2b6b22801fc1d167c1b2b7664877de"
+    },
+    {
+      "path": "registry/index/dept/1.2.4/dept-1.2.4.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "15c4f2767ad220a7cca1ae4dbea5803ae5b833179382bc4fd34ae028d25a7ab7"
+    },
+    {
+      "path": "registry/index/dept/1.2.5/dept-1.2.5.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "64ea15f02b646e0aedc06e72d1bccfd9622150cafe7b7d6c6681316d007402a4"
+    },
+    {
+      "path": "registry/index/dept/1.7.0/dept-1.7.0.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "e24ac755bdfb086925c3e143e7c4cb6ef2eef50c72fe158ca0d031f54e5a5b9b"
+    },
+    {
+      "path": "registry/index/dept/1.8.0/dept-1.8.0.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "99254589406752cf17a952e83d85b56c3a2c485f568167892bbd259e6a6645b1"
+    },
+    {
+      "path": "registry/index/dept/1.9.0/dept-1.9.0.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "7a3a4d14e7d48932f4c0f080fe943c344b94b45d47fd23f15d5ea62e2abe11a1"
+    },
+    {
+      "path": "registry/index/dept/2.0.0/dept-2.0.0.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "b25dfde32d218677a0c999c5d3adb90c2fbd11133a2c4a51e468f10347ebad59"
+    },
+    {
+      "path": "registry/index/dept/2.1.0/dept-2.1.0.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "1faadc9e6529e843369477797d3a276e57b66332ffdcb23490186fc1a7a5fdaf"
+    },
+    {
+      "path": "registry/index/dept/3.0.0/dept-3.0.0.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "a4019171a98da0ce0129bf10766b61a4bf643b19f2671c2d9ff88bebfb86998f"
+    },
+    {
+      "path": "registry/index/deputil/1.0.0/deputil-1.0.0.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "162ab42df6c1455b5d7d227ec5e4c5e631da55299291903c7057b79934f78c2d"
+    },
+    {
+      "path": "registry/index/deputil/2.0.0/deputil-2.0.0.crate",
+      "role": "e5 fixture artifact",
+      "sha256": "aac8ec5d577e87dc785e2f4da6392230786c8df63ff8f3fbe25f2900bfee225f"
+    }
+  ],
+  "cases": [
+    {
+      "bootstrap_lineage": "cargo-major-excluded-compatible",
+      "class": "native-range-refusal",
+      "consumer": "cases/cell-excluded-compatible-major/consumer",
+      "expected_checker_outcome": "not-applicable",
+      "feasible_target": {
+        "basis": "release exists in the frozen catalog",
+        "flag": true
+      },
+      "id": "cell-excluded-compatible-major",
+      "independent_verdict": "compatible",
+      "non_compatibility_constraints": [],
+      "oracle_can_adjudicate": false,
+      "origin": "synthetic",
+      "phases": [
+        {
+          "authority": "none",
+          "expected_outcome": "resolution-refused-by-range",
+          "phase": "original-range"
+        },
+        {
+          "authority": "manifest-edit",
+          "expected_outcome": "resolved-and-consumer-tests-passed",
+          "phase": "authorized"
+        }
+      ],
+      "split": "development",
+      "tags": [],
+      "target": "2.0.0"
+    },
+    {
+      "bootstrap_lineage": "cargo-patch-permitted-incompatible",
+      "class": "native-consumer-breakage",
+      "consumer": "consumer-base",
+      "expected_checker_outcome": "not-applicable",
+      "feasible_target": {
+        "basis": "release exists in the frozen catalog",
+        "flag": true
+      },
+      "id": "cell-allowed-incompatible-patch",
+      "independent_verdict": "incompatible",
+      "non_compatibility_constraints": [],
+      "oracle_can_adjudicate": false,
+      "origin": "synthetic",
+      "phases": [
+        {
+          "authority": "manifest-edit",
+          "expected_outcome": "resolved-then-consumer-tests-failed",
+          "phase": "authorized"
+        }
+      ],
+      "split": "development",
+      "tags": [],
+      "target": "1.2.4"
+    },
+    {
+      "class": "native-ordinary-update",
+      "consumer": "consumer-base",
+      "expected_checker_outcome": "not-applicable",
+      "feasible_target": {
+        "basis": "release exists in the frozen catalog",
+        "flag": true
+      },
+      "id": "cell-allowed-compatible-update",
+      "independent_verdict": "compatible",
+      "non_compatibility_constraints": [],
+      "oracle_can_adjudicate": false,
+      "origin": "synthetic",
+      "phases": [
+        {
+          "authority": "manifest-edit",
+          "expected_outcome": "resolved-and-consumer-tests-passed",
+          "phase": "authorized"
+        }
+      ],
+      "split": "development",
+      "tags": [],
+      "target": "1.2.5"
+    },
+    {
+      "class": "native-range-refusal",
+      "consumer": "consumer-base",
+      "expected_checker_outcome": "not-applicable",
+      "feasible_target": {
+        "basis": "release exists in the frozen catalog",
+        "flag": true
+      },
+      "id": "cell-excluded-incompatible-major",
+      "independent_verdict": "incompatible",
+      "non_compatibility_constraints": [],
+      "oracle_can_adjudicate": false,
+      "origin": "synthetic",
+      "phases": [
+        {
+          "authority": "none",
+          "expected_outcome": "resolution-refused-by-range",
+          "phase": "original-range"
+        },
+        {
+          "authority": "manifest-edit",
+          "expected_outcome": "resolved-then-consumer-build-failed",
+          "phase": "authorized"
+        }
+      ],
+      "split": "development",
+      "tags": [],
+      "target": "3.0.0"
+    },
+    {
+      "class": "transitive-addition",
+      "consumer": "consumer-base",
+      "expected_checker_outcome": "not-applicable",
+      "feasible_target": {
+        "basis": "release exists in the frozen catalog",
+        "flag": true
+      },
+      "id": "transitive-addition",
+      "independent_verdict": "compatible",
+      "non_compatibility_constraints": [],
+      "oracle_can_adjudicate": false,
+      "origin": "synthetic",
+      "phases": [
+        {
+          "authority": "manifest-edit",
+          "expected_outcome": "resolved-and-consumer-tests-passed",
+          "phase": "authorized"
+        }
+      ],
+      "split": "evaluation",
+      "tags": [
+        "transitive"
+      ],
+      "target": "1.9.0"
+    },
+    {
+      "class": "singleton-conflict",
+      "consumer": "cases/singleton-conflict/consumer",
+      "expected_checker_outcome": "not-applicable",
+      "feasible_target": {
+        "basis": "release exists in the frozen catalog",
+        "flag": true
+      },
+      "id": "singleton-conflict",
+      "independent_verdict": "unresolved",
+      "non_compatibility_constraints": [],
+      "oracle_can_adjudicate": false,
+      "origin": "synthetic",
+      "phases": [
+        {
+          "authority": "manifest-edit",
+          "expected_outcome": "resolution-conflict",
+          "phase": "authorized"
+        }
+      ],
+      "split": "evaluation",
+      "tags": [
+        "singleton"
+      ],
+      "target": "1.9.0"
+    },
+    {
+      "class": "platform-ineligibility",
+      "consumer": "consumer-base",
+      "expected_checker_outcome": "not-applicable",
+      "feasible_target": {
+        "basis": "release exists in the frozen catalog",
+        "flag": true
+      },
+      "id": "platform-ineligibility",
+      "independent_verdict": "incompatible",
+      "non_compatibility_constraints": [],
+      "oracle_can_adjudicate": false,
+      "origin": "synthetic",
+      "phases": [
+        {
+          "authority": "manifest-edit",
+          "expected_outcome": "resolved-then-consumer-build-failed",
+          "phase": "authorized"
+        }
+      ],
+      "split": "evaluation",
+      "tags": [
+        "runtime",
+        "platform"
+      ],
+      "target": "1.8.0"
+    },
+    {
+      "class": "dynamic-usage-unresolved",
+      "consumer": "consumer-base",
+      "expected_checker_outcome": "unknown",
+      "feasible_target": {
+        "basis": "release exists in the frozen catalog",
+        "flag": true
+      },
+      "id": "dynamic-usage-unresolved",
+      "independent_verdict": "unresolved",
+      "non_compatibility_constraints": [],
+      "oracle_can_adjudicate": true,
+      "origin": "synthetic",
+      "phases": [
+        {
+          "authority": "manifest-edit",
+          "expected_outcome": "resolved-and-consumer-tests-passed",
+          "phase": "authorized"
+        }
+      ],
+      "split": "evaluation",
+      "tags": [
+        "dynamic"
+      ],
+      "target": "1.7.0"
+    },
+    {
+      "class": "wrong-target-selection",
+      "consumer": "consumer-base",
+      "expected_checker_outcome": "not-applicable",
+      "feasible_target": {
+        "basis": "release exists in the frozen catalog",
+        "flag": true
+      },
+      "id": "wrong-target-selection",
+      "independent_verdict": "unresolved",
+      "non_compatibility_constraints": [],
+      "oracle_can_adjudicate": false,
+      "origin": "synthetic",
+      "phases": [
+        {
+          "authority": "none",
+          "expected_outcome": "resolved-but-selected-target-mismatch",
+          "expected_selected": "1.2.3",
+          "phase": "no-update",
+          "requested": "1.2.5"
+        }
+      ],
+      "split": "evaluation",
+      "tags": [
+        "wrong-target"
+      ],
+      "target": "1.2.5"
+    },
+    {
+      "class": "baseline-failure",
+      "consumer": "cases/baseline-failure/consumer",
+      "expected_checker_outcome": "not-applicable",
+      "feasible_target": {
+        "basis": "release exists in the frozen catalog",
+        "flag": true
+      },
+      "id": "baseline-failure",
+      "independent_verdict": "unresolved",
+      "non_compatibility_constraints": [],
+      "oracle_can_adjudicate": false,
+      "origin": "synthetic",
+      "phases": [
+        {
+          "authority": "none",
+          "expected_outcome": "baseline-tests-failed",
+          "phase": "baseline"
+        }
+      ],
+      "split": "evaluation",
+      "tags": [
+        "baseline"
+      ],
+      "target": "1.2.3"
+    },
+    {
+      "class": "migration",
+      "consumer": "consumer-base",
+      "expected_checker_outcome": "not-applicable",
+      "feasible_target": {
+        "basis": "release exists in the frozen catalog",
+        "flag": true
+      },
+      "id": "migration-supplied",
+      "independent_verdict": "compatible",
+      "non_compatibility_constraints": [],
+      "oracle_can_adjudicate": false,
+      "origin": "synthetic",
+      "phases": [
+        {
+          "authority": "manifest-edit+migration",
+          "expected_outcome": "resolved-and-consumer-tests-passed",
+          "migration": "cases/migration-supplied/consumer/migration/farewell.rs.v2",
+          "migration_target": "tests/farewell.rs",
+          "phase": "authorized"
+        }
+      ],
+      "split": "evaluation",
+      "tags": [
+        "migration"
+      ],
+      "target": "2.1.0"
+    },
+    {
+      "class": "intent-change",
+      "consumer": "consumer-base",
+      "expected_checker_outcome": "not-applicable",
+      "feasible_target": {
+        "basis": "release exists in the frozen catalog",
+        "flag": true
+      },
+      "id": "intent-change",
+      "independent_verdict": "compatible",
+      "non_compatibility_constraints": [],
+      "oracle_can_adjudicate": false,
+      "origin": "synthetic",
+      "phases": [
+        {
+          "authority": "manifest-edit+intent",
+          "expected_outcome": "resolved-and-consumer-tests-passed",
+          "phase": "authorized"
+        }
+      ],
+      "split": "evaluation",
+      "tags": [
+        "intent-change"
+      ],
+      "target": "1.2.4"
+    }
+  ],
+  "catalog": {
+    "dept": [
+      "1.2.3",
+      "1.2.4",
+      "1.2.5",
+      "1.7.0",
+      "1.8.0",
+      "1.9.0",
+      "2.0.0",
+      "2.1.0",
+      "3.0.0"
+    ],
+    "deputil": [
+      "1.0.0",
+      "2.0.0"
+    ]
+  },
+  "note": "Full frozen E5 evaluation cohort (beads wild-aoq.2). Extends the wild-aoq.5 bootstrap corpus; never rewrites it. All cases are synthetic fixtures with independently specified expected outcomes established by real Cargo replay before any miner tuning.",
+  "schema": "wild-e5-cases-v1",
+  "split": {
+    "development": [
+      "cell-excluded-compatible-major",
+      "cell-allowed-incompatible-patch",
+      "cell-allowed-compatible-update",
+      "cell-excluded-incompatible-major"
+    ],
+    "evaluation": [
+      "transitive-addition",
+      "singleton-conflict",
+      "platform-ineligibility",
+      "dynamic-usage-unresolved",
+      "wrong-target-selection",
+      "baseline-failure",
+      "migration-supplied",
+      "intent-change"
+    ],
+    "policy": "never-tune-against-sealed"
+  },
+  "toolchain": {
+    "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)"
+  }
+}

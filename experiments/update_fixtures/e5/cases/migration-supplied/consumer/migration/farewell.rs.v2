@@ -1,0 +1,10 @@
+// Purpose: Supplied migration for the e5 migration case.
+// Responsibilities: Replace tests/farewell.rs so the consumer exercises
+//   dept 2.1.0's goodbye API after farewell's removal.
+// Rationale: The migration is committed as a raw artifact; replay applies
+//   it and proves it necessary (unpatched consumer fails) and sufficient
+//   (patched consumer passes).
+#[test]
+fn says_goodbye() {
+    assert!(dept::goodbye("consumer").contains("consumer"));
+}
