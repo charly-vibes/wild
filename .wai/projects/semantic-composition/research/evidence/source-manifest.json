@@ -1,0 +1,29 @@
+{
+  "wild_head": "60b860bc4a215f8a0825a21e3079b5afbaeee359",
+  "wild_status": " M experiments/update_eval.py\n M testaruda.toml\n?? .wai/projects/semantic-composition/\n?? cv/\n?? experiments/update_fixtures/e5/\n?? tests/test_update_fixture_replay.py\n",
+  "specodelic_head": "21f6f3feb1516f56dbb64edee180d710610b6290",
+  "specodelic_status": "",
+  "scope": "local working-tree source inspection, not a claim about release v0.7.0",
+  "sha256": {
+    "docs/wild-formats-v1.md": "1b7073eb6f3cc12551358289f11a92589ad8e4f6344907645af4a1598e1b468f",
+    "schemas/wild-v1.schema.json": "a5a72754077abf464cd855a4440c2bf498642869b43f340f3b2dac8851df5e6a",
+    "openspec/specs/wild-compose/spec.md": "103179f818c274b30131b6faec6705b706ba95767aded9343cff9bd5a2252566",
+    "openspec/specs/wild-core/spec.md": "38d13a21d49ac3a36d76621da8cca5123f83c3994c8d3539a4a777bc10610d26",
+    "openspec/specs/wild-tiers/spec.md": "ae4a5aabf388b1e5880f6de60a56305b6c94aad062dfe8bd4bd95ce8022c4c12",
+    "prototype/wild_sim.py": "e7dd17679cb239effde86e82d095f8e0e603bc6bd4fdc2fca4b2de68f042cc61",
+    "prototype/wild_cat_sim.py": "cae2e184c5ebb5cb3e82095196304f8c5f08f7cf2d9e0f85ebd8b48b4777d2f8",
+    "tests/test_spec_corpus.py": "cd266e54116074589629180ddb47b070dcb71151363c1dfaef115dc56418aada",
+    "tests/test_prototype_smoke.py": "d1ea019a6279e2654c1e658b80087fd748d86551fa0e79823e6c8a037e20043a",
+    "openspec/changes/add-local-contract-checking/design.md": "754bfc5298a9deeac15dfec077b072df9c5ac210892bffbf39fa042e5066b1cf",
+    "experiments/update_eval.py": "b08f515d03fca4714fb37047d5d64c12c7e2d53e5d1e34a344c5614f15308780",
+    ".wai/projects/semantic-composition/research/evidence/sources/semantic-assessment.md": "e6f4031b3cce0ba1e8bf6eabdff3692f0620e2542f8ee09338e7abaecd7db7a7",
+    ".wai/projects/semantic-composition/research/evidence/sources/hierarchical-assessment.md": "8a08251b54f835a75cc02823f3139aa2cf3af80e3d37322ed2e3583ae09440fe",
+    ".wai/projects/semantic-composition/research/evidence/sources/followup-prompt.md": "e35e59ccfb8063b0534560009f773464a1d9d261185568057957ec62517a40dc",
+    ".wai/projects/semantic-composition/research/evidence/sources/original-manifest.yaml": "2196fb9a8c517857526458e51c43351ad4e59a1786a2e311f83cebdf6da7f254",
+    "cv/wild-phase7-8-docs.zip": "ba502ea8062b88ff8a3f53ac2491aef74a82e29862178b86ce008946d89adee5",
+    "../specodelic/src/kernel.rs": "48d68302a6d8dfc46f060781949b56a01e5d44dcedfb8c52671f7caa53fa440e",
+    "../specodelic/src/compile.rs": "baa36d2cea8bbd248910069ee7b74a90ce6b4af9eb255e3fb37a2b807be4d981",
+    "../specodelic/tests/kernel_binding.rs": "150ef020809fbaaa86b3071ed6fa2183d4f132d3e5f3ee514791ed16aa2bd63a",
+    "../specodelic/specs/compile.md": "d2191bda7c1846c34ef8eccb2f6891c56f5eace1f732b4caaf919f58ca643e8b"
+  }
+}

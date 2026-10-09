@@ -1,0 +1,90 @@
+{
+  "model": "jev-latest",
+  "state": {
+    "artifact": {
+      "investigation-baseline.md": "# Investigation baseline \u2014 before Rule-of-5 refinement\n\nThis is a frozen summary of the preceding discussion, not a new normative spec.\n\n## Scope\n\nThe semantic report proposes a supported translation from Specodelic obligations to Wild laws, with independent observation/harness evidence. The hierarchical report proposes comparing manual wrappers, first-class composites, and flattening-only assemblies. Wild already specifies structural composition but does not give assemblies a recursive public contract.\n\n## Semantic connection\n\nWild laws carry an id, suite digest, and slot scope. A translation must give Specodelic obligations executable meaning; copying prose to a law identifier only preserves traceability. The pending local-checking proposal already separates accepted obligations from mined facts and protects the base harness. The exact Specodelic executable subset has not yet been inspected locally in this investigation.\n\n## Hierarchy\n\nDistinguish assembly grouping, a reusable public component boundary, and deriving parent guarantees from children. Existing assembly composition is disjoint union with explicit renaming and bindings. The schema lacks public contract/export mapping fields.\n\n## Example\n\nA reservation coordinator and store expose hold, confirm, and expire. Replacing a store with unchanged signatures but weaker atomicity could allow both confirmation and expiration. Structural checks could pass; a parent behavioral check must detect the violation. Preserving external traces would be a successful replacement.\n\n## Recommendation\n\nStart with an authored wrapper boundary, check the internal assembly explicitly, and evaluate public laws independently. Hiding internals must not hide dependencies, singleton conflicts, or failed relations. An internal artifact change must trigger fresh behavioral evaluation even if the public contract is unchanged. Added metadata needs a separately versioned format.\n\n## Validation recorded in preceding discussion\n\nWild HEAD: 60b860bc4a215f8a0825a21e3079b5afbaeee359, with a dirty working tree. Twenty-two focused spec/prototype tests passed; one full category simulation test was deselected. Reduced category, 1,000-substitution, and ten-certificate studies passed within the toy model. No v1 runtime or cross-language pilot was executed.\n\n## Open decision\n\nShould hierarchy package and check an authored public contract, or derive it and its guarantees from the children? Tentative answer: authored first. No comparative case matrix, measurement thresholds, or concrete observation protocol was recorded in that discussion.\n",
+      "specodelic/src/kernel.rs": "//! The min-expr kernel \u2014 the decidable bounded logic over the acset\n//! instances I(k) (openspec change `add-min-expr-kernel`, beads\n//! specodelic-7ga, tasks.md \u00a73).\n//!\n//! Purpose: give the corpus's data-dependent cells \u2014 the equational and\n//! bounded-quantified ones that are prose-only \u2014 defined, decidable\n//! semantics. Responsibilities: the closed v0 atomic grammar (D1:\n//! `==`, comparisons, bounded \u2200/\u2203 over I(k), \u2227/\u00ac, and the\n//! reference-typed atomics `resolves`/`unique`/`acyclic`/`reachable`),\n//! row-typed parsing against the canonical schema (Schema-as-data), the\n//! grounding table mapping each atomic to its proven machinery (D1 \u2014\n//! an atomic without a grounding entry cannot ship), evaluation over a\n//! `KernelEnv` yielding the slice-1 `ThreeValued` status (reused from\n//! the citation algebra \u2014 never re-invented), the corpus claim pass\n//! (\u00a73.7: complete-corpus kernel evaluation plus `merge_corpus_statuses`,\n//! the ONE shared command-path identity/merge helper both command paths\n//! call \u2014 \u00a73.8 TIDY), and the predicate\n//! registry seam for later pack registration (D8's decidability gate \u2014\n//! nothing outside the v0 set registers here). Rationale: kernel\n//! semantics never outruns proven machinery \u2014 every atomic names its\n//! grounding (graph traversal, acset traversal, model_check bounded\n//! evaluation), so evaluation is total over finite instances and\n//! `unknown` stays honest (dl/1 Kleene absorb: unknown never coerces\n//! to pass).\n//!\n//! Grammar of record (v0, closed):\n//!\n//! ```text\n//! expr   := unary ('\u2227' unary)*\n//! unary  := '\u00ac' unary | primary\n//! primary:= '\u2200' var '\u2208' Object ':' expr\n//!         | '\u2203' var '\u2208' Object ':' expr\n//!         | '(' expr ')'\n//!         | 'resolves' '(' Morphism ')' | 'unique' '(' Morphism ')'\n//!         | 'acyclic' '(' Morphism ')'\n//!         | 'reachable' '(' Id ',' Id ',' Morphism ')'\n//!         | term ('==' | '<' | '<=' | '>' | '>=') term\n//! term   := '|' Object '|' | Int | '\u22a5' | var | Id | var '.' Morphism\n//! ```\n//!\n//! Opt-in boundary (pure widening): a cell opts in with the\n//! `**kernel:**` marker in fragment position (sd1 rule carried over:\n//! cell start or span-opening); anything else \u2014 prose, citation\n//! expressions, executable `**lang:**` fragments \u2014 stays exactly as\n//! before. The corpus's existing \u2200-led prose cells (specodelic.md's\n//! `unique_id`, merge.md's `no_new_id_collision`) carry no marker and\n//! compile byte-identically; they are phase 6's migration targets,\n//! not phase 3's.\n\nuse std::collections::BTreeMap;\n\nuse crate::acset::instance::Instance;\nuse crate::acset::query;\nuse crate::acset::schema::{self, Schema};\nuse crate::compile::{self, ThreeValued};\nuse crate::graph::kind_index;\nuse crate::spec::Spec;\n\n// ----------------------------------------------",
+      "specodelic/tests/kernel_binding.rs": "//! The opaque binding claim carrier \u2014 Tier C of add-min-expr-kernel\n//! (specodelic-bf5, tasks.md \u00a75.1 RED; design D4).\n//!\n//! `kernel.binding` extraction tests: an invariant-kind Constraint with a\n//! `kernel.binding` cell extracts the claim as an opaque string; the\n//! toolchain never interprets its contents (no parse, no validation, no\n//! execution); a constraint claimed by an external checker surfaces in\n//! contract-TOML `flags` binding shape (node id / `-k` /\n//! `[[tests.shell]]`) via the compiled Constraints TOML artifact. No\n//! registry \u2014 the carrier is the artifact surface and nothing more.\n//!\n//! Hard gate (tasks.md \u00a75.1): at least three fixtures preserve ordinary,\n//! arbitrary, and empty binding strings exactly.\n//!\n//! These live out-of-module as new integration tests (the ticket's\n//! preferred split; src/model_check.r"
+    },
+    "findings": [
+      {
+        "id": "DRAFT-001",
+        "location": "investigation-baseline.md / Open decision",
+        "claim": "The investigation has no comparative case matrix or measurement thresholds, so the authored-wrapper recommendation is not yet an evaluated choice.",
+        "evidence": "No comparative case matrix, measurement thresholds, or concrete observation protocol was recorded in that discussion."
+      },
+      {
+        "id": "CORR-001",
+        "location": "investigation-baseline.md / Semantic connection",
+        "claim": "The investigation leaves the Specodelic executable subset unresolved. Local kernel.rs defines evaluation over finite specification instances, and kernel_binding.rs describes an opaque carrier rather than execution; an application-observation mapping still needs to be specified.",
+        "evidence": "The exact Specodelic executable subset has not yet been inspected locally in this investigation."
+      },
+      {
+        "id": "CORR-002",
+        "location": "investigation-baseline.md / Recommendation",
+        "claim": "The recommendation requires reevaluation after internal artifact changes but does not specify how wrapper evidence commits to the internal assembly and its observation adapter. That evidence identity is still undefined in the investigation.",
+        "evidence": "An internal artifact change must trigger fresh behavioral evaluation even if the public contract is unchanged."
+      },
+      {
+        "id": "EDGE-001",
+        "location": "investigation-baseline.md / Recommendation",
+        "claim": "The investigation warns against hiding singleton conflicts but does not specify what happens when two wrappers share one internal singleton; identity-preserving sharing versus independent copies remains an unevaluated case.",
+        "evidence": "Hiding internals must not hide dependencies, singleton conflicts, or failed relations."
+      }
+    ]
+  },
+  "questions": {
+    "verify_DRAFT-001": {
+      "type": "choice",
+      "instructions": {
+        "finding": "`findings[0]`",
+        "question": "Does the `artifact` at the location named in `finding` contain evidence that supports `finding.claim`?"
+      },
+      "criteria": {
+        "verified": "The cited location contains evidence supporting the claim",
+        "unsupported": "The location exists but says nothing about the claim",
+        "contradicted": "The location's context says the opposite of the claim",
+        "fabricated": "The claim misrepresents what the location says"
+      }
+    },
+    "verify_CORR-001": {
+      "type": "choice",
+      "instructions": {
+        "finding": "`findings[1]`",
+        "question": "Does the `artifact` at the location named in `finding` contain evidence that supports `finding.claim`?"
+      },
+      "criteria": {
+        "verified": "The cited location contains evidence supporting the claim",
+        "unsupported": "The location exists but says nothing about the claim",
+        "contradicted": "The location's context says the opposite of the claim",
+        "fabricated": "The claim misrepresents what the location says"
+      }
+    },
+    "verify_CORR-002": {
+      "type": "choice",
+      "instructions": {
+        "finding": "`findings[2]`",
+        "question": "Does the `artifact` at the location named in `finding` contain evidence that supports `finding.claim`?"
+      },
+      "criteria": {
+        "verified": "The cited location contains evidence supporting the claim",
+        "unsupported": "The location exists but says nothing about the claim",
+        "contradicted": "The location's context says the opposite of the claim",
+        "fabricated": "The claim misrepresents what the location says"
+      }
+    },
+    "verify_EDGE-001": {
+      "type": "choice",
+      "instructions": {
+        "finding": "`findings[3]`",
+        "question": "Does the `artifact` at the location named in `finding` contain evidence that supports `finding.claim`?"
+      },
+      "criteria": {
+        "verified": "The cited location contains evidence supporting the claim",
+        "unsupported": "The location exists but says nothing about the claim",
+        "contradicted": "The location's context says the opposite of the claim",
+        "fabricated": "The claim misrepresents what the location says"
+      }
+    }
+  }
+}

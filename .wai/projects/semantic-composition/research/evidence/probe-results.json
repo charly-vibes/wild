@@ -1,0 +1,265 @@
+{
+  "scope": "toy checks and exhaustive six-schedule illustrative model",
+  "category": {
+    "states": 76,
+    "triples": 438976,
+    "reflexivity_failures": 0,
+    "transitivity_violations": 0,
+    "restriction_violations": 0,
+    "note": "per-name check; the relation is a conjunction over names, so it extends to many slots"
+  },
+  "substitution": {
+    "assemblies": 1000,
+    "global_ok": 323,
+    "global_unsound": 0,
+    "global_reject": 677,
+    "rescued": 145,
+    "scoped_unsound": 0,
+    "rescued_pct_of_rejections": 21.4
+  },
+  "certificates": {
+    "valid_accepted": 10,
+    "n": 10,
+    "bindings": 402,
+    "swap_total": 50,
+    "swap_false_accept": 0,
+    "swap_rejected": 20,
+    "swap_ok_still": 30,
+    "corrupt_total": 50,
+    "corrupt_rejected": 50,
+    "drop_total": 50,
+    "drop_rejected": 50,
+    "avg_bindings": 40.2
+  },
+  "same_shape_accretion": true,
+  "reservation": {
+    "initial_state": "held",
+    "schedules": 6,
+    "atomic_violations": 0,
+    "stale_violations": 4,
+    "rows": [
+      {
+        "schedule": [
+          [
+            "confirmed",
+            "read"
+          ],
+          [
+            "confirmed",
+            "commit"
+          ],
+          [
+            "expired",
+            "read"
+          ],
+          [
+            "expired",
+            "commit"
+          ]
+        ],
+        "atomic_trace": [
+          "confirmed"
+        ],
+        "stale_trace": [
+          "confirmed"
+        ],
+        "atomic_violation": false,
+        "stale_violation": false
+      },
+      {
+        "schedule": [
+          [
+            "confirmed",
+            "read"
+          ],
+          [
+            "expired",
+            "read"
+          ],
+          [
+            "confirmed",
+            "commit"
+          ],
+          [
+            "expired",
+            "commit"
+          ]
+        ],
+        "atomic_trace": [
+          "confirmed"
+        ],
+        "stale_trace": [
+          "confirmed",
+          "expired"
+        ],
+        "atomic_violation": false,
+        "stale_violation": true
+      },
+      {
+        "schedule": [
+          [
+            "confirmed",
+            "read"
+          ],
+          [
+            "expired",
+            "read"
+          ],
+          [
+            "expired",
+            "commit"
+          ],
+          [
+            "confirmed",
+            "commit"
+          ]
+        ],
+        "atomic_trace": [
+          "expired"
+        ],
+        "stale_trace": [
+          "expired",
+          "confirmed"
+        ],
+        "atomic_violation": false,
+        "stale_violation": true
+      },
+      {
+        "schedule": [
+          [
+            "expired",
+            "read"
+          ],
+          [
+            "confirmed",
+            "read"
+          ],
+          [
+            "confirmed",
+            "commit"
+          ],
+          [
+            "expired",
+            "commit"
+          ]
+        ],
+        "atomic_trace": [
+          "confirmed"
+        ],
+        "stale_trace": [
+          "confirmed",
+          "expired"
+        ],
+        "atomic_violation": false,
+        "stale_violation": true
+      },
+      {
+        "schedule": [
+          [
+            "expired",
+            "read"
+          ],
+          [
+            "confirmed",
+            "read"
+          ],
+          [
+            "expired",
+            "commit"
+          ],
+          [
+            "confirmed",
+            "commit"
+          ]
+        ],
+        "atomic_trace": [
+          "expired"
+        ],
+        "stale_trace": [
+          "expired",
+          "confirmed"
+        ],
+        "atomic_violation": false,
+        "stale_violation": true
+      },
+      {
+        "schedule": [
+          [
+            "expired",
+            "read"
+          ],
+          [
+            "expired",
+            "commit"
+          ],
+          [
+            "confirmed",
+            "read"
+          ],
+          [
+            "confirmed",
+            "commit"
+          ]
+        ],
+        "atomic_trace": [
+          "expired"
+        ],
+        "stale_trace": [
+          "expired"
+        ],
+        "atomic_violation": false,
+        "stale_violation": false
+      }
+    ]
+  },
+  "existing_behavior_cases": [
+    {
+      "id": "3b",
+      "case": "behaviour covered by a law",
+      "trace": "draft > extracted > identified > shape_checked > rejected@laws",
+      "why": "law timeout_ge_30 failed",
+      "consumers": {
+        "C": {
+          "tool": "protected",
+          "semver": "BROKEN"
+        }
+      }
+    },
+    {
+      "id": "3c",
+      "case": "undeclared ordering, no evidence",
+      "trace": "draft > extracted > identified > shape_checked > law_checked > published",
+      "why": "published",
+      "consumers": {
+        "C": {
+          "tool": "BROKEN",
+          "semver": "BROKEN"
+        }
+      }
+    },
+    {
+      "id": "3d",
+      "case": "undeclared ordering, canary replay",
+      "trace": "draft > extracted > identified > shape_checked > law_checked > published > observed > repair_draft",
+      "why": "evidence: ['order'] drifted",
+      "consumers": {
+        "C": {
+          "tool": "protected",
+          "semver": "BROKEN"
+        }
+      }
+    },
+    {
+      "id": "4c",
+      "case": "C uncontracted, B has no law",
+      "trace": "draft > extracted > identified > shape_checked > law_checked > published",
+      "why": "published",
+      "consumers": {
+        "App": {
+          "tool": "BROKEN",
+          "semver": "BROKEN"
+        }
+      }
+    }
+  ]
+}

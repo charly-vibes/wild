@@ -1,0 +1,19 @@
+artifact: wild-phase7-8-documentation
+generated_at: '2026-10-09'
+model: OpenAI GPT-6
+project: https://github.com/charly-vibes/wild
+upstream_branch: main
+upstream_commit: UNKNOWN
+upstream_release: unreleased
+method: primary-source web inspection
+independent_execution: false
+files:
+  - README.md
+  - FOLLOWUP_PROMPT.md
+  - manifest.yaml
+primary_sources:
+  - https://github.com/charly-vibes/wild/blob/main/README.md
+  - https://github.com/charly-vibes/wild/blob/main/docs/wild-manual.md
+  - https://github.com/charly-vibes/wild/blob/main/docs/wild-formats-v1.md
+  - https://github.com/charly-vibes/wild/blob/main/schemas/wild-v1.schema.json
+  - https://github.com/charly-vibes/wild/blob/main/experiments/RESULTS.md
