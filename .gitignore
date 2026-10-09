@@ -46,4 +46,5 @@ __pycache__/
 # devenv.sh state (see devenv.nix)
 .devenv/
 .devenv.flake.nix
+devenv.lock
 .direnv/
