@@ -1,0 +1,31 @@
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "verify_M-CORR-001-resolution": {
+      "type": "choice",
+      "choice": "verified",
+      "confidence": 1.0,
+      "probabilities": {
+        "verified": 1.0,
+        "unsupported": 0.0,
+        "contradicted": 0.0,
+        "fabricated": 0.0
+      }
+    },
+    "verify_M-CORR-002-resolution": {
+      "type": "choice",
+      "choice": "verified",
+      "confidence": 1.0,
+      "probabilities": {
+        "verified": 1.0,
+        "unsupported": 0.0,
+        "contradicted": 0.0,
+        "fabricated": 0.0
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 6479,
+    "output_tokens": 115
+  }
+}

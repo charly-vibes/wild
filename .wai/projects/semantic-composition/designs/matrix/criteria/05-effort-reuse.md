@@ -1,1 +1,1 @@
-Measure authoring effort, changed declarations, checks rerun, runtime and evidence bytes at equal correctness. Comparative benefit is currently unknown.
+Use the comparison protocol ledger: shared setup separately; arm setup, authoring, updates, review/repair, execution and exit per arm. Report raw costs and same-unit amortization over frozen B consumers and U updates, with separate cold/reused conditions. Unknown sunk costs are not zero.

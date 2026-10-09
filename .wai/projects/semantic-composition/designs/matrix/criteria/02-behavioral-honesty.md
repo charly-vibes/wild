@@ -1,1 +1,1 @@
-At equal oracle coverage, catch the same-shape negative cases and retain useful positive acceptance. Report method and unknown scope separately.
+Every required variant must match its frozen expected fields; supported positives must accept. Diagnostic unknown/refusal controls are distinct from missing execution. Use phase-specific denominators.

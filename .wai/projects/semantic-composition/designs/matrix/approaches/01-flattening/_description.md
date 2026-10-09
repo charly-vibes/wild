@@ -1,1 +1,1 @@
-H0: Explicit flat instance graph, with an experimental root boundary and the same independent oracle used in H1/H2.
+H0: Full flat assembly and experiment-only root mapping per consumer. Copy/templates and ordinary scripts permitted; submitted artifacts contain no reusable component-boundary reference. Evaluate against the common flat closure and oracle.

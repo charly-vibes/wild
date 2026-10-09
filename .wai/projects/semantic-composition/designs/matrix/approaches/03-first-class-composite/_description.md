@@ -1,1 +1,1 @@
-H2: A new explicit nested component representation with public boundaries, child commitments and specified flattening rules; no automatic S3 proof implied.
+H2: Experimental schema-native nested component boundaries and deterministic expansion to the same canonical flat closure. Entry needs a grammar/expander/adapter, not a successful H1 result; no automatic refinement proof.

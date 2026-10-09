@@ -1,11 +1,11 @@
 # Decision status
 
-Architecture selection: OPEN.
+Architecture selection: OPEN. Research protocol revision: 2, following the matrix review and the user's instruction to fix its findings.
 
-Research ordering: compare H0 flattening and H1 authored wrappers with the same S1 boundary oracle. H1 is a tentative candidate, not an adopted architecture. Keep H2 first-class composites and S2/S3 semantics in the matrix so their value can be evaluated without presuming it.
+Research ordering: P1 starts with H0/H1 using the same S1 oracle and S0 closure obligations. H2 may join when its experimental grammar and expander meet the same entry checks; H1 need not show a benefit first. P2 adds bounded cross-language interpretation; P3 adds supported assume–guarantee refinement.
 
-Promotion requires passing the applicable negative and positive cases, evidence tied to exact inputs, and an observable benefit at equal oracle coverage. The current six-schedule example demonstrates the need for behavioral checking but does not distinguish H0 from H1.
+C05 shared singleton identity and C07 exact evidence linkage are REQUIRED from P1 onward, no longer provisional. The pilot includes finite empty graphs, shared instances and dependency cycles at the structural level. Missing support for a required positive case prevents phase readiness. This is an experimental scope decision, not an adopted v1 extension.
 
-Open human judgment: whether exact composite evidence linkage and shared singleton identity must be hard conditions for the initial pilot, or remain later cases. Both are provisionally included; neither has been approved as a new normative protocol requirement.
+The [comparison protocol](../2026-10-09-comparison-protocol.md) governs phase applicability, treatment definitions, cost attribution and aggregation. Required controls must match frozen expectations before efficiency comparison. Readiness is distinct from adoption: selecting a representation also needs a preregistered practical benefit threshold. Incomplete results, unset thresholds or unresolved cost tradeoffs yield INCONCLUSIVE selection; retain the current architecture. The six-schedule probe does not select a representation.
 
-Beads: wild-9co. Related work: wild-mh5 (local checking), wild-nic (consumer updates), wild-aoq (evaluation infrastructure), wild-3rr (broad runtime conformance). No new dependency is imposed on those product slices by this research.
+Beads: wild-9co; corrections wild-9co.6. Product work wild-mh5/wild-nic/wild-aoq and runtime conformance wild-3rr remain independent. Future production protocol changes still use OpenSpec.
