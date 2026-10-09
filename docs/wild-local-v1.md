@@ -24,6 +24,10 @@ in [examples-local.json](../schemas/examples-local.json).
 | Extraction report | `extraction-report` | Profile id, `complete_inventory` flag, stable diagnostics (`incomplete-demand`, `unsupported-construct`, `input-mismatch`) |
 | Demand | `demand` | Ordered entries naming consumer crate, resolved callee, optional local alias, and the bound provider slot id |
 | Provenance | `provenance` | Bundle root, per-file raw digests, source locations for supported slots and demand sites |
+| Check request | `check-request` | Profile id, consumer scope, base and candidate bundle commitments (per-file sha256), target, toolchain, features, fixed policy literal, trusted obligations reference, checker identity, optional trusted transition record; every filesystem reference confined to the supplied bundles |
+| Check report | `check-report` | Consumer scope, policy, per-slot verdicts, obligation verdicts, obligation changes, transition echo, invocation commitment, per-side extraction summaries, disposition, decision, assurance, stable diagnostics |
+| Obligations document | `obligations` | Accepted and proposed obligation records: stable id, consumer/boundary scope, origin (`human` or `agent`), state, accepting authority (name plus digest), and a digest-bound predicate (structural contract record or executable law suite digest); prose is never an executable predicate |
+| Transition record | `transition` (check-request field) | Externally authorized old-to-new obligation change: old and new digest, reason, affected consumers, authority digest; supplied by the trusted caller, never by the candidate |
 
 Slot ids derive from crate identity (package name plus version) and the
 qualified declaration path — never from line numbers. Semantic contract
@@ -55,10 +59,49 @@ invalidates the old request's raw digests; resubmission fails with
 `input-mismatch` and a fresh extraction is required. Changed build inputs
 never silently rebind.
 
+## Protected context
+
+The check request binds accepted obligations through a separate trusted
+document referenced by `{digest, path}`: the checker digest-verifies the
+document before use and the candidate never supplies or selects accepted
+context. Each accepted obligation is evaluated against the candidate
+regardless of any candidate-sourced signal:
+
+- a structural predicate binds its contract record by content digest; the
+  base side must carry the bound slots with the exact accepted types
+  (a stale document that no longer describes the trusted base is an
+  error-class refusal), and the candidate must carry them with accreting
+  types — a narrowed type is a definite weakening reported as
+  `obligation-change` with a proposed-weakening change record;
+- a law predicate binds executable suite bytes by digest; the base bundle
+  must contain the suite (else error), a candidate that drops the suite is
+  a definite weakening with a proposed-deletion change record, and a
+  retained law without execution evidence stays `law-inconclusive` unknown
+  until genuinely checked;
+- proposed-state obligations are reported with their origin but never
+  enforced — candidate additions remain proposals and cannot replace
+  accepted obligations;
+- an externally authorized transition binds old and new commitment digests
+  with reason, affected consumers, and authority; when the accepted
+  replacement obligation matches the candidate exactly and all unchanged
+  obligations still hold, the disposition is
+  `accepted-intentional-change` — never backward-compatibility success;
+  a transition that names no accepted replacement is an error-class
+  refusal.
+
+The report's `invocation_commitment` records enforcement as `local` (a
+local caller cannot claim independent CI enforcement) and pins the
+obligations/checker/policy/bundle digests; harness, fixture, budget, and
+evaluation-time commitments are present as explicit nulls until their
+slices land, so the report shape does not change again.
+
 ## Scope
 
-This slice implements the extraction half of local-1. The check command,
-obligations, trusted invocation, and law execution are future slices; the
-local-1 report kind for `wild check` is defined by
-`openspec/changes/add-local-contract-checking/design.md` and lands with
-its implementing ticket.
+This slice implements the extraction half of local-1 plus the protected-
+context check half: scoped structural checking, accepted-obligation
+enforcement from a trusted external document, and externally authorized
+obligation transitions. Law execution (running retained suites under a
+bounded harness) and the full invocation commitment (harnesses, fixtures,
+budgets, evaluation time) remain future slices; their report fields exist
+as explicit nulls. The local-1 report kind for `wild check` is defined by
+`openspec/changes/add-local-contract-checking/design.md`.

@@ -1,78 +1,165 @@
 {
-  "description": "Structural examples for every wild local-1 record kind (beads wild-mh5.1). Placeholder digests are intentionally not valid content commitments; these documents check structure only.",
-  "examples": [
+ "description": "Structural examples for every wild local-1 record kind (beads wild-mh5.1). Placeholder digests are intentionally not valid content commitments; these documents check structure only.",
+ "examples": [
+  {
+   "version": "local-1",
+   "kind": "extraction-request",
+   "profile": "rust-cargo-local-1",
+   "bundle_root": "/tmp/supplied-bundle",
+   "files": {
+    "Cargo.toml": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "Cargo.lock": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "consumer/Cargo.toml": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+    "consumer/src/lib.rs": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "provider/Cargo.toml": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+    "provider/src/lib.rs": "sha256:6666666666666666666666666666666666666666666666666666666666666666"
+   },
+   "target": "x86_64-unknown-linux-gnu",
+   "toolchain": "stable",
+   "features": [],
+   "extractor": {
+    "name": "wild",
+    "digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777"
+   }
+  },
+  {
+   "version": "local-1",
+   "kind": "extraction-report",
+   "profile": "rust-cargo-local-1",
+   "complete_inventory": false,
+   "diagnostics": [
     {
-      "version": "local-1",
-      "kind": "extraction-request",
-      "profile": "rust-cargo-local-1",
-      "bundle_root": "/tmp/supplied-bundle",
-      "files": {
-        "Cargo.toml": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-        "Cargo.lock": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
-        "consumer/Cargo.toml": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
-        "consumer/src/lib.rs": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
-        "provider/Cargo.toml": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
-        "provider/src/lib.rs": "sha256:6666666666666666666666666666666666666666666666666666666666666666"
-      },
-      "target": "x86_64-unknown-linux-gnu",
-      "toolchain": "stable",
-      "features": [],
-      "extractor": {
-        "name": "wild",
-        "digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777"
-      }
-    },
-    {
-      "version": "local-1",
-      "kind": "extraction-report",
-      "profile": "rust-cargo-local-1",
-      "complete_inventory": false,
-      "diagnostics": [
-        {
-          "code": "unsupported-construct",
-          "severity": "error",
-          "source": "consumer/src/lib.rs",
-          "slots": [],
-          "reason": "macro `make_export!` may generate declarations the profile cannot inventory"
-        }
-      ]
-    },
-    {
-      "version": "local-1",
-      "kind": "demand",
-      "entries": [
-        {
-          "consumer": "consumer",
-          "called": "provider::greet",
-          "alias": "say_greet",
-          "provider_slot": "provider.0.1.0.greet"
-        },
-        {
-          "consumer": "consumer",
-          "called": "provider::add_one",
-          "alias": null,
-          "provider_slot": "provider.0.1.0.add_one"
-        }
-      ]
-    },
-    {
-      "version": "local-1",
-      "kind": "provenance",
-      "bundle_root": "/tmp/supplied-bundle",
-      "files": [
-        {
-          "path": "consumer/src/lib.rs",
-          "raw_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
-        }
-      ],
-      "locations": [
-        {
-          "slot": "provider::add_one",
-          "file": "provider/src/lib.rs",
-          "line": 1,
-          "col": 7
-        }
-      ]
+     "code": "unsupported-construct",
+     "severity": "error",
+     "source": "consumer/src/lib.rs",
+     "slots": [],
+     "reason": "macro `make_export!` may generate declarations the profile cannot inventory"
     }
-  ]
+   ]
+  },
+  {
+   "version": "local-1",
+   "kind": "demand",
+   "entries": [
+    {
+     "consumer": "consumer",
+     "called": "provider::greet",
+     "alias": "say_greet",
+     "provider_slot": "provider.0.1.0.greet"
+    },
+    {
+     "consumer": "consumer",
+     "called": "provider::add_one",
+     "alias": null,
+     "provider_slot": "provider.0.1.0.add_one"
+    }
+   ]
+  },
+  {
+   "version": "local-1",
+   "kind": "provenance",
+   "bundle_root": "/tmp/supplied-bundle",
+   "files": [
+    {
+     "path": "consumer/src/lib.rs",
+     "raw_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+    }
+   ],
+   "locations": [
+    {
+     "slot": "provider::add_one",
+     "file": "provider/src/lib.rs",
+     "line": 1,
+     "col": 7
+    }
+   ]
+  },
+  {
+   "version": "local-1",
+   "kind": "obligations",
+   "obligations": [
+    {
+     "id": "provider-add-one-accretes",
+     "scope": "consumer",
+     "origin": "human",
+     "state": "accepted",
+     "authority": {
+      "name": "project-lead",
+      "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+     },
+     "predicate": {
+      "kind": "structural",
+      "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "contract": {
+       "schema_version": "1",
+       "kind": "contract",
+       "slots": [
+        {
+         "name": "provider::add_one",
+         "meaning": "public function",
+         "polarity": "out",
+         "facet": "api",
+         "type": {
+          "shape": "function",
+          "arguments": [
+           {
+            "shape": "scalar",
+            "name": "integer",
+            "min": 0,
+            "max": 4294967295
+           }
+          ],
+          "result": {
+           "shape": "scalar",
+           "name": "integer",
+           "min": 0,
+           "max": 4294967295
+          }
+         },
+         "required": true,
+         "default": {
+          "present": false
+         }
+        }
+       ],
+       "tombstones": [],
+       "laws": [],
+       "relations": [],
+       "sunsets": []
+      }
+     }
+    },
+    {
+     "id": "regression-suite-retained",
+     "scope": "consumer",
+     "origin": "agent",
+     "state": "accepted",
+     "authority": {
+      "name": "project-lead",
+      "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+     },
+     "predicate": {
+      "kind": "law",
+      "suite_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+     }
+    }
+   ]
+  },
+  {
+   "version": "local-1",
+   "kind": "transition",
+   "transition": {
+    "old_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "new_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "reason": "authorized bug fix changes the old obligation",
+    "affected_consumers": [
+     "consumer"
+    ],
+    "authority": {
+     "name": "project-lead",
+     "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+    }
+   }
+  }
+ ]
 }
