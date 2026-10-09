@@ -7,6 +7,10 @@
 #   parser version (2.0.119) with the feature set settled in the
 #   wild-mh5.1 design review; remaining deps are resolved and pinned in
 #   the committed Cargo.lock, required by this slice only.
+#   libc is required and pinned by wild-mh5.4: the law-suite sandbox applies
+#   Landlock restriction, no-new-privs, and resource limits inside the
+#   pre-exec hook with raw syscalls (async-signal-safe, no new high-level
+#   sandbox dependency), which needs the C ABI surface.
 
 [package]
 name = "wild"
@@ -19,3 +23,4 @@ proc-macro2 = { version = "1.0", features = ["span-locations"] }
 quote = "1.0"
 toml = "0.9"
 sha2 = "0.10"
+libc = "0.2"

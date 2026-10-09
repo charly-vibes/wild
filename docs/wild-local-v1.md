@@ -24,8 +24,8 @@ in [examples-local.json](../schemas/examples-local.json).
 | Extraction report | `extraction-report` | Profile id, `complete_inventory` flag, stable diagnostics (`incomplete-demand`, `unsupported-construct`, `input-mismatch`) |
 | Demand | `demand` | Ordered entries naming consumer crate, resolved callee, optional local alias, and the bound provider slot id |
 | Provenance | `provenance` | Bundle root, per-file raw digests, source locations for supported slots and demand sites |
-| Check request | `check-request` | Profile id, consumer scope, base and candidate bundle commitments (per-file sha256), target, toolchain, features, fixed policy literal, trusted obligations reference, checker identity, optional trusted transition record; every filesystem reference confined to the supplied bundles |
-| Check report | `check-report` | Consumer scope, policy, per-slot verdicts, obligation verdicts, obligation changes, transition echo, invocation commitment, per-side extraction summaries, disposition, decision, assurance, stable diagnostics |
+| Check request | `check-request` | Profile id, consumer scope, base and candidate bundle commitments (per-file sha256), target, toolchain, features, fixed policy literal, trusted obligations reference, checker identity, optional trusted transition record, optional law-invocation inputs (harnesses, fixtures, budgets, environment, evaluation_time — supplied as a complete set or not at all); every filesystem reference confined to the supplied bundles |
+| Check report | `check-report` | Consumer scope, policy, per-slot verdicts, obligation verdicts, obligation changes, transition echo, law evidence (`law_methods`), invocation commitment, per-side extraction summaries, disposition, decision, assurance, stable diagnostics |
 | Obligations document | `obligations` | Accepted and proposed obligation records: stable id, consumer/boundary scope, origin (`human` or `agent`), state, accepting authority (name plus digest), and a digest-bound predicate (structural contract record or executable law suite digest); prose is never an executable predicate |
 | Transition record | `transition` (check-request field) | Externally authorized old-to-new obligation change: old and new digest, reason, affected consumers, authority digest; supplied by the trusted caller, never by the candidate |
 
@@ -34,6 +34,37 @@ qualified declaration path — never from line numbers. Semantic contract
 bytes are identical across checkout locations and formatting; provenance
 and raw digests stay location- and byte-accurate. Opaque inventories
 fingerprint declaration structure, not source text.
+
+## Law execution
+
+A retained accepted law obligation executes when the request supplies the
+five law-invocation inputs as a complete set: `harnesses` (exactly one
+base-bound `law-harness` document), `fixtures` (base-bound case files),
+`budgets` (`wall_ms`), `environment` (`seed`), and `evaluation_time` (UTC
+RFC3339 with second precision and `Z`). The runner executes the
+digest-bound suite executable from the trusted base bundle against the
+candidate artifact, twice, under an enforced sandbox: Landlock denies
+network access and every filesystem write while confining reads to the
+supplied bundles and the system runtime; rlimits cap file size,
+descriptors, processes, memory, and CPU; a fixed minimal environment is
+handed to the suite; and a wall deadline kills overruns (any result
+produced at or after the deadline is discarded as inconclusive).
+
+The suite receives a stdin invocation record `{version, kind:
+law-invocation, artifact: {root, digest, contract}, law: {suite, harness},
+fixtures: {root, files}, seed, budgets}` where `artifact.digest` is the
+candidate bundle commitment (sha256 over the canonical per-file digest
+map — path-independent) and `artifact.contract` is the boundary contract
+digest from the candidate extraction. The suite's stdout must be a v1
+`law_result` echoing exactly those runner-derived bindings plus method,
+status, witness, and reason. Every violation — malformed stdout, unknown
+fields, echo mismatches, a nondeterministic pair of runs, wall timeout,
+crash, or a claimed `proof`/`exhaustive` method (downgraded: this slice
+accepts sampled evidence only) — is runner-authored inconclusive, never an
+accepting result. A witnessed sampled counterexample is a definite Reject.
+Suite bytes that cannot be executed as a program carry no execution
+evidence (`law-retained-inconclusive` unknown); a genuine runner spawn
+failure remains an operational error (exit 2).
 
 ## Command and exit mapping
 
@@ -76,8 +107,13 @@ regardless of any candidate-sourced signal:
 - a law predicate binds executable suite bytes by digest; the base bundle
   must contain the suite (else error), a candidate that drops the suite is
   a definite weakening with a proposed-deletion change record, and a
-  retained law without execution evidence stays `law-inconclusive` unknown
-  until genuinely checked;
+  retained law is executed against the actual candidate artifact through
+  the sandboxed law runner when the request supplies the law-invocation
+  inputs (see [Law execution](#law-execution)); without those inputs, or
+  with suite bytes that cannot be run as a program, the retained law
+  carries no execution evidence and stays `law-inconclusive` unknown; a
+  policy that requires law evidence while the only matching obligation is
+  proposed also yields Unknown, never an error;
 - proposed-state obligations are reported with their origin but never
   enforced — candidate additions remain proposals and cannot replace
   accepted obligations;
@@ -91,17 +127,18 @@ regardless of any candidate-sourced signal:
 
 The report's `invocation_commitment` records enforcement as `local` (a
 local caller cannot claim independent CI enforcement) and pins the
-obligations/checker/policy/bundle digests; harness, fixture, budget, and
-evaluation-time commitments are present as explicit nulls until their
-slices land, so the report shape does not change again.
+obligations/checker/policy/bundle digests; once law execution runs, the
+harness, fixture, budget, environment, and evaluation-time fields carry the
+real supplied bindings and a `sandbox` record reports the enforced sandbox
+capabilities; checks without law obligations keep the explicit nulls.
 
 ## Scope
 
-This slice implements the extraction half of local-1 plus the protected-
-context check half: scoped structural checking, accepted-obligation
-enforcement from a trusted external document, and externally authorized
-obligation transitions. Law execution (running retained suites under a
-bounded harness) and the full invocation commitment (harnesses, fixtures,
-budgets, evaluation time) remain future slices; their report fields exist
-as explicit nulls. The local-1 report kind for `wild check` is defined by
+This slice implements the extraction half of local-1, the protected-
+context check half (scoped structural checking, accepted-obligation
+enforcement from a trusted external document, externally authorized
+obligation transitions), and bounded law execution: digest-bound suites
+run twice under an enforced Landlock/rlimit sandbox with echo-validated,
+method-labelled v1 evidence. The local-1 report kind for `wild check` is
+defined by
 `openspec/changes/add-local-contract-checking/design.md`.
