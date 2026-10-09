@@ -1,0 +1,21 @@
+# Purpose: Host manifest for the wild extractor crate (beads wild-mh5.1).
+# Responsibilities: Declare the repo-root Rust CLI/library that implements
+#   the rust-cargo-local-1 extraction profile: strict v1 JSON handling,
+#   syn-based inventory, and the `wild` binary entrypoint.
+# Rationale: The slice requires a pinned parser inventoring Rust source
+#   without executing it. syn is pinned to vampiro-rust-frontend's exact
+#   parser version (2.0.119) with the feature set settled in the
+#   wild-mh5.1 design review; remaining deps are resolved and pinned in
+#   the committed Cargo.lock, required by this slice only.
+
+[package]
+name = "wild"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+syn = { version = "=2.0.119", features = ["full", "visit", "extra-traits"] }
+proc-macro2 = { version = "1.0", features = ["span-locations"] }
+quote = "1.0"
+toml = "0.9"
+sha2 = "0.10"

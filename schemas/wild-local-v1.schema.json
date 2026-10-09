@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wild.local/schemas/wild-local-v1.schema.json",
+  "title": "Wild local-1 protocol records",
+  "description": "Separately versioned local protocol for bounded local contract checking (beads wild-mh5.1). Each record carries version and kind; unknown versions, kinds, and fields, duplicate object keys, floating-point numbers, out-of-range integers, and references escaping the supplied bundle are refused per the reader's v1 canonical rules. Local records hash with the v1 canonical JSON rules; this is not a v1 wire-kind extension.",
+  "type": "object",
+  "oneOf": [
+    { "$ref": "#/$defs/extraction_request" },
+    { "$ref": "#/$defs/extraction_report" },
+    { "$ref": "#/$defs/demand" },
+    { "$ref": "#/$defs/provenance" }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_.:/-]*$",
+      "maxLength": 256
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "profile_id": {
+      "type": "string",
+      "const": "rust-cargo-local-1"
+    },
+    "file_map": {
+      "type": "object",
+      "description": "Normalized bundle-relative path to committed raw sha256 digest. Every reference must resolve inside the supplied bundle; dot, dot-dot, and absolute components are refused.",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_][A-Za-z0-9_./-]*$",
+        "not": { "pattern": "(^|/)\\.\\.?(/|$)" }
+      },
+      "additionalProperties": { "$ref": "#/$defs/digest" }
+    },
+    "extractor_identity": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$" },
+        "digest": { "$ref": "#/$defs/digest" }
+      },
+      "required": ["name", "digest"],
+      "additionalProperties": false
+    },
+    "diagnostic": {
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "enum": ["incomplete-demand", "unsupported-construct", "input-mismatch", "obligation-change", "law-inconclusive"] },
+        "severity": { "type": "string", "enum": ["error", "warning", "info"] },
+        "source": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+        "slots": { "type": "array", "items": { "$ref": "#/$defs/id" }, "uniqueItems": true },
+        "reason": { "type": "string" }
+      },
+      "required": ["code", "severity", "source", "slots", "reason"],
+      "additionalProperties": false
+    },
+    "location": {
+      "type": "object",
+      "properties": {
+        "slot": { "$ref": "#/$defs/id" },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "col": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["slot", "file", "line", "col"],
+      "additionalProperties": false
+    },
+    "extraction_request": {
+      "type": "object",
+      "properties": {
+        "version": { "const": "local-1" },
+        "kind": { "const": "extraction-request" },
+        "profile": { "$ref": "#/$defs/profile_id" },
+        "bundle_root": { "type": "string" },
+        "files": { "$ref": "#/$defs/file_map" },
+        "target": { "type": "string" },
+        "toolchain": { "type": "string" },
+        "features": { "type": "array", "items": { "type": "string" } },
+        "extractor": { "$ref": "#/$defs/extractor_identity" }
+      },
+      "required": ["version", "kind", "profile", "bundle_root", "files", "target", "toolchain", "features", "extractor"],
+      "additionalProperties": false
+    },
+    "extraction_report": {
+      "type": "object",
+      "properties": {
+        "version": { "const": "local-1" },
+        "kind": { "const": "extraction-report" },
+        "profile": { "$ref": "#/$defs/profile_id" },
+        "complete_inventory": { "type": "boolean" },
+        "diagnostics": { "type": "array", "items": { "$ref": "#/$defs/diagnostic" } }
+      },
+      "required": ["version", "kind", "profile", "complete_inventory", "diagnostics"],
+      "additionalProperties": false
+    },
+    "demand_entry": {
+      "type": "object",
+      "properties": {
+        "consumer": { "$ref": "#/$defs/id" },
+        "called": { "type": "string" },
+        "alias": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+        "provider_slot": { "$ref": "#/$defs/id" }
+      },
+      "required": ["consumer", "called", "alias", "provider_slot"],
+      "additionalProperties": false
+    },
+    "demand": {
+      "type": "object",
+      "properties": {
+        "version": { "const": "local-1" },
+        "kind": { "const": "demand" },
+        "entries": { "type": "array", "items": { "$ref": "#/$defs/demand_entry" } }
+      },
+      "required": ["version", "kind", "entries"],
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "version": { "const": "local-1" },
+        "kind": { "const": "provenance" },
+        "bundle_root": { "type": "string" },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": { "type": "string" },
+              "raw_digest": { "$ref": "#/$defs/digest" }
+            },
+            "required": ["path", "raw_digest"],
+            "additionalProperties": false
+          }
+        },
+        "locations": { "type": "array", "items": { "$ref": "#/$defs/location" } }
+      },
+      "required": ["version", "kind", "bundle_root", "files", "locations"],
+      "additionalProperties": false
+    }
+  }
+}
