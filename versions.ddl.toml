@@ -11,7 +11,7 @@
 # 23 passed, pretender check green, testaruda doctor green, spk lint green.
 
 [tools]
-espectacular = "0.9.2"     # crates.io (bin: ah) — latest released
+espectacular = "0.10.0"    # crates.io (bin: ah) — latest released
 pretender = "0.8.0"        # crates.io — latest released
 specodelic = "0.7.0"       # crates.io (bin: spk) — matches dev install
 testaruda = "0.5.2"        # GitHub release tarball (testaruda + python/rust adapters; adapters not on crates.io)
