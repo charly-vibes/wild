@@ -1,0 +1,160 @@
+{
+  "arms": [
+    {
+      "adapter": "existing-tool",
+      "id": "A",
+      "outcome_mapping": {
+        "accept": "accept"
+      }
+    }
+  ],
+  "authority": {
+    "manifest_edit": true
+  },
+  "budgets": {
+    "max_attempts": 3,
+    "timeout_seconds": 600
+  },
+  "cold_warm_policy": "cold",
+  "environment": {
+    "cargo": "1.85.0",
+    "rustc": "1.85.0"
+  },
+  "mode": "fixture",
+  "protocol_id": "study-six-candidate",
+  "record_type": "protocol",
+  "schema_version": 1,
+  "split": {
+    "development": [
+      "t1",
+      "t2",
+      "t3",
+      "t4",
+      "t5",
+      "t6"
+    ],
+    "evaluation": []
+  },
+  "tasks": [
+    {
+      "base_digest": "sha256:f1209a11468fb98b0936d6c2799f08a226aea5dfacf53b1fbf41c0635df15574",
+      "consumer_digest": "sha256:cb6fe28944d4effc6856810067e1df20eb3dfb4f40b9a82fd5afb97c19ce23a8",
+      "exact_target": "serde 1.0.200",
+      "feasible_target": {
+        "basis": "registry has release",
+        "flag": true
+      },
+      "non_compatibility_constraints": [],
+      "oracle_commitment": {
+        "domain": "crate:serde",
+        "tests_digest": "sha256:390b9395952ebaec15a893304c6b992b88536cf01234a31139cf985bf1cca556"
+      },
+      "origin": "synthetic",
+      "original_range": ">=1.0.100, <1.1.0",
+      "record_type": "task",
+      "stratum": "direct",
+      "tags": [],
+      "task_id": "t1"
+    },
+    {
+      "base_digest": "sha256:0513d714567a28db6bd2eb50e0bdda366d746d9adb2e27f4c8d1bab6d415140e",
+      "consumer_digest": "sha256:69b85a867794a2f6255e67a988150fc150e532de1107b98ab47fc09ad243e6a2",
+      "exact_target": "serde 1.0.200",
+      "feasible_target": {
+        "basis": "registry has release",
+        "flag": true
+      },
+      "non_compatibility_constraints": [],
+      "oracle_commitment": {
+        "domain": "crate:serde",
+        "tests_digest": "sha256:986caa5073b9a7e67b117ccd32ee1f81b8d00c2d56391a3da029d61b3b873665"
+      },
+      "origin": "synthetic",
+      "original_range": ">=1.0.100, <1.1.0",
+      "record_type": "task",
+      "stratum": "direct",
+      "tags": [],
+      "task_id": "t2"
+    },
+    {
+      "base_digest": "sha256:a5769cee752f559721026ad46c5fa21796b737e5feb59774fa80d1db7cc7c3bc",
+      "consumer_digest": "sha256:99d76f81ec95cedd8ec7cb44912b06236a104e3bb56b0c4e3937c0deee9562d0",
+      "exact_target": "serde 1.0.200",
+      "feasible_target": {
+        "basis": "registry has release",
+        "flag": true
+      },
+      "non_compatibility_constraints": [],
+      "oracle_commitment": {
+        "domain": "crate:serde",
+        "tests_digest": "sha256:bb3a7b1ae26526d539d20f6582ae2d9988e2efa5e43f2a79e12f9bdf53738590"
+      },
+      "origin": "synthetic",
+      "original_range": ">=1.0.100, <1.1.0",
+      "record_type": "task",
+      "stratum": "direct",
+      "tags": [],
+      "task_id": "t3"
+    },
+    {
+      "base_digest": "sha256:85849fb8d26c759e2cb4ecc6bdd044655fcf1c2b136de0ac7ac6e9d51538dd4e",
+      "consumer_digest": "sha256:0f264565e2e5ff75da0c848619e5ef3368a7457b2f17883e310dab01f5c47cd2",
+      "exact_target": "serde 1.0.200",
+      "feasible_target": {
+        "basis": "registry has release",
+        "flag": true
+      },
+      "non_compatibility_constraints": [],
+      "oracle_commitment": {
+        "domain": "crate:serde",
+        "tests_digest": "sha256:9ce0bf206b35359d89c27e0972ee17d16cb7eb0e932ba1a2ac9ef7f9a475198d"
+      },
+      "origin": "synthetic",
+      "original_range": ">=1.0.100, <1.1.0",
+      "record_type": "task",
+      "stratum": "direct",
+      "tags": [],
+      "task_id": "t4"
+    },
+    {
+      "base_digest": "sha256:a644933e4912970b892ae50d0653ab36c543ec51ea1a31f0bc2c09d8baf764c9",
+      "consumer_digest": "sha256:186bc1e8b445c4236a172f5ade953b5589958007713852cf9eeaa4e5c8bdfc9b",
+      "exact_target": "serde 1.0.200",
+      "feasible_target": {
+        "basis": "registry has release",
+        "flag": true
+      },
+      "non_compatibility_constraints": [],
+      "oracle_commitment": {
+        "domain": "crate:serde",
+        "tests_digest": "sha256:d42b5ea23d97465955f5eb5170839f751e8b45b383c52dc2de2ecea59036ee76"
+      },
+      "origin": "synthetic",
+      "original_range": ">=1.0.100, <1.1.0",
+      "record_type": "task",
+      "stratum": "direct",
+      "tags": [],
+      "task_id": "t5"
+    },
+    {
+      "base_digest": "sha256:66cc1d82533f0341327b25b7eb2f54a55cc0090c12f4dc5604fe4bf6f7f67f63",
+      "consumer_digest": "sha256:e7281a703eb0686366f0b297af245769550edc6ae9c4e81e1a3982099ca00e7b",
+      "exact_target": "serde 1.0.200",
+      "feasible_target": {
+        "basis": "registry has release",
+        "flag": true
+      },
+      "non_compatibility_constraints": [],
+      "oracle_commitment": {
+        "domain": "crate:serde",
+        "tests_digest": "sha256:f7bdfb41bd66022a7f30542e8b77f650bab174f7764360fa538a880fc66370cb"
+      },
+      "origin": "synthetic",
+      "original_range": ">=1.0.100, <1.1.0",
+      "record_type": "task",
+      "stratum": "direct",
+      "tags": [],
+      "task_id": "t6"
+    }
+  ]
+}

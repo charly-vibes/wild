@@ -1,0 +1,569 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wild.dev/schemas/update-protocol-v1.json",
+  "title": "wild update evaluation record schema v1",
+  "description": "Versioned evaluation record schema for the controlled update evaluation harness (design: openspec/changes/add-update-evaluation-harness/design.md, 'Commands and records'). Separate from the v1 runtime wire format by design. Structural layer only: cross-record semantics (uniqueness, artifact matching, confirmatory preregistration listing, cost honesty) are enforced by experiments/update_eval.py on top of this schema.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/protocol"
+    },
+    {
+      "$ref": "#/$defs/task_result"
+    }
+  ],
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "cost": {
+      "description": "Every cost field is measured, explicitly unavailable, or intentionally inapplicable. A measured field carries its measured value (a genuine measured zero is honest); unavailable/inapplicable fields carry no numeric value \u2014 never a fabricated zero.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "basis",
+            "value"
+          ],
+          "properties": {
+            "basis": {
+              "const": "measured"
+            },
+            "value": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "basis"
+          ],
+          "properties": {
+            "basis": {
+              "enum": [
+                "unavailable",
+                "inapplicable"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "task": {
+      "type": "object",
+      "required": [
+        "record_type",
+        "task_id",
+        "origin",
+        "consumer_digest",
+        "base_digest",
+        "exact_target",
+        "original_range",
+        "stratum",
+        "feasible_target",
+        "non_compatibility_constraints",
+        "tags",
+        "oracle_commitment"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "record_type": {
+          "const": "task"
+        },
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "origin": {
+          "description": "Real or synthetic origin, disclosed in every summary.",
+          "enum": [
+            "real",
+            "synthetic"
+          ]
+        },
+        "historical_cutoff": {
+          "type": "string"
+        },
+        "consumer_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "base_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "exact_target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "original_range": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stratum": {
+          "enum": [
+            "direct",
+            "migration",
+            "intent-change"
+          ]
+        },
+        "feasible_target": {
+          "type": "object",
+          "required": [
+            "flag",
+            "basis"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "flag": {
+              "type": "boolean"
+            },
+            "basis": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "non_compatibility_constraints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "oracle_commitment": {
+          "type": "object",
+          "required": [
+            "domain",
+            "tests_digest"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "domain": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tests_digest": {
+              "$ref": "#/$defs/digest"
+            }
+          }
+        }
+      }
+    },
+    "attempt": {
+      "type": "object",
+      "required": [
+        "record_type",
+        "attempt_id",
+        "input_commitments",
+        "requested_artifact",
+        "checker_outcome",
+        "checker_reason",
+        "exit",
+        "costs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "record_type": {
+          "const": "attempt"
+        },
+        "attempt_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_commitments": {
+          "type": "object"
+        },
+        "requested_artifact": {
+          "type": "object",
+          "required": [
+            "digest"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "digest": {
+              "$ref": "#/$defs/digest"
+            }
+          }
+        },
+        "closure": {
+          "type": "object"
+        },
+        "checker_outcome": {
+          "enum": [
+            "accept",
+            "reject",
+            "unknown",
+            "error"
+          ]
+        },
+        "checker_reason": {
+          "description": "Reason category. Rejections for compatibility (reason 'compatibility') are distinguishable from structural, counterexample, policy, and host-resolution refusals.",
+          "type": "string"
+        },
+        "exit": {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "ok",
+                "timeout",
+                "abandoned"
+              ]
+            }
+          }
+        },
+        "costs": {
+          "type": "object",
+          "required": [
+            "human_minutes",
+            "compute_cost_usd",
+            "wall_time_minutes"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "human_minutes": {
+              "$ref": "#/$defs/cost"
+            },
+            "compute_cost_usd": {
+              "$ref": "#/$defs/cost"
+            },
+            "wall_time_minutes": {
+              "$ref": "#/$defs/cost"
+            }
+          }
+        }
+      }
+    },
+    "oracle_result": {
+      "type": "object",
+      "required": [
+        "record_type",
+        "attempt_id",
+        "graded_artifact",
+        "verdict",
+        "domain",
+        "eligibility",
+        "grader",
+        "adjudication_history"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "record_type": {
+          "const": "oracle_result"
+        },
+        "attempt_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "graded_artifact": {
+          "description": "Commits the actually evaluated artifact, not merely the requested release.",
+          "type": "object",
+          "required": [
+            "digest"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "digest": {
+              "$ref": "#/$defs/digest"
+            }
+          }
+        },
+        "verdict": {
+          "enum": [
+            "compatible",
+            "incompatible",
+            "unresolved"
+          ]
+        },
+        "domain": {
+          "type": "string",
+          "minLength": 1
+        },
+        "eligibility": {
+          "type": "object",
+          "required": [
+            "eligible",
+            "reasons"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "eligible": {
+              "type": "boolean"
+            },
+            "reasons": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "grader": {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "adjudication_history": {
+          "type": "array"
+        }
+      }
+    },
+    "task_result": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "record_type",
+        "task_id",
+        "arm",
+        "trial",
+        "attempts",
+        "oracle_results",
+        "delivered",
+        "terminal_disposition"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "record_type": {
+          "const": "task_result"
+        },
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "arm": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trial": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "attempts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/attempt"
+          }
+        },
+        "oracle_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/oracle_result"
+          }
+        },
+        "delivered": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "required": [
+                "attempt_id",
+                "independently_valid"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "attempt_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "independently_valid": {
+                  "type": "boolean"
+                }
+              }
+            }
+          ]
+        },
+        "terminal_disposition": {
+          "enum": [
+            "delivered",
+            "refused",
+            "failed",
+            "abandoned"
+          ]
+        }
+      }
+    },
+    "protocol": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "record_type",
+        "protocol_id",
+        "mode",
+        "split",
+        "environment",
+        "arms",
+        "budgets",
+        "authority",
+        "tasks"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "record_type": {
+          "const": "protocol"
+        },
+        "protocol_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mode": {
+          "enum": [
+            "fixture",
+            "confirmatory"
+          ]
+        },
+        "preregistration": {
+          "type": "object",
+          "required": [
+            "risk_margin",
+            "completion_margin",
+            "stopping_rules"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "risk_margin": {
+              "type": "number"
+            },
+            "completion_margin": {
+              "type": "number"
+            },
+            "stopping_rules": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "split": {
+          "type": "object",
+          "required": [
+            "development",
+            "evaluation"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "development": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "evaluation": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "environment": {
+          "type": "object"
+        },
+        "arms": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "adapter",
+              "outcome_mapping"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "adapter": {
+                "type": "string",
+                "minLength": 1
+              },
+              "outcome_mapping": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "budgets": {
+          "type": "object",
+          "required": [
+            "timeout_seconds",
+            "max_attempts"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "timeout_seconds": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "max_attempts": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "authority": {
+          "type": "object"
+        },
+        "cold_warm_policy": {
+          "type": "string"
+        },
+        "execution_order": {
+          "type": "object"
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/task"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "confirmatory"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "preregistration"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

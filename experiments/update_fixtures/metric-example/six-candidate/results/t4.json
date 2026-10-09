@@ -1,0 +1,58 @@
+{
+  "arm": "A",
+  "attempts": [
+    {
+      "attempt_id": "t4-A-1-a1",
+      "checker_outcome": "reject",
+      "checker_reason": "compatibility",
+      "costs": {
+        "compute_cost_usd": {
+          "basis": "unavailable"
+        },
+        "human_minutes": {
+          "basis": "measured",
+          "value": 9.0
+        },
+        "wall_time_minutes": {
+          "basis": "measured",
+          "value": 9.0
+        }
+      },
+      "exit": {
+        "kind": "ok"
+      },
+      "input_commitments": {
+        "manifest": "sha256:eea2a16b5f61d51b32f2f82a2d8f41e5dda4ea9719b4d8b35b91ef9958d3ae27"
+      },
+      "record_type": "attempt",
+      "requested_artifact": {
+        "digest": "sha256:bdac0f69c40b032c3af8a567416972bca06cde64f5d7a3d78e47747a3db2585f"
+      }
+    }
+  ],
+  "delivered": null,
+  "oracle_results": [
+    {
+      "adjudication_history": [],
+      "attempt_id": "t4-A-1-a1",
+      "domain": "crate:serde",
+      "eligibility": {
+        "eligible": true,
+        "reasons": []
+      },
+      "graded_artifact": {
+        "digest": "sha256:bdac0f69c40b032c3af8a567416972bca06cde64f5d7a3d78e47747a3db2585f"
+      },
+      "grader": {
+        "id": "grader-1"
+      },
+      "record_type": "oracle_result",
+      "verdict": "incompatible"
+    }
+  ],
+  "record_type": "task_result",
+  "schema_version": 1,
+  "task_id": "t4",
+  "terminal_disposition": "failed",
+  "trial": 1
+}
