@@ -1,28 +1,33 @@
 // Purpose: Isolated evaluation of an authorized update plan (beads
-//   wild-nic.2, change add-consumer-update-workflow).
-// Responsibilities: Verify that an external invocation pin commits the exact
+//   wild-nic.2/nic.3, change add-consumer-update-workflow).
+// Responsibilities: Verify an external invocation pin commits the exact
 //   authority and plan digests before anything runs (candidate
-//   self-authorization fails), re-verify the plan's base preconditions,
-//   copy the consumer bundle into a disposable workspace that refuses
-//   symlink escapes, apply only the proposed manifest edit, run real
-//   `cargo update --offline --precise` against the bundle's own frozen
-//   local-registry mirror under a fresh CARGO_HOME, inspect the selected
-//   target (version + source artifact digest against the plan) and the
-//   catalog's declared rust-version against the authorized toolchain, and
-//   produce an `update-report` record carrying evaluated host evidence —
-//   requested and actual identities on a wrong-target or environment
-//   refusal, never a delivered-update claim.
-// Rationale: The design's state transitions 3-5 make evaluation an applied
-//   host-resolution check in isolation: trust is anchored in the externally
-//   committed pin (the same out-of-band commitment mechanism local checking
-//   uses), the host resolver stays authoritative, and this slice stops at
-//   host evidence — baseline build/test, contract checks, and protected
-//   obligations remain pending until U3 integrates them. Resource limits on
-//   the Cargo child and a pinned rustup toolchain are enforced by the U3
-//   sandbox slice; this slice already uses a fresh CARGO_HOME, offline mode,
-//   a bounded wait, and never passes --ignore-rust-version.
+//   self-authorization fails), re-verify base preconditions, copy the
+//   bundle into a disposable workspace refusing symlink escapes, run the
+//   baseline build/test, apply only the proposed manifest edit, resolve
+//   with real `cargo update --offline --precise` under a fresh CARGO_HOME,
+//   inspect the selected target and closure, then (wild-nic.3, transitions
+//   5-8) validate the integrated pipeline: fixed-lock build/test with the
+//   bundle's committed tests as protected obligations, closure coverage
+//   where uncontracted entries stay visible as Unknown and refuse
+//   delivery, a manifest/lock-only scope check, and a durable pinned diff
+//   written and digest-verified under the output directory. Wrong targets,
+//   failed tests, changed inputs, or failed persistence never claim a
+//   delivered update, and no registry-certificate or newest-tip claim is
+//   ever emitted.
+// Rationale: Trust is anchored in the externally committed pin (the same
+//   out-of-band commitment mechanism local checking uses); the host
+//   resolver stays authoritative and delivery requires actual resolution,
+//   build/test, coverage, and durable output. This first profile takes
+//   contract coverage from the plan's committed `contracts` map (the plan
+//   is externally pinned, so its contract commitments are caller
+//   obligations audited by wild-nic.6). Resource limits on the Cargo child
+//   and a pinned rustup toolchain remain with the sandbox slice; this
+//   slice already uses a fresh CARGO_HOME, offline mode, bounded waits,
+//   and never passes --ignore-rust-version.
 
 use crate::formats::{self, Value};
+use crate::delivery::{report_record, validate_and_deliver};
 use crate::update::{confined, diagnostic};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -183,6 +188,51 @@ fn resolve_and_inspect(
     let edit = plan
         .get("edit")
         .ok_or_else(|| "input-mismatch: plan carries no edit".to_string())?;
+    let cargo_home = workspace.join(".wild-cargo-home");
+
+    // State transition 3 (baseline): verify the build/test validation of the
+    // untouched base under the frozen environment before candidate edits. A
+    // pre-existing failure is recorded, never attributed to the candidate.
+    let baseline = run_cargo_cmd(
+        workspace,
+        &cargo_home,
+        &["test", "--offline", "--locked"],
+        "baseline-test",
+    )?;
+    if !baseline.status.success() {
+        let stderr = tail(&baseline.stderr);
+        let report = report_record(
+            plan_digest,
+            authority_digest,
+            &package,
+            &release,
+            None,
+            None,
+            None,
+            "refused",
+            vec![diagnostic(
+                "baseline-failed",
+                "error",
+                &format!(
+                    "the baseline build/test failed before the candidate edit; the pre-existing failure prevents validated delivery: {stderr}"
+                ),
+            )],
+            Value::Null,
+            plan.get("source_digest").cloned().unwrap_or(Value::Null),
+            plan.get("lock_version").cloned().unwrap_or(Value::Null),
+            vec![evidence_value("baseline-test", "cargo test --offline --locked", baseline.status.code().unwrap_or(-1) as i64)],
+        );
+        write_report(output_dir, &report)?;
+        return Ok(Evaluated {
+            decision: "refuse",
+            report,
+            cargo_stderr: None,
+        });
+    }
+
+    // The baseline closure, captured before any edit or resolution.
+    let baseline_lock_text = std::fs::read_to_string(workspace.join("Cargo.lock"))
+        .map_err(|e| format!("input-mismatch: baseline lock unreadable: {e}"))?;
 
     // Apply only the proposed change, in the workspace copy.
     let manifest_rel = edit.str_field("file")?.to_string();
@@ -204,7 +254,6 @@ fn resolve_and_inspect(
         .map_err(|e| format!("isolation-refused: cannot write workspace manifest: {e}"))?;
 
     // Real offline resolution with a fresh isolated Cargo home.
-    let cargo_home = workspace.join(".wild-cargo-home");
     let output = run_cargo(workspace, &cargo_home, &package, &release)?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
@@ -228,6 +277,7 @@ fn resolve_and_inspect(
             plan.get("pending_checks").cloned().unwrap_or(Value::Null),
             plan.get("source_digest").cloned().unwrap_or(Value::Null),
             plan.get("lock_version").cloned().unwrap_or(Value::Null),
+            Vec::new(),
         );
         let _ = std::fs::create_dir_all(output_dir);
         let _ = std::fs::write(output_dir.join("cargo-stderr.log"), &stderr);
@@ -238,14 +288,63 @@ fn resolve_and_inspect(
         });
     }
 
-    inspect_resolution(
-        plan, authority, workspace, plan_digest, authority_digest, &package, &release,
-    )
+    let facts = match inspect_facts(
+        plan,
+        authority,
+        workspace,
+        plan_digest,
+        authority_digest,
+        &package,
+        &release,
+    )? {
+        Ok(facts) => facts,
+        Err(refusal) => {
+            write_report(output_dir, &refusal.report)?;
+            return Ok(refusal);
+        }
+    };
+    let evaluated = validate_and_deliver(
+        plan,
+        authority,
+        workspace,
+        output_dir,
+        plan_digest,
+        authority_digest,
+        &package,
+        &cargo_home,
+        &baseline_lock_text,
+        facts,
+    )?;
+    write_report(output_dir, &evaluated.report)?;
+    Ok(evaluated)
+}
+
+/// Persist the report under the requested output directory; a failure here
+/// is an explicit error, never a silent loss of evidence.
+pub(crate) fn write_report(output_dir: &Path, report: &Value) -> Result<(), String> {
+    std::fs::create_dir_all(output_dir)
+        .map_err(|e| format!("persistence-failed: cannot create output directory: {e}"))?;
+    std::fs::write(output_dir.join("report.json"), formats::canonical(report))
+        .map_err(|e| format!("persistence-failed: cannot write report: {e}"))
+}
+
+pub(crate) fn evidence_value(role: &str, command: &str, exit_code: i64) -> Value {
+    formats::obj(vec![
+        ("role", formats::s(role)),
+        ("command", formats::s(command)),
+        ("exit_code", Value::Int(exit_code)),
+    ])
+}
+
+pub(crate) fn tail(output: &[u8]) -> String {
+    let text = String::from_utf8_lossy(output);
+    text.lines().last().unwrap_or_default().to_string()
 }
 
 /// Inspect the actual selected target in the resolved lock and the frozen
-/// mirror, then classify the outcome as host evidence or a refusal.
-fn inspect_resolution(
+/// mirror, then either hand the verified facts to the integrated validation
+/// stage or classify a refusal.
+fn inspect_facts(
     plan: &Value,
     authority: &Value,
     workspace: &Path,
@@ -253,7 +352,7 @@ fn inspect_resolution(
     authority_digest: &str,
     package: &str,
     release: &str,
-) -> Result<Evaluated, String> {
+) -> Result<Result<Facts, Evaluated>, String> {
     let lock_text = std::fs::read_to_string(workspace.join("Cargo.lock"))
         .map_err(|e| format!("input-mismatch: resolved lock unreadable: {e}"))?;
     let lock: toml::Value = toml::from_str(&lock_text)
@@ -339,8 +438,8 @@ fn inspect_resolution(
         let report = report_record(
             plan_digest,
             authority_digest,
-            &package,
-            &release,
+            package,
+            release,
             Some(&actual_version),
             actual_digest.as_deref(),
             lock_source.as_deref(),
@@ -349,105 +448,34 @@ fn inspect_resolution(
             plan.get("pending_checks").cloned().unwrap_or(Value::Null),
             requested_digest_value(&requested_digest),
             plan.get("lock_version").cloned().unwrap_or(Value::Null),
+            Vec::new(),
         );
-        return Ok(Evaluated {
+        return Ok(Err(Evaluated {
             decision: "refuse",
             report,
             cargo_stderr: None,
-        });
+        }));
     }
 
-    // Host evidence only: integrated checks remain pending.
-    let pending: Vec<Value> = plan
-        .get("pending_checks")
-        .and_then(Value::as_arr)
-        .map(|checks| checks.to_vec())
-        .unwrap_or_default();
-    let remaining: Vec<Value> = pending
-        .iter()
-        .filter(|c| {
-            !matches!(
-                c.as_str(),
-                Some("cargo-resolution") | Some("closure-inspection")
-            )
-        })
-        .cloned()
-        .collect();
-    let report = report_record(
-        plan_digest,
-        authority_digest,
-        &package,
-        &release,
-        Some(&actual_version),
-        actual_digest.as_deref(),
-        lock_source.as_deref(),
-        "host-evidence",
-        Vec::new(),
-        formats::arr(remaining),
-        plan.get("source_digest").cloned().unwrap_or(Value::Null),
-        plan.get("lock_version").cloned().unwrap_or(Value::Null),
-    );
-    Ok(Evaluated {
-        decision: "accept",
-        report,
-        cargo_stderr: None,
-    })
+    // Host evidence accepted; the integrated validation stage continues.
+    Ok(Ok(Facts {
+        actual_version,
+        actual_digest,
+        lock_source,
+    }))
 }
 
+/// The verified host-selection facts from the resolved lock.
+pub(crate) struct Facts {
+    pub actual_version: String,
+    pub actual_digest: Option<String>,
+    pub lock_source: Option<String>,
+}
+
+/// State transitions 5-7: fixed-lock build/test, full closure coverage with
+/// uncontracted entries visible, the manifest/lock-only scope check, and the
+/// durable pinned diff. Delivery requires every stage to succeed.
 #[allow(clippy::too_many_arguments)]
-fn report_record(
-    plan_digest: &str,
-    authority_digest: &str,
-    package: &str,
-    release: &str,
-    actual_version: Option<&str>,
-    actual_digest: Option<&str>,
-    lock_source: Option<&str>,
-    disposition: &str,
-    diagnostics: Vec<Value>,
-    pending_checks: Value,
-    requested_digest: Value,
-    lock_version: Value,
-) -> Value {
-    formats::obj(vec![
-        ("version", formats::s("local-1")),
-        ("kind", formats::s("update-report")),
-        ("package", formats::s(package)),
-        ("release", formats::s(release)),
-        ("plan_digest", formats::s(plan_digest)),
-        ("authority_digest", formats::s(authority_digest)),
-        (
-            "requested",
-            formats::obj(vec![
-                ("release", formats::s(release)),
-                ("source_digest", requested_digest),
-            ]),
-        ),
-        (
-            "actual",
-            formats::obj(vec![
-                (
-                    "version",
-                    actual_version.map(formats::s).unwrap_or(Value::Null),
-                ),
-                (
-                    "source_digest",
-                    actual_digest.map(formats::s).unwrap_or(Value::Null),
-                ),
-                (
-                    "lock_source",
-                    lock_source.map(formats::s).unwrap_or(Value::Null),
-                ),
-            ]),
-        ),
-        ("disposition", formats::s(disposition)),
-        ("assurance", formats::s("Unknown")),
-        ("pending_checks", pending_checks),
-        ("lock_version", lock_version),
-        ("diagnostics", formats::arr(diagnostics)),
-    ])
-}
-
 fn requested_digest_value(requested: &Option<String>) -> Value {
     match requested {
         Some(d) => formats::s(d),
@@ -512,6 +540,50 @@ fn apply_edit(
     Ok(edited)
 }
 
+/// Run one bounded, offline Cargo command with a fresh CARGO_HOME and no
+/// ambient Cargo/Rust configuration.
+pub(crate) fn run_cargo_cmd(
+    workspace: &Path,
+    cargo_home: &Path,
+    args: &[&str],
+    role: &str,
+) -> Result<std::process::Output, String> {
+    let mut cmd = std::process::Command::new("cargo");
+    cmd.args(args)
+        .current_dir(workspace)
+        .env("CARGO_HOME", cargo_home)
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped());
+    for (key, _) in std::env::vars() {
+        if key.starts_with("CARGO_") || key.starts_with("RUST") {
+            cmd.env_remove(&key);
+        }
+    }
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("{role}-failed: cannot start cargo: {e}"))?;
+    let deadline = Instant::now() + CHILD_TIMEOUT;
+    loop {
+        match child.try_wait() {
+            Ok(Some(_)) => break,
+            Ok(None) => {
+                if Instant::now() > deadline {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    return Err(format!(
+                        "{role}-failed: cargo exceeded the bounded wait and was killed"
+                    ));
+                }
+                std::thread::sleep(Duration::from_millis(50));
+            }
+            Err(e) => return Err(format!("{role}-failed: {e}")),
+        }
+    }
+    child
+        .wait_with_output()
+        .map_err(|e| format!("{role}-failed: {e}"))
+}
+
 fn run_cargo(
     workspace: &Path,
     cargo_home: &Path,
@@ -558,7 +630,7 @@ fn run_cargo(
 }
 
 /// Read the local-registry mirror path from the bundle's own Cargo config.
-fn local_registry_of(workspace: &Path) -> Result<String, String> {
+pub(crate) fn local_registry_of(workspace: &Path) -> Result<String, String> {
     let config = workspace.join(".cargo").join("config.toml");
     let text = std::fs::read_to_string(&config).map_err(|_| {
         "isolation-refused: the bundle carries no .cargo/config.toml local-registry".to_string()

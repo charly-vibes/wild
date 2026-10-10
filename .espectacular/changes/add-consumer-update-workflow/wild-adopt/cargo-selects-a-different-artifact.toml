@@ -1,0 +1,11 @@
+id = "cargo-selects-a-different-artifact"
+description = "When actual resolution selects a different source or release than the authorized plan, evaluation refuses and records both requested and actual identities"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_update_resolution.py::test_evaluate_refuses_wrong_selected_target", timeout_seconds = 300},
+]

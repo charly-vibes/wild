@@ -1,0 +1,11 @@
+id = "plan-without-changing-the-application"
+description = "Planning an out-of-range candidate writes only the requested proposal with the exact range change and pending checks; the original manifest, lockfile, source, and host selection stay unchanged"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_update_plan.py::test_plan_records_exact_change_without_touching_the_project", timeout_seconds = 300},
+]

@@ -348,6 +348,16 @@
       "type": "string"
      }
     },
+    "contracts": {
+     "type": [
+      "object",
+      "null"
+     ],
+     "description": "Optional caller-committed contract digests per dependency package name; entries absent from this map have no usable contract",
+     "additionalProperties": {
+      "$ref": "#/$defs/digest"
+     }
+    },
     "pending_checks": {
      "type": "array",
      "items": {
@@ -1260,7 +1270,9 @@
     "disposition": {
      "enum": [
       "host-evidence",
-      "refused"
+      "refused",
+      "delivered",
+      "error"
      ]
     },
     "assurance": {
@@ -1271,6 +1283,116 @@
      "items": {
       "type": "string"
      }
+    },
+    "scope": {
+     "const": "local",
+     "description": "A local report is scoped to the explicit host-selected assembly and is not a v1 registry certificate"
+    },
+    "resolution": {
+     "const": "host-selected",
+     "description": "Cargo selected under the authorized manifest; no registry newest-tip or lineage claim is made"
+    },
+    "update_class": {
+     "enum": [
+      "direct",
+      "migration",
+      "intent-change"
+     ]
+    },
+    "closure": {
+     "type": "array",
+     "description": "Every lock entry with its coverage status and assurance; uncontracted entries remain visible as Unknown",
+     "items": {
+      "type": "object",
+      "properties": {
+       "package": {
+        "type": "string"
+       },
+       "version": {
+        "type": "string"
+       },
+       "status": {
+        "enum": [
+         "root",
+         "target",
+         "unchanged",
+         "changed",
+         "new"
+        ]
+       },
+       "assurance": {
+        "enum": [
+         "Contract",
+         "Unknown"
+        ]
+       }
+      },
+      "required": [
+       "package",
+       "version",
+       "status",
+       "assurance"
+      ],
+      "additionalProperties": false
+     }
+    },
+    "evidence": {
+     "type": "array",
+     "description": "Actual executed commands with their roles and exit codes",
+     "items": {
+      "type": "object",
+      "properties": {
+       "role": {
+        "type": "string"
+       },
+       "command": {
+        "type": "string"
+       },
+       "exit_code": {
+        "type": "integer"
+       }
+      },
+      "required": [
+       "role",
+       "command",
+       "exit_code"
+      ],
+      "additionalProperties": false
+     }
+    },
+    "diff": {
+     "type": "array",
+     "description": "The pinned output diff: only manifest/lock files with before and after digests",
+     "items": {
+      "type": "object",
+      "properties": {
+       "path": {
+        "type": "string"
+       },
+       "before_digest": {
+        "$ref": "#/$defs/digest"
+       },
+       "after_digest": {
+        "$ref": "#/$defs/digest"
+       }
+      },
+      "required": [
+       "path",
+       "before_digest",
+       "after_digest"
+      ],
+      "additionalProperties": false
+     }
+    },
+    "diff_digest": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/digest"
+      },
+      {
+       "type": "null"
+      }
+     ]
     },
     "diagnostics": {
      "type": "array"

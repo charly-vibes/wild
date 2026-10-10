@@ -1,0 +1,11 @@
+id = "environment-constraint-survives-range-relaxation"
+description = "A target requiring an unsupported Rust version refuses delivery independently of compatibility; the environment constraint survives the range change"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_update_resolution.py::test_evaluate_refuses_unsupported_rust_version", timeout_seconds = 300},
+]

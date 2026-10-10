@@ -1,0 +1,11 @@
+id = "local-pin-does-not-claim-newest-lineage-tip"
+description = "A delivered local report identifies its local scope and host-selected resolution and makes no registry-certificate, newest-tip, or publication claim"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_direct_update.py::test_compatible_release_outside_the_old_range_is_delivered", timeout_seconds = 300},
+]

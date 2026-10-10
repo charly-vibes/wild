@@ -1,0 +1,11 @@
+id = "unknown-dependency-remains-visible"
+description = "A lock entry with no usable contract remains in closure and coverage with Unknown assurance and refuses delivery under a policy requiring declared structure"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_direct_update.py::test_unknown_dependency_remains_visible_in_closure_and_coverage", timeout_seconds = 300},
+]

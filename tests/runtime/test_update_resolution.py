@@ -11,8 +11,10 @@
 #   artifact — evaluation refuses and records both requested and actual
 #   identities; (c) an environment constraint (unsupported rust-version)
 #   refuses delivery independently of compatibility. A successful evaluation
-#   records evaluated host evidence only — never a delivered-update claim —
-#   and the original worktree stays byte-identical. Assert observable records
+#   Since wild-nic.3 the integrated pipeline continues past host evidence
+#   into fixed-lock build/test and closure coverage, so the authorized-
+#   target case now ends in an adjudicated consumer-break refusal for the
+#   bootstrap consumer; the original worktree stays byte-identical. Assert observable records
 #   and exit codes, never implementation internals.
 # Rationale: The slice's acceptance requires actual offline Cargo resolution,
 #   not canned success responses. Every scenario runs the real binary against
@@ -163,12 +165,13 @@ def test_evaluate_resolves_authorized_target_offline(tmp_path: Path) -> None:
 
     authority = make_authority(tmp_path, plan)
     proc = run_evaluate(plan, authority, trusted_pin(plan, authority), tmp_path)
-    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert proc.returncode == 1, proc.stdout + proc.stderr
     env = json.loads(proc.stdout)
     assert env["command"] == "update-evaluate"
-    # Host evidence is gathered here; delivered-update status waits for the
-    # integrated checks and is never claimed by this slice.
-    assert env["decision"] == "accept"
+    # Integrated semantics (wild-nic.3): evaluation no longer stops at host
+    # evidence; the bootstrap consumer's farewell test breaks against 2.0.0,
+    # so the integrated pipeline refuses the candidate.
+    assert env["decision"] == "refuse"
     assert env["assurance"] == "Unknown"
 
     report = json.loads((tmp_path / "result" / "report.json").read_text())
@@ -182,11 +185,9 @@ def test_evaluate_resolves_authorized_target_offline(tmp_path: Path) -> None:
     assert report["actual"]["source_digest"] == sha_bytes(
         (root / MIRROR / "dept-2.0.0.crate").read_bytes()
     )
-    assert report["disposition"] == "host-evidence"
+    assert report["disposition"] == "refused"
+    assert any(d["code"] == "consumer-break" for d in report["diagnostics"])
     assert "delivered" not in json.dumps(report)
-    # Integrated checks remain pending in this slice.
-    assert "contract-checks" in report["pending_checks"]
-    assert "protected-obligations" in report["pending_checks"]
 
     # The original worktree stays byte-identical and hosts no workspace.
     assert snapshot(root) == before

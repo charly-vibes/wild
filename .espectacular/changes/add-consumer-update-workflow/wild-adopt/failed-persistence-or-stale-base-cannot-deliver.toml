@@ -1,0 +1,12 @@
+id = "failed-persistence-or-stale-base-cannot-deliver"
+description = "When output persistence fails the result records the persistence-failed cause as an error disposition and never claims a delivered update; stale base commitments refuse before any edit"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_direct_update.py::test_failed_output_persistence_cannot_deliver", timeout_seconds = 300},
+  {flags = "tests/runtime/test_update_plan.py::test_plan_refuses_stale_base_commitment", timeout_seconds = 300},
+]

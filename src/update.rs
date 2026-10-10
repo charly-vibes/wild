@@ -117,9 +117,10 @@ pub fn plan(request: &Value) -> Result<PlanOutcome, String> {
             request.get("source_digest").cloned().unwrap_or(Value::Null),
         ),
         ("lock_version", formats::s(&lock_version)),
+        ("preconditions", formats::obj(preconditions)),
         (
-            "preconditions",
-            formats::obj(preconditions),
+            "contracts",
+            request.get("contracts").cloned().unwrap_or(Value::Null),
         ),
         (
             "allowed_changed_paths",

@@ -472,6 +472,7 @@ fn run_update_evaluate(args: &[String]) -> i32 {
                 "edit-mismatch"          => "edit-mismatch",
                 "host-resolution-failed" => "host-resolution-failed",
                 "missing-evidence"       => "missing-evidence",
+                "persistence-failed"     => "persistence-failed",
                 _                        => "input-mismatch",
             };
             let reason = match msg.split_once(": ") {

@@ -1,0 +1,11 @@
+id = "permitted-patch-breaks-a-consumer"
+description = "A patch release allowed by the old range that removes a demanded function resolves but fails the fixed-lock consumer tests, so the update is refused with no delivered-update claim"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_direct_update.py::test_permitted_patch_breaking_the_consumer_is_refused", timeout_seconds = 300},
+]
