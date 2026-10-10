@@ -1,0 +1,110 @@
+{
+  "candidate_metrics": {
+    "accepted_oracle_unresolved": 0,
+    "assigned": 12,
+    "confusion": {
+      "detection_recall": {
+        "den": 0,
+        "num": 0,
+        "reason": "no-adjudicated-incompatible-candidates",
+        "value": null
+      },
+      "false_block_rate": {
+        "den": 12,
+        "num": 0,
+        "value": 0.0
+      },
+      "false_negative_rate": {
+        "den": 0,
+        "num": 0,
+        "reason": "no-adjudicated-incompatible-candidates",
+        "value": null
+      },
+      "unsafe_acceptance": {
+        "den": 4,
+        "num": 0,
+        "value": 0.0
+      }
+    },
+    "eligible_adjudicated": 12,
+    "error_rate": {
+      "den": 12,
+      "num": 0,
+      "value": 0.0
+    },
+    "excluded": {
+      "oracle_unresolved": {
+        "count": 0
+      },
+      "policy_ineligible": {
+        "count": 0,
+        "reasons": {}
+      }
+    },
+    "oracle_coverage": {
+      "den": 12,
+      "num": 12,
+      "value": 1.0
+    },
+    "unknown_rate": {
+      "den": 12,
+      "num": 4,
+      "value": 0.3333333333333333
+    }
+  },
+  "mode": "fixture",
+  "protocol_id": "arm-trial-e3",
+  "record_type": "summary",
+  "schema_version": 1,
+  "task_metrics": {
+    "assigned_tasks": 12,
+    "attempts_total": 12,
+    "completed": 8,
+    "completion_rate": {
+      "den": 12,
+      "num": 8,
+      "value": 0.6666666666666666
+    },
+    "cost_per_valid_update": {
+      "den": 8,
+      "num": 0.0,
+      "value": 0.0
+    },
+    "delivered_attempts": 8,
+    "delivered_but_not_validated": 0,
+    "effort": {
+      "compute_cost_usd": {
+        "inapplicable_count": 12,
+        "measured": 0.0,
+        "unavailable_count": 0
+      },
+      "human_minutes": {
+        "inapplicable_count": 12,
+        "measured": 0.0,
+        "unavailable_count": 0
+      },
+      "wall_time_minutes": {
+        "inapplicable_count": 0,
+        "measured": 0.1123,
+        "unavailable_count": 0
+      }
+    },
+    "effort_failed_attempts": {
+      "compute_cost_usd": {
+        "inapplicable_count": 4,
+        "measured": 0.0,
+        "unavailable_count": 0
+      },
+      "human_minutes": {
+        "inapplicable_count": 4,
+        "measured": 0.0,
+        "unavailable_count": 0
+      },
+      "wall_time_minutes": {
+        "inapplicable_count": 0,
+        "measured": 0.0394,
+        "unavailable_count": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,9 @@
+id = "unsupported-dynamic-usage-is-retained"
+description = "The treatment's unknown abstention on returned-object/macro-like dynamic usage is retained beside the independent oracle's adjudication instead of being relabelled as detection or unsafe acceptance"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [{flags = "tests/test_update_eval_execution.py::test_dynamic_usage_unknown_retained_beside_oracle", timeout_seconds = 600}, {flags = "tests/test_update_fixture_replay.py::test_dynamic_case_retains_unresolved_label", timeout_seconds = 300}]

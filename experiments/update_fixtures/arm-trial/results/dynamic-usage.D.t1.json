@@ -1,0 +1,92 @@
+{
+  "arm": "D",
+  "attempts": [
+    {
+      "attempt_id": "dynamic-usage-D-t1-a1",
+      "checker_outcome": "unknown",
+      "checker_reason": "dynamic-usage",
+      "closure": {
+        "accepted_check_deleted_from_workspace": false,
+        "accepted_check_intact": true,
+        "authorized_resolution": "resolved",
+        "build": "ok",
+        "macro_invocations": [
+          "greetings"
+        ],
+        "original_range_attempt": "resolved",
+        "protected_accepted_check_enforced": true,
+        "static_api_refs": [],
+        "workspace_inventory": [
+          ".cargo/config.toml",
+          ".wild-feedback/authored/obligations.md",
+          ".wild-feedback/mined/contracts.md",
+          "Cargo.lock",
+          "Cargo.toml",
+          "src/main.rs",
+          "tests/accepted_check.rs"
+        ]
+      },
+      "costs": {
+        "compute_cost_usd": {
+          "basis": "inapplicable"
+        },
+        "human_minutes": {
+          "basis": "inapplicable"
+        },
+        "wall_time_minutes": {
+          "basis": "measured",
+          "value": 0.0093
+        }
+      },
+      "exit": {
+        "kind": "ok"
+      },
+      "input_commitments": {
+        "authority": {
+          "manifest_edit": true
+        },
+        "budget": {
+          "max_attempts": 3,
+          "timeout_seconds": 600
+        },
+        "consumer": "sha256:723b6a5db1a1aeda0f4246ff42a936cc6de08a48961bcd1749c90ceb6519c090",
+        "feedback": "both",
+        "manifest": "sha256:7dc43260a0fecb875efb6e3527f0bcba59012d6aa9b272bf725cf6ae623f9615",
+        "oracle_suite_digest": "sha256:c70667fb65d171077772c36cb3c6199578733635f54690d22fae1809dce2fd05",
+        "target": "dept 1.7.0"
+      },
+      "record_type": "attempt",
+      "requested_artifact": {
+        "digest": "sha256:32902117739d715ab3a3fff6a79fe34bcb24c20fe7b6ed96d73e872e1fc064d9"
+      }
+    }
+  ],
+  "delivered": {
+    "attempt_id": "dynamic-usage-D-t1-a1",
+    "independently_valid": true
+  },
+  "oracle_results": [
+    {
+      "adjudication_history": [],
+      "attempt_id": "dynamic-usage-D-t1-a1",
+      "domain": "crate:dept",
+      "eligibility": {
+        "eligible": true,
+        "reasons": []
+      },
+      "graded_artifact": {
+        "digest": "sha256:32902117739d715ab3a3fff6a79fe34bcb24c20fe7b6ed96d73e872e1fc064d9"
+      },
+      "grader": {
+        "id": "independent-oracle"
+      },
+      "record_type": "oracle_result",
+      "verdict": "compatible"
+    }
+  ],
+  "record_type": "task_result",
+  "schema_version": 1,
+  "task_id": "dynamic-usage",
+  "terminal_disposition": "delivered",
+  "trial": 1
+}

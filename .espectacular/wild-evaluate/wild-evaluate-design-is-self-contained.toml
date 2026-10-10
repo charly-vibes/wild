@@ -1,0 +1,11 @@
+id = "wild-evaluate-design-is-self-contained"
+description = "Validate design rule coverage, local format references, and the shared JSON Schema; this is not a runtime implementation claim"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/test_spec_corpus.py::test_design_contract_is_self_contained[wild-evaluate]", timeout_seconds = 120},
+]

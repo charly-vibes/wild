@@ -1,0 +1,9 @@
+id = "ineligible-and-unresolved-cases-remain-visible"
+description = "A policy-prohibited candidate and an accepted oracle-unresolved candidate stay out of the eligible binary table while remaining in assigned counts and their own categories, and neither counts as independently validated completion"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [{flags = "tests/test_update_eval_records.py::test_ineligible_and_unresolved_remain_visible", timeout_seconds = 120}]

@@ -1,0 +1,9 @@
+id = "multiple-attempts-do-not-inflate-completion"
+description = "One assigned task delivered after three attempts counts one completion with all three attempts charged to effort"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [{flags = "tests/test_update_eval_records.py::test_multiple_attempts_do_not_inflate_completion", timeout_seconds = 120}]

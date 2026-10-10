@@ -1,0 +1,90 @@
+{
+  "arm": "A",
+  "attempts": [
+    {
+      "attempt_id": "out-of-range-major-A-t1-a1",
+      "checker_outcome": "accept",
+      "checker_reason": "none",
+      "closure": {
+        "accepted_check_deleted_from_workspace": false,
+        "accepted_check_intact": true,
+        "authorized_resolution": "resolved",
+        "build": "ok",
+        "macro_invocations": [],
+        "original_range_attempt": "resolution-refused-by-range",
+        "protected_accepted_check_enforced": true,
+        "static_api_refs": [
+          "greet"
+        ],
+        "workspace_inventory": [
+          ".cargo/config.toml",
+          "Cargo.lock",
+          "Cargo.toml",
+          "src/main.rs",
+          "tests/accepted_check.rs"
+        ]
+      },
+      "costs": {
+        "compute_cost_usd": {
+          "basis": "inapplicable"
+        },
+        "human_minutes": {
+          "basis": "inapplicable"
+        },
+        "wall_time_minutes": {
+          "basis": "measured",
+          "value": 0.0091
+        }
+      },
+      "exit": {
+        "kind": "ok"
+      },
+      "input_commitments": {
+        "authority": {
+          "manifest_edit": true
+        },
+        "budget": {
+          "max_attempts": 3,
+          "timeout_seconds": 600
+        },
+        "consumer": "sha256:b73eeb61cae0b476df5b8c3035072b81359f9dd8de064a3cde2736b37ab14d10",
+        "feedback": "none",
+        "manifest": "sha256:00c72effb17a4f80d7617250b8202687e28885761988de2569143fd85d903cb2",
+        "oracle_suite_digest": "sha256:633672dcd89f97c0ecb11a0cd4a3e10c37fba9d4617c0c3e2ddc66f7ec4305d0",
+        "target": "dept 2.0.0"
+      },
+      "record_type": "attempt",
+      "requested_artifact": {
+        "digest": "sha256:54f08007c496548c28373c8cba65dfbdbc4c28c6937b22f1ee2773d3d9da4fa9"
+      }
+    }
+  ],
+  "delivered": {
+    "attempt_id": "out-of-range-major-A-t1-a1",
+    "independently_valid": true
+  },
+  "oracle_results": [
+    {
+      "adjudication_history": [],
+      "attempt_id": "out-of-range-major-A-t1-a1",
+      "domain": "crate:dept",
+      "eligibility": {
+        "eligible": true,
+        "reasons": []
+      },
+      "graded_artifact": {
+        "digest": "sha256:54f08007c496548c28373c8cba65dfbdbc4c28c6937b22f1ee2773d3d9da4fa9"
+      },
+      "grader": {
+        "id": "independent-oracle"
+      },
+      "record_type": "oracle_result",
+      "verdict": "compatible"
+    }
+  ],
+  "record_type": "task_result",
+  "schema_version": 1,
+  "task_id": "out-of-range-major",
+  "terminal_disposition": "delivered",
+  "trial": 1
+}

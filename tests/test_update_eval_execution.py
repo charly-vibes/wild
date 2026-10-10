@@ -10,7 +10,9 @@
 #   abstentions stay unknown through attempt, grade and summary.
 # Rationale: The slice's observable workflow is comparative execution with
 #   honest outcomes; expectations pin spec scenarios, not implementation
-#   mirrors. Written red-first per the ticket's TDD mandate.
+#   mirrors. Written red-first per the ticket's TDD mandate. The published
+#   release-evidence test (wild-aoq.4) recomputes the committed A-D fixture
+#   report from its published records instead of trusting the prose.
 
 from __future__ import annotations
 
@@ -163,3 +165,48 @@ def test_dynamic_usage_unknown_retained_beside_oracle(executed: dict) -> None:
     assert cm["unknown_rate"]["den"] == 12
     assert cm["confusion"]["unsafe_acceptance"]["num"] == 0
     assert cm["confusion"]["unsafe_acceptance"]["den"] == 4
+
+
+# ---- published release evidence (wild-aoq.4) ------------------------------
+
+
+def test_published_arm_trial_report_replays_clean() -> None:
+    """The committed A-D fixture report is replayable: its published records
+    validate, the recomputed summary matches the committed summary byte for
+    byte, and the report distinguishes real/synthetic/unresolved evidence
+    without claiming market value or rare-failure safety."""
+    fixture = REPO / "experiments" / "update_fixtures" / "arm-trial"
+    results = fixture / "results"
+    published = sorted(results.glob("*.json"))
+    assert published, "published arm-trial records missing"
+    # 12 arm-trial task_result records + the run manifest.
+    records = [p for p in published if json.loads(p.read_text())["record_type"]
+               == "task_result"]
+    assert len(records) == 12, sorted(p.name for p in published)
+
+    v = run_cli("validate", "--protocol", str(fixture / "study.json"),
+                "--runs", str(results))
+    assert v.returncode == 0, v.stderr
+
+    s = run_cli("summarize", "--protocol", str(fixture / "study.json"),
+                "--runs", str(results))
+    assert s.returncode == 0, s.stderr
+    recomputed = json.loads(s.stdout)
+    committed_summary = json.loads((fixture / "summary.json").read_text())
+    assert recomputed == committed_summary, (
+        "recomputed summary diverges from the published one"
+    )
+
+    report = (fixture / "REPORT.md").read_text()
+    for section in ("What ran", "Conclusions", "Real, synthetic, and unresolved",
+                    "Scope limits"):
+        assert f"## {section}" in report, section
+    low = report.lower()
+    # Every run here is synthetic: the report must say so, must keep the
+    # unresolved dynamic-usage outcome visible, and must not dress the
+    # fixture result up as market value or rare-failure safety.
+    assert "synthetic" in low
+    assert "unresolved" in low
+    assert "real cargo" in low
+    for banned in ("market", "rare-failure", "rare failure", "production safety"):
+        assert banned not in low, banned

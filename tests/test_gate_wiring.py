@@ -102,7 +102,8 @@ def test_openspec_corpus() -> None:
     corpus = REPO / "openspec" / "specs"
     assert corpus.exists(), "openspec spec corpus missing"
     specs = sorted(corpus.rglob("spec.md"))
-    assert len(specs) == 9, f"expected 9 openspec specs, found {len(specs)}"
+    # Ten capabilities since wild-evaluate was archived (wild-aoq.4).
+    assert len(specs) == 10, f"expected 10 openspec specs, found {len(specs)}"
     r = run(["spk", "lint", "openspec/specs"])
     assert r.returncode == 0, f"spk lint failed: {r.stderr}"
     d = run(["spk", "graph", "openspec/specs"])

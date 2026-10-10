@@ -1,0 +1,23 @@
+{
+  "execution_seed": 7,
+  "mode": "fixture",
+  "protocol_digest": "sha256:095bb5ce5a7fe56487ed9201c8f78a2805f3ada5f89c92f2fca91ed2e6436eeb",
+  "protocol_id": "arm-trial-e3",
+  "realized_order": [
+    "dynamic-usage/D/1",
+    "accepted-check-deletion/D/1",
+    "out-of-range-major/D/1",
+    "accepted-check-deletion/C/1",
+    "accepted-check-deletion/A/1",
+    "dynamic-usage/A/1",
+    "accepted-check-deletion/B/1",
+    "out-of-range-major/B/1",
+    "out-of-range-major/A/1",
+    "dynamic-usage/C/1",
+    "out-of-range-major/C/1",
+    "dynamic-usage/B/1"
+  ],
+  "record_type": "run_manifest",
+  "schema_version": 1,
+  "status": "executed"
+}

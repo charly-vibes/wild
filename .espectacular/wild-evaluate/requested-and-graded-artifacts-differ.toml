@@ -1,0 +1,9 @@
+id = "requested-and-graded-artifacts-differ"
+description = "Records are invalid when the oracle commits an artifact other than the one the attempt reports, so a mismatched delivery cannot count as a valid update"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [{flags = "tests/test_update_eval_records.py::test_requested_and_graded_artifacts_differ", timeout_seconds = 120}]

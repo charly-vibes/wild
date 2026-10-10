@@ -1,0 +1,9 @@
+id = "deleted-accepted-check-does-not-disappear"
+description = "Deleting an arm's accepted check cannot bypass it: the common trusted invocation re-enforces the protected original in every arm and the deletion stays a policy refusal, not a compatibility reject"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [{flags = "tests/test_update_eval_execution.py::test_deleted_accepted_check_does_not_disappear", timeout_seconds = 600}]

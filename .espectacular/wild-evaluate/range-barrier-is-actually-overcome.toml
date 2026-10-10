@@ -1,0 +1,9 @@
+id = "range-barrier-is-actually-overcome"
+description = "An exact target Cargo refuses under the original manifest range is resolved under an authorized proposed manifest with the pinned lock selecting the target and independent consumer tests passing — neither a parse-only report nor a path replacement counts"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [{flags = "tests/test_update_fixture_replay.py::test_cell_excluded_compatible_major_two_phases", timeout_seconds = 300}, {flags = "tests/test_update_fixture_replay.py::test_cell_excluded_incompatible_major_two_phases", timeout_seconds = 300}]

@@ -1,0 +1,9 @@
+id = "no-delivered-update"
+description = "With three attempted tasks, recorded effort and no independently valid delivery, cost per valid update is null with a zero-delivery reason and total failed effort remains visible"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [{flags = "tests/test_update_eval_records.py::test_no_delivered_update", timeout_seconds = 120}]

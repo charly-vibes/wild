@@ -1,0 +1,9 @@
+id = "candidate-cannot-read-its-oracle"
+description = "An agent trial never sees or alters the hidden acceptance suite; the external grader evaluates the actual output artifact against the committed suite"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [{flags = "tests/test_update_eval_execution.py::test_candidate_cannot_read_its_oracle", timeout_seconds = 600}]

@@ -1,0 +1,9 @@
+id = "missing-margins-prevent-confirmatory-claims"
+description = "A protocol without preregistered risk/completion margins or stopping rules is refused in confirmatory mode with the missing fields listed while a labelled fixture/debug run stays possible"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [{flags = "tests/test_update_eval_records.py::test_missing_margins_prevent_confirmatory_claims", timeout_seconds = 120}]
