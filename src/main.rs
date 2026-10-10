@@ -56,6 +56,10 @@ fn envelope(command: &str, decision: &str, assurance: &str, diagnostics: Vec<Val
 }
 
 fn diagnostic(code: &'static str, reason: String) -> Value {
+    diagnostic_shared(code, reason)
+}
+
+fn diagnostic_shared(code: &str, reason: String) -> Value {
     formats::obj(vec![
         ("code", formats::s(code)),
         ("severity", formats::s("error")),
@@ -391,14 +395,169 @@ fn run_update(args: &[String]) -> i32 {
     exit_code
 }
 
+fn run_v1(args: &[String]) -> i32 {
+    // args: [prog, v1, --input, <file>, --output, <file>]
+    let usage = "usage: wild v1 --input <file> --output <file>";
+    if args.len() != 6 || args[2] != "--input" || args[4] != "--output" {
+        eprintln!("{usage}");
+        let envelope_value = envelope(
+            "v1-read",
+            "refuse",
+            "Unknown",
+            vec![diagnostic("input-mismatch", usage.to_string())],
+            Vec::new(),
+            Value::Null,
+            (0, 0),
+        );
+        println!("{}", formats::canonical(&envelope_value));
+        return 2;
+    }
+    let input_path = std::path::PathBuf::from(&args[3]);
+    let output_path = std::path::PathBuf::from(&args[5]);
+
+    let outcome: Result<Value, wild::v1::ReadError> = (|| {
+        let text = std::fs::read_to_string(&input_path)
+            .map_err(|e| wild::v1::ReadError::Malformed(format!(
+                "input-mismatch: document unreadable: {e}"
+            )))?;
+        wild::v1::read_document(&text)
+    })();
+
+    match &outcome {
+        Err(reason) => {
+            // An unknown kind is a refusal of the named kind; malformed
+            // input or unknown versions are caller errors, not
+            // compatibility evidence.
+            let (decision, code, detail) = match reason {
+                wild::v1::ReadError::UnknownKind(kind) => (
+                    "refuse",
+                    "kind-unsupported",
+                    format!("unknown kind `{kind}`"),
+                ),
+                other => (
+                    "error",
+                    "input-mismatch",
+                    match other {
+                        wild::v1::ReadError::Malformed(m) => m.clone(),
+                        wild::v1::ReadError::MissingField(f) => {
+                            format!("missing field `{f}`")
+                        }
+                        wild::v1::ReadError::UnknownVersion(v) => {
+                            format!("unknown schema_version `{v}`")
+                        }
+                        wild::v1::ReadError::UnknownKind(_) => unreachable!(),
+                    },
+                ),
+            };
+            let envelope_value = envelope(
+                "v1-read",
+                decision,
+                "Unknown",
+                vec![diagnostic_shared(code, detail)],
+                Vec::new(),
+                Value::Null,
+                (0, 0),
+            );
+            println!("{}", formats::canonical(&envelope_value));
+            if decision == "refuse" {
+                1
+            } else {
+                2
+            }
+        }
+        Ok(document) => {
+            let kind = document.str_field("kind").unwrap_or_default();
+            if kind != "contract" {
+                // This slice implements semantic validation for the contract
+                // kind only; other known kinds keep an explicit refusal so no
+                // partial document can receive a complete assurance claim.
+                let envelope_value = envelope(
+                    "v1-read",
+                    "refuse",
+                    "Unknown",
+                    vec![diagnostic(
+                        "kind-unsupported",
+                        format!("kind `{kind}` has no semantic validator in this slice"),
+                    )],
+                    Vec::new(),
+                    Value::Null,
+                    (0, 0),
+                );
+                println!("{}", formats::canonical(&envelope_value));
+                return 1;
+            }
+            match wild::v1::validate_contract(document) {
+                Ok(()) => {
+                    // Write the canonical form of the read document: object
+                    // key order, whitespace, and escape spelling have no
+                    // effect on canonical bytes.
+                    let canonical = formats::canonical(document);
+                    if let Err(e) = std::fs::write(&output_path, &canonical) {
+                        let envelope_value = envelope(
+                            "v1-read",
+                            "error",
+                            "Unknown",
+                            vec![diagnostic(
+                                "output-unwritable",
+                                format!("cannot write canonical output: {e}"),
+                            )],
+                            Vec::new(),
+                            Value::Null,
+                            (0, 0),
+                        );
+                        println!("{}", formats::canonical(&envelope_value));
+                        return 2;
+                    }
+                    let slot_names: Vec<String> = document
+                        .get("slots")
+                        .and_then(Value::as_arr)
+                        .unwrap_or(&[])
+                        .iter()
+                        .filter_map(|s| s.str_field("name").ok().map(String::from))
+                        .collect();
+                    let envelope_value = envelope(
+                        "v1-read",
+                        "accept",
+                        "PassDeclared",
+                        Vec::new(),
+                        slot_names.clone(),
+                        Value::Null,
+                        (slot_names.len() as i64, slot_names.len() as i64),
+                    );
+                    println!("{}", formats::canonical(&envelope_value));
+                    0
+                }
+                Err(codes) => {
+                    let diagnostics: Vec<Value> = codes
+                        .iter()
+                        .map(|code| diagnostic_shared(code, format!("contract failed `{code}`")))
+                        .collect();
+                    let envelope_value = envelope(
+                        "v1-read",
+                        "refuse",
+                        "Unknown",
+                        diagnostics,
+                        Vec::new(),
+                        Value::Null,
+                        (0, 0),
+                    );
+                    println!("{}", formats::canonical(&envelope_value));
+                    1
+                }
+            }
+        }
+    }
+}
+
 fn run() -> i32 {
     let args: Vec<String> = std::env::args().collect();
     match args.get(1).map(String::as_str) {
         Some("extract") => run_extract(&args),
         Some("check") => run_check(&args),
         Some("update") => run_update(&args),
+        Some("v1") => run_v1(&args),
         _ => {
-            let usage = "usage: wild <extract|check|update> ...";
+            let usage = "usage: wild <extract|check|update|v1> ...";
             eprintln!("{usage}");
             let envelope = envelope(
                 "unknown",
