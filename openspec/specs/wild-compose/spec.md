@@ -153,6 +153,8 @@ The system SHALL satisfy `resolution_by_lineage` as defined in the Constraints t
 
 The system SHALL satisfy `resolver_deterministic` as defined in the Constraints table and the v1 format reference.
 
+Scope reconciliation: registry-mode newest-tip selection is retained unchanged; local validation accepts a host-selected pinned assembly and makes no newest-tip claim.
+
 #### Acceptance case: Resolution reproducible
 - **GIVEN** the fixture domain `same_snapshot_resolved_twice()`
 - **WHEN** the `resolver_deterministic` check runs
@@ -304,9 +306,7 @@ The system SHALL satisfy `composition_is_category` as defined in the Constraints
 - **GIVEN** the accepted tips violate a declared timeout relation but older revisions would pass
 - **WHEN** resolution completes closure and checks relations
 - **THEN** it refuses with the relation id; no older candidate is selected
-
 ## Requirements
-
 ### Requirement: Wild compose design contract
 
 The design corpus SHALL expose this capability's constraints as normative, self-contained rules with acceptance cases, and SHALL link to a structurally valid shared v1 schema without claiming future runtime behavior is implemented.
@@ -317,3 +317,23 @@ The design corpus SHALL expose this capability's constraints as normative, self-
 - **THEN** every constraint has a corresponding rule and acceptance case
 - **AND** both referenced files exist and the schema is valid JSON Schema draft 2020-12
 - **AND** this capability is discoverable by strict OpenSpec validation
+
+### Requirement: Validate a host-selected local assembly
+
+Local update evaluation SHALL validate the explicit assembly selected by the host lock rather than invoke registry newest-tip selection. It SHALL account for all roots, components, required inputs, transitive dependencies, declared singletons, and relations using existing v1 structural rules. Unknown entries SHALL remain in coverage and SHALL refuse policies requiring complete structure. The local report SHALL NOT claim native registry ancestry or constitute a v1 registry certificate.
+
+#### Scenario: New provider dependency is not hidden by demand restriction
+- **GIVEN** a candidate preserves the consumer's demanded output but adds an unsatisfied required dependency
+- **WHEN** the host-selected assembly is checked
+- **THEN** delivery is refused even though the root's demanded output signature is unchanged
+
+#### Scenario: Unknown dependency remains visible
+- **GIVEN** the lock contains a required dependency with no usable contract
+- **WHEN** the local assembly is evaluated under policy requiring declared structure
+- **THEN** that entry remains in the closure and coverage with Unknown assurance and delivery is refused
+
+#### Scenario: Local pin does not claim newest lineage tip
+- **GIVEN** a valid explicitly pinned host assembly and no Wild registry
+- **WHEN** local structural checking succeeds
+- **THEN** the report identifies its local scope and makes no registry-tip or publication claim
+
