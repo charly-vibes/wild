@@ -508,6 +508,15 @@
                 "type": "string",
                 "minLength": 1
               },
+              "feedback": {
+                "description": "Declared additional feedback beyond the common existing-tool baseline. Only this varies across arms.",
+                "enum": [
+                  "none",
+                  "mined",
+                  "authored",
+                  "both"
+                ]
+              },
               "outcome_mapping": {
                 "type": "object"
               }
@@ -539,6 +548,10 @@
           "type": "string"
         },
         "execution_order": {
+          "type": "object"
+        },
+        "task_bindings": {
+          "description": "Per-task fixture bindings: consumer tree and scripted candidate actions used by the host execution path.",
           "type": "object"
         },
         "tasks": {

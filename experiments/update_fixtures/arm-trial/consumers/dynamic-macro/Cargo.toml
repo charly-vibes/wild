@@ -1,0 +1,13 @@
+# Purpose: Dynamic-usage consumer for the arm-trial comparative fixture (aoq.3).
+# Responsibilities: Depend on dept through the unresolved macro surface the
+#   checker treatment cannot statically inventory.
+# Rationale: The treatment must retain its abstention as unknown; the
+#   independent oracle adjudicates the same artifact from outside the
+#   candidate workspace.
+[package]
+name = "consumer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dept = ">=1.5.0, <2.0.0"

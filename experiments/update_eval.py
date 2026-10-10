@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-# Purpose: Deterministic validation, summary, and fixture-replay CLI for the
-#   controlled update evaluation harness (beads wild-aoq.1, wild-aoq.2).
+# Purpose: Deterministic validation, summary, fixture-replay, and four-arm
+#   execution CLI for the controlled update evaluation harness (beads
+#   wild-aoq.1, wild-aoq.2, wild-aoq.3).
 # Responsibilities: Validate committed protocol and run records against
 #   experiments/update-protocol.schema.json plus cross-record semantics
 #   (unique ids, artifact commitments, cost honesty, confirmatory
@@ -9,26 +10,37 @@
 #   successes, hiding failed effort, or substituting zero for null; replay
 #   frozen e5 fixture cases through real offline Cargo resolution/build/test,
 #   classifying observed outcomes from process exit codes and lockfile
-#   content only.
+#   content only; execute all four A-D arms for a committed protocol through
+#   one shared host path with isolated per-arm workspaces, protected
+#   accepted checks, hidden-oracle grading outside candidate control,
+#   randomized recorded order, and equal budgets/authority.
 # Rationale: The harness's first acceptance is a working measurement
 #   pipeline (design.md 'Commands and records', 'Outcomes and exact
 #   denominators'). Validation and summary are deterministic functions of
 #   committed records; replay (aoq.2) proves fixture expectations with the
 #   native toolchain so original range exclusion is never a handwritten
-#   semver oracle or a path-replacement bypass. Experimental execution
-#   (arms, agents, oracles) stays out of scope here and arrives in later
-#   slices. Records are append-only in spirit: a defective record
-#   invalidates summaries rather than being corrected in place.
+#   semver oracle or a path-replacement bypass. Comparative execution
+#   (aoq.3) holds catalog, authority, environment and budgets constant —
+#   the arm's declared feedback is the only treatment — while the trusted
+#   invocation re-enforces accepted checks from host-side protected copies
+#   and the grader evaluates the actual resolved artifact in a separate
+#   grading workspace the candidate never sees; unknown checker outcomes
+#   stay unknown beside the adjudicated oracle verdict. Records are
+#   append-only in spirit: a defective record invalidates summaries rather
+#   than being corrected in place.
 
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import random
 import re
 import shutil
 import subprocess
 import sys
+import tempfile
+import time
 from pathlib import Path
 
 import jsonschema
@@ -197,6 +209,8 @@ def load_and_validate(protocol_path: Path, runs_dir: Path | None, errors: Record
         except (OSError, json.JSONDecodeError) as exc:
             errors.add(f"cannot read run record {name}: {exc}")
             continue
+        if result.get("record_type") == "run_manifest":
+            continue  # execution metadata, not a task_result record
         structural_errors(result, validator, f"run {name}", errors)
         check_task_result_semantics(result, name, errors)
         key = (result.get("task_id"), result.get("arm"), result.get("trial"))
@@ -474,11 +488,13 @@ def _cargo_home(tmp: Path) -> Path:
     return home
 
 
-def _cargo(cmd: list[str], cwd: Path, home: Path) -> subprocess.CompletedProcess[str]:
+def _cargo(cmd: list[str], cwd: Path, home: Path,
+           timeout: float = 900) -> subprocess.CompletedProcess[str]:
     import os
     env = dict(os.environ)
     env["CARGO_HOME"] = str(home)
-    return subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=900)
+    return subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True,
+                          timeout=timeout)
 
 
 def _lock_dept_version(workspace: Path) -> str | None:
@@ -688,6 +704,326 @@ def cmd_replay(args: argparse.Namespace) -> int:
     return 0 if record["match"] else 1
 
 
+# ---------------------------------------------------------------------------
+# Four-arm execution: equal authority, protected grading (beads wild-aoq.3)
+# ---------------------------------------------------------------------------
+
+FEEDBACK_VALUES = ("none", "mined", "authored", "both")
+
+
+def _tree_digest(root: Path) -> str:
+    h = hashlib.sha256()
+    for path in sorted(root.rglob("*")):
+        if path.is_file():
+            h.update(str(path.relative_to(root)).encode())
+            h.update(path.read_bytes())
+    return "sha256:" + h.hexdigest()
+
+
+def _file_digest(path: Path) -> str:
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _artifact_digest(workspace: Path) -> str:
+    """Commit the actually resolved artifact: manifest plus fixed lock."""
+    h = hashlib.sha256()
+    for name in ("Cargo.toml", "Cargo.lock"):
+        h.update((workspace / name).read_bytes())
+    return "sha256:" + h.hexdigest()
+
+
+def _check_execution_protocol(proto: dict, errors: RecordErrors) -> None:
+    arms = proto.get("arms") or []
+    ids = [a.get("id") for a in arms]
+    if len(ids) != len(set(ids)):
+        errors.add("duplicate arm ids in protocol")
+    for arm in arms:
+        if arm.get("feedback") not in FEEDBACK_VALUES:
+            errors.add(
+                f"arm {arm.get('id')!r} must declare feedback in "
+                f"{', '.join(FEEDBACK_VALUES)}"
+            )
+    bindings = proto.get("task_bindings") or {}
+    for task in proto.get("tasks") or []:
+        tid = task.get("task_id")
+        if tid not in bindings:
+            errors.add(f"task {tid!r} has no task_bindings entry")
+        elif not (Path("x") / (bindings[tid].get("consumer") or "")).name:
+            errors.add(f"task {tid!r} binding has no consumer")
+
+
+def _stage_fixtures(fixtures_root: Path, tmp: Path) -> Path:
+    """Assemble the offline local-registry working copy once per run (warm
+    policy: shared build caches and registry index across all arms)."""
+    fixtures_copy = tmp / "fixtures"
+    shutil.copytree(
+        fixtures_root, fixtures_copy,
+        ignore=shutil.ignore_patterns("cases", "consumer-base", "*.json"))
+    index_src = fixtures_root / "registry" / "index"
+    local_reg = fixtures_copy / "local-registry"
+    shutil.copytree(index_src, local_reg / "index")
+    shutil.copy2(index_src / "config.json", local_reg / "config.json")
+    for crate in sorted((fixtures_root / "consumer-mirror").glob("*.crate")):
+        shutil.copy2(crate, local_reg / crate.name)
+    return fixtures_copy
+
+
+def _point_workspace_at_registry(workspace: Path, fixtures_copy: Path) -> None:
+    (workspace / ".cargo").mkdir(exist_ok=True)
+    (workspace / ".cargo" / "config.toml").write_text(
+        '[source.crates-io]\nreplace-with = "wild-lr"\n\n'
+        f'[source.wild-lr]\nlocal-registry = "{fixtures_copy / "local-registry"}"\n',
+        encoding="utf-8")
+
+
+def _workspace_inventory(workspace: Path) -> list[str]:
+    return sorted(
+        str(p.relative_to(workspace))
+        for p in workspace.rglob("*")
+        if p.is_file() and not str(p.relative_to(workspace)).startswith("target")
+    )
+
+
+def _copy_artifact(src: Path, dst: Path) -> None:
+    for name in ("Cargo.toml", "Cargo.lock"):
+        shutil.copy2(src / name, dst / name)
+
+
+def _execute_assignment(
+    proto: dict,
+    task: dict,
+    arm: dict,
+    binding: dict,
+    trial: int,
+    fixture_dir: Path,
+    fixtures_copy: Path,
+    home: Path,
+) -> dict:
+    """Run one task/arm/trial through the single host execution path:
+    isolated candidate workspace, trusted accepted-check enforcement, and
+    independent grading of the actual artifact outside candidate control."""
+    start = time.monotonic()
+    arm_id = arm["id"]
+    task_id = task["task_id"]
+    trial_dir = home.parent / f"{task_id}.{arm_id}.t{trial}"
+    consumer = fixture_dir / binding["consumer"]
+    timeout = float(proto.get("budgets", {}).get("timeout_seconds", 600))
+
+    def cargo(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+        try:
+            return _cargo(cmd, cwd, home, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return subprocess.CompletedProcess(cmd, 124, stdout="", stderr="timeout")
+
+    # -- candidate workspace: isolated, oracle never copied in -------------
+    workspace = trial_dir / "workspace"
+    shutil.copytree(consumer, workspace)
+    shutil.rmtree(workspace / "tests", ignore_errors=True)
+    accepted_src = fixture_dir / "accepted-checks" / f"{arm_id}.rs"
+    (workspace / "tests").mkdir()
+    shutil.copy2(accepted_src, workspace / "tests" / "accepted_check.rs")
+    protected_digest = _file_digest(accepted_src)
+    feedback = arm["feedback"]
+    if feedback in ("mined", "both"):
+        shutil.copytree(fixture_dir / "feedback" / "mined",
+                        workspace / ".wild-feedback" / "mined")
+    if feedback in ("authored", "both"):
+        shutil.copytree(fixture_dir / "feedback" / "authored",
+                        workspace / ".wild-feedback" / "authored")
+    _point_workspace_at_registry(workspace, fixtures_copy)
+
+    deleted = False
+    for action in binding.get("actions", []):
+        if action.get("kind") == "delete_accepted_check":
+            (workspace / "tests" / "accepted_check.rs").unlink()
+            deleted = True
+
+    target = task["exact_target"].split()[-1]
+
+    # -- original range: real Cargo range enforcement, no authority --------
+    original = cargo(["cargo", "update", "--package", "dept",
+                      "--precise", target, "--offline"], workspace)
+    original_outcome = ("resolution-refused-by-range"
+                        if original.returncode != 0 else "resolved")
+
+    # -- authorized attempt: same manifest-edit authority for every arm ----
+    _pin_dept(workspace, target)
+    update = cargo(["cargo", "update", "--offline"], workspace)
+    authorized_outcome = ("resolved" if update.returncode == 0
+                          else "resolution-conflict")
+    build = cargo(["cargo", "build", "--offline"], workspace)
+    build_ok = build.returncode == 0
+
+    # -- checker treatment: the arm's own evidence, never the oracle -------
+    src_text = "\n".join(
+        p.read_text(encoding="utf-8") for p in sorted((workspace / "src").rglob("*.rs")))
+    macro_uses = sorted(set(re.findall(r"dept::([A-Za-z_][A-Za-z0-9_]*)\s*!", src_text)))
+    static_refs = sorted(
+        set(re.findall(r"dept::([A-Za-z_][A-Za-z0-9_]*)", src_text)) - set(macro_uses))
+
+    workspace_check = workspace / "tests" / "accepted_check.rs"
+    check_intact = (workspace_check.is_file()
+                    and _file_digest(workspace_check) == protected_digest)
+
+    # -- trusted invocation re-enforces the protected accepted check -------
+    verify = trial_dir / "verify"
+    shutil.copytree(consumer, verify)
+    shutil.rmtree(verify / "tests", ignore_errors=True)
+    (verify / "tests").mkdir()
+    shutil.copy2(accepted_src, verify / "tests" / "accepted_check.rs")
+    _copy_artifact(workspace, verify)
+    _point_workspace_at_registry(verify, fixtures_copy)
+    enforced = cargo(["cargo", "test", "--offline"], verify)
+    enforced_pass = enforced.returncode == 0
+
+    if not check_intact:
+        outcome, reason = "reject", "policy:accepted-check-deleted"
+    elif not build_ok:
+        outcome, reason = "reject", "compatibility"
+    elif macro_uses:
+        # Dynamic/macro-generated usage is outside the checker's static
+        # evidence: the treatment abstains and stays unknown.
+        outcome, reason = "unknown", "dynamic-usage"
+    else:
+        outcome, reason = "accept", "none"
+
+    # -- independent grading outside candidate control ---------------------
+    grade = trial_dir / "grade"
+    shutil.copytree(consumer, grade)
+    shutil.rmtree(grade / "tests", ignore_errors=True)
+    (grade / "tests").mkdir()
+    shutil.copy2(fixture_dir / "oracle" / f"{task_id}.rs",
+                 grade / "tests" / "oracle_suite.rs")
+    _copy_artifact(workspace, grade)
+    _point_workspace_at_registry(grade, fixtures_copy)
+    oracle_run = cargo(["cargo", "test", "--offline"], grade)
+    verdict = "compatible" if oracle_run.returncode == 0 else "incompatible"
+    graded_digest = _artifact_digest(grade)
+
+    attempt_id = f"{task_id}-{arm_id}-t{trial}-a1"
+    attempt = {
+        "record_type": "attempt",
+        "attempt_id": attempt_id,
+        "input_commitments": {
+            "target": task["exact_target"],
+            "authority": proto.get("authority", {}),
+            "budget": proto.get("budgets", {}),
+            "feedback": feedback,
+            "consumer": task.get("consumer_digest"),
+            "oracle_suite_digest": task["oracle_commitment"]["tests_digest"],
+            "manifest": _file_digest(workspace / "Cargo.toml"),
+        },
+        "requested_artifact": {"digest": _artifact_digest(workspace)},
+        "closure": {
+            "workspace_inventory": _workspace_inventory(workspace),
+            "original_range_attempt": original_outcome,
+            "authorized_resolution": authorized_outcome,
+            "build": "ok" if build_ok else "failed",
+            "accepted_check_deleted_from_workspace": deleted,
+            "accepted_check_intact": check_intact,
+            "protected_accepted_check_enforced": enforced_pass,
+            "static_api_refs": static_refs,
+            "macro_invocations": macro_uses,
+        },
+        "checker_outcome": outcome,
+        "checker_reason": reason,
+        "exit": {"kind": "ok"},
+        "costs": {
+            "human_minutes": {"basis": "inapplicable"},
+            "compute_cost_usd": {"basis": "inapplicable"},
+            "wall_time_minutes": {
+                "basis": "measured",
+                "value": round((time.monotonic() - start) / 60.0, 4),
+            },
+        },
+    }
+    oracle_result = {
+        "record_type": "oracle_result",
+        "attempt_id": attempt_id,
+        "graded_artifact": {"digest": graded_digest},
+        "verdict": verdict,
+        "domain": task["oracle_commitment"]["domain"],
+        "eligibility": {"eligible": True, "reasons": []},
+        "grader": {"id": "independent-oracle"},
+        "adjudication_history": [],
+    }
+    delivered = None
+    if (outcome in ("accept", "unknown") and verdict == "compatible"):
+        delivered = {"attempt_id": attempt_id, "independently_valid": True}
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "record_type": "task_result",
+        "task_id": task_id,
+        "arm": arm_id,
+        "trial": trial,
+        "attempts": [attempt],
+        "oracle_results": [oracle_result],
+        "delivered": delivered,
+        "terminal_disposition": "delivered" if delivered else "failed",
+    }
+
+
+def cmd_execute(args: argparse.Namespace) -> int:
+    errors = RecordErrors()
+    proto, _ = load_and_validate(Path(args.protocol), None, errors)
+    _check_execution_protocol(proto, errors)
+    if not errors.ok:
+        print(f"execute refused: invalid protocol ({len(errors.items)} error(s)):",
+              file=sys.stderr)
+        print(errors.report(), file=sys.stderr)
+        return 1
+    proto_path = Path(args.protocol).resolve()
+    fixture_dir = proto_path.parent
+    env = proto.get("environment", {})
+    fixtures_root = (fixture_dir / env.get("fixtures_root", ".")).resolve()
+    out_dir = Path(args.output)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    seed = (proto.get("execution_order") or {}).get("random_seed", 0)
+    assignments = [(task, arm, 1)
+                   for task in proto.get("tasks", [])
+                   for arm in proto.get("arms", [])]
+    random.Random(seed).shuffle(assignments)
+    commitment = hashlib.sha256(
+        json.dumps(proto, sort_keys=True).encode()).hexdigest()
+    manifest = {
+        "record_type": "run_manifest",
+        "schema_version": SCHEMA_VERSION,
+        "protocol_id": proto.get("protocol_id"),
+        "mode": proto.get("mode"),
+        "protocol_digest": f"sha256:{commitment}",
+        "execution_seed": seed,
+        "realized_order": [f"{t['task_id']}/{a['id']}/{trial}"
+                           for t, a, trial in assignments],
+        "status": "executed",
+    }
+    (out_dir / "run_manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+
+    bindings = proto.get("task_bindings", {})
+    with tempfile.TemporaryDirectory(prefix="wild-exec-") as raw:
+        tmp = Path(raw)
+        fixtures_copy = _stage_fixtures(fixtures_root, tmp)
+        home = _cargo_home(tmp)
+        for task, arm, trial in assignments:
+            record = _execute_assignment(
+                proto, task, arm, bindings[task["task_id"]], trial,
+                fixture_dir, fixtures_copy, home)
+            (out_dir / f"{task['task_id']}.{arm['id']}.t{trial}.json").write_text(
+                json.dumps(record, indent=2, sort_keys=True) + "\n")
+
+    # The harness never files records it would itself refuse to validate.
+    post = RecordErrors()
+    load_and_validate(proto_path, out_dir, post)
+    if not post.ok:
+        print(f"execute produced invalid records ({len(post.items)} error(s)):",
+              file=sys.stderr)
+        print(post.report(), file=sys.stderr)
+        return 1
+    print(f"executed {len(assignments)} assignments in {out_dir}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="update_eval.py", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -707,6 +1043,12 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--protocol", required=True)
     p_run.add_argument("--output", required=True)
     p_run.set_defaults(func=cmd_run)
+
+    p_exec = sub.add_parser("execute",
+                            help="run all protocol arms through the shared host path")
+    p_exec.add_argument("--protocol", required=True)
+    p_exec.add_argument("--output", required=True)
+    p_exec.set_defaults(func=cmd_execute)
 
     p_replay = sub.add_parser("replay", help="replay e5 fixture cases through real Cargo")
     p_replay.add_argument("--fixtures", required=True)

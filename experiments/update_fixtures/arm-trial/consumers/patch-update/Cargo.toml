@@ -1,0 +1,13 @@
+# Purpose: Greet-only consumer for the arm-trial comparative fixture (aoq.3, patch-update variant).
+# Responsibilities: Use exactly the API that survives the excluded major
+#   2.0.0 so the authorized target is genuinely compatible.
+# Rationale: Arms A-D replay this frozen consumer through the shared host
+#   path; the manifest is rewritten only by the authorized authority step,
+#   never by path replacement.
+[package]
+name = "consumer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dept = ">=1.2.0, <2.0.0"

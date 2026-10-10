@@ -1,0 +1,153 @@
+{
+  "arms": [
+    {
+      "adapter": "existing-tool",
+      "feedback": "none",
+      "id": "A",
+      "outcome_mapping": {
+        "no-evidence": "unknown",
+        "tests-fail": "reject",
+        "tests-pass": "accept"
+      }
+    },
+    {
+      "adapter": "mined-contracts",
+      "feedback": "mined",
+      "id": "B",
+      "outcome_mapping": {
+        "no-evidence": "unknown",
+        "tests-fail": "reject",
+        "tests-pass": "accept"
+      }
+    },
+    {
+      "adapter": "authored-obligations",
+      "feedback": "authored",
+      "id": "C",
+      "outcome_mapping": {
+        "no-evidence": "unknown",
+        "tests-fail": "reject",
+        "tests-pass": "accept"
+      }
+    },
+    {
+      "adapter": "mined-and-authored",
+      "feedback": "both",
+      "id": "D",
+      "outcome_mapping": {
+        "no-evidence": "unknown",
+        "tests-fail": "reject",
+        "tests-pass": "accept"
+      }
+    }
+  ],
+  "authority": {
+    "manifest_edit": true
+  },
+  "budgets": {
+    "max_attempts": 3,
+    "timeout_seconds": 600
+  },
+  "cold_warm_policy": "warm",
+  "environment": {
+    "cargo": "host",
+    "fixtures_root": "../e5"
+  },
+  "execution_order": {
+    "random_seed": 7
+  },
+  "mode": "fixture",
+  "protocol_id": "arm-trial-e3",
+  "record_type": "protocol",
+  "schema_version": 1,
+  "split": {
+    "development": [],
+    "evaluation": [
+      "out-of-range-major",
+      "dynamic-usage",
+      "accepted-check-deletion"
+    ]
+  },
+  "task_bindings": {
+    "accepted-check-deletion": {
+      "actions": [
+        {
+          "kind": "delete_accepted_check"
+        }
+      ],
+      "consumer": "consumers/patch-update"
+    },
+    "dynamic-usage": {
+      "actions": [],
+      "consumer": "consumers/dynamic-macro"
+    },
+    "out-of-range-major": {
+      "actions": [],
+      "consumer": "consumers/greet-only"
+    }
+  },
+  "tasks": [
+    {
+      "base_digest": "sha256:b73eeb61cae0b476df5b8c3035072b81359f9dd8de064a3cde2736b37ab14d10",
+      "consumer_digest": "sha256:b73eeb61cae0b476df5b8c3035072b81359f9dd8de064a3cde2736b37ab14d10",
+      "exact_target": "dept 2.0.0",
+      "feasible_target": {
+        "basis": "release exists in the frozen catalog",
+        "flag": true
+      },
+      "non_compatibility_constraints": [],
+      "oracle_commitment": {
+        "domain": "crate:dept",
+        "tests_digest": "sha256:633672dcd89f97c0ecb11a0cd4a3e10c37fba9d4617c0c3e2ddc66f7ec4305d0"
+      },
+      "origin": "synthetic",
+      "original_range": "~1.2",
+      "record_type": "task",
+      "stratum": "direct",
+      "tags": [],
+      "task_id": "out-of-range-major"
+    },
+    {
+      "base_digest": "sha256:723b6a5db1a1aeda0f4246ff42a936cc6de08a48961bcd1749c90ceb6519c090",
+      "consumer_digest": "sha256:723b6a5db1a1aeda0f4246ff42a936cc6de08a48961bcd1749c90ceb6519c090",
+      "exact_target": "dept 1.7.0",
+      "feasible_target": {
+        "basis": "release exists in the frozen catalog",
+        "flag": true
+      },
+      "non_compatibility_constraints": [],
+      "oracle_commitment": {
+        "domain": "crate:dept",
+        "tests_digest": "sha256:c70667fb65d171077772c36cb3c6199578733635f54690d22fae1809dce2fd05"
+      },
+      "origin": "synthetic",
+      "original_range": ">=1.5.0, <2.0.0",
+      "record_type": "task",
+      "stratum": "direct",
+      "tags": [
+        "dynamic"
+      ],
+      "task_id": "dynamic-usage"
+    },
+    {
+      "base_digest": "sha256:7bc9accb00bd98ace959db9fcdee427c2c06c2f34c7a98ddfdfae3dc3281ba8e",
+      "consumer_digest": "sha256:7bc9accb00bd98ace959db9fcdee427c2c06c2f34c7a98ddfdfae3dc3281ba8e",
+      "exact_target": "dept 1.9.0",
+      "feasible_target": {
+        "basis": "release exists in the frozen catalog",
+        "flag": true
+      },
+      "non_compatibility_constraints": [],
+      "oracle_commitment": {
+        "domain": "crate:dept",
+        "tests_digest": "sha256:a4f9b66ce3d5043a96b2b536e03b043b5fc344020a3dbc3d85a8cf8eb896653a"
+      },
+      "origin": "synthetic",
+      "original_range": ">=1.2.0, <2.0.0",
+      "record_type": "task",
+      "stratum": "direct",
+      "tags": [],
+      "task_id": "accepted-check-deletion"
+    }
+  ]
+}
