@@ -39,3 +39,8 @@ Binaries exist for v0.2.0, v0.3.0, v0.4.0 only (checksums verified). v0.1.0, v0.
   A constructed spec (a law property without `**identity:**` / `**associativity:**` labels) exits 0 under v0.2.0 and 1 under v0.3.0 and v0.4.0, so a CI gate can flip. That fixture is derived from the rule delta, not found in the wild.
 - Release notes for v0.3.0 and v0.4.0 contain only a full-changelog link; no breaking change was declared on the page.
 - Reading: tier 1 (shape) passes both transitions; a corpus replay (tier 3) detects both and names the rules.
+
+## 4. Semantic-composition replacement experiment (wild-9co.2)
+- `composition_replacement.py`: frozen finite reservation domain (6 two-op schedules, commit step budget 8), independently specified public-event oracle (safety L1 + bounded progress L2), five implementations with recorded digests, three projections, four evidence claims.
+- C01: same-shape stale-read replacement accepted by the structural check (red), public oracle flags 4/6 schedules. C02: independently written token-CAS implementation allowed on 6/6. C08: dishonest projections rejected by the event-completeness fixture. C14: deadlock fails bounded progress (safety-only would pass); beyond-bound is unknown. C16: subdomain/foreign-oracle/edited-law claims refused.
+- Scope: finite frozen domain only; schedules outside the six are unknown; no v1 runtime, unbounded liveness, or cross-language conformance. Assertions pinned in `tests/test_composition_replacement.py`.
