@@ -16,6 +16,12 @@
   },
   {
    "$ref": "#/$defs/provenance"
+  },
+  {
+   "$ref": "#/$defs/update_request"
+  },
+  {
+   "$ref": "#/$defs/update_plan"
   }
  ],
  "$defs": {
@@ -73,7 +79,14 @@
       "unsupported-construct",
       "input-mismatch",
       "obligation-change",
-      "law-inconclusive"
+      "law-inconclusive",
+      "ambiguous-package",
+      "inherited-range",
+      "unsupported-lock",
+      "unsupported-manifest",
+      "unknown-package",
+      "base-changed",
+      "plan-ready"
      ]
     },
     "severity": {
@@ -137,6 +150,234 @@
     "file",
     "line",
     "col"
+   ],
+   "additionalProperties": false
+  },
+  "update_request": {
+   "type": "object",
+   "description": "Read-only update planning request (beads wild-nic.1): names the bundle, the manifest to edit, the exact package target/release with source artifact digest, and environment/policy commitments. No candidate or baseline code is executed during planning.",
+   "properties": {
+    "version": {
+     "const": "local-1"
+    },
+    "kind": {
+     "const": "update-request"
+    },
+    "bundle_root": {
+     "type": "string"
+    },
+    "files": {
+     "$ref": "#/$defs/file_map"
+    },
+    "manifest": {
+     "type": "string",
+     "description": "Bundle-relative path to the Cargo.toml that declares the target dependency"
+    },
+    "package": {
+     "$ref": "#/$defs/id"
+    },
+    "release": {
+     "type": "string",
+     "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[A-Za-z0-9.-]+)?$"
+    },
+    "source_digest": {
+     "$ref": "#/$defs/digest"
+    },
+    "target": {
+     "type": "string"
+    },
+    "toolchain": {
+     "type": "string"
+    },
+    "features": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "consumer": {
+     "$ref": "#/$defs/id"
+    },
+    "policy": {
+     "type": "object"
+    },
+    "catalog": {
+     "type": "object",
+     "properties": {
+      "kind": {
+       "type": "string"
+      },
+      "digest": {
+       "$ref": "#/$defs/digest"
+      }
+     },
+     "required": [
+      "kind",
+      "digest"
+     ],
+     "additionalProperties": false
+    },
+    "migration_digest": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/digest"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "planner": {
+     "$ref": "#/$defs/extractor_identity"
+    }
+   },
+   "required": [
+    "version",
+    "kind",
+    "bundle_root",
+    "files",
+    "manifest",
+    "package",
+    "release",
+    "source_digest",
+    "target",
+    "toolchain",
+    "features",
+    "consumer",
+    "policy",
+    "catalog",
+    "planner"
+   ],
+   "additionalProperties": false
+  },
+  "update_plan": {
+   "type": "object",
+   "description": "Immutable committed update plan (beads wild-nic.1). Planning success is a well-formed eligible proposal, NOT an accepted compatibility check: assurance stays Unknown and every required validation is listed as pending.",
+   "properties": {
+    "version": {
+     "const": "local-1"
+    },
+    "kind": {
+     "const": "update-plan"
+    },
+    "consumer": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/id"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "package": {
+     "$ref": "#/$defs/id"
+    },
+    "release": {
+     "type": "string"
+    },
+    "request_digest": {
+     "$ref": "#/$defs/digest"
+    },
+    "original_range": {
+     "type": "string"
+    },
+    "edit": {
+     "type": "object",
+     "properties": {
+      "file": {
+       "type": "string"
+      },
+      "table": {
+       "type": "string"
+      },
+      "package": {
+       "$ref": "#/$defs/id"
+      },
+      "from": {
+       "type": "string"
+      },
+      "to": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "file",
+      "table",
+      "package",
+      "from",
+      "to"
+     ],
+     "additionalProperties": false
+    },
+    "why": {
+     "type": "string"
+    },
+    "excluded_by_original_range": {
+     "type": "boolean"
+    },
+    "source_digest": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/digest"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "lock_version": {
+     "type": "string"
+    },
+    "preconditions": {
+     "$ref": "#/$defs/file_map",
+     "description": "Base-file digests that must still match at evaluation time before any edit is applied"
+    },
+    "allowed_changed_paths": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "pending_checks": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     },
+     "uniqueItems": true
+    },
+    "assurance": {
+     "const": "Unknown"
+    },
+    "disposition": {
+     "const": "plan-ready"
+    },
+    "diagnostics": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/diagnostic"
+     }
+    }
+   },
+   "required": [
+    "version",
+    "kind",
+    "consumer",
+    "package",
+    "release",
+    "request_digest",
+    "original_range",
+    "edit",
+    "why",
+    "excluded_by_original_range",
+    "source_digest",
+    "lock_version",
+    "preconditions",
+    "allowed_changed_paths",
+    "pending_checks",
+    "assurance",
+    "disposition",
+    "diagnostics"
    ],
    "additionalProperties": false
   },

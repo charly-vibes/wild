@@ -1,6 +1,7 @@
-// Purpose: `wild` executable entrypoint (beads wild-mh5.1, wild-mh5.2).
-// Responsibilities: Parse the `extract --request <file> --output <dir>` and
-//   `check --request <file> --format json --report <file>` command lines,
+// Purpose: `wild` executable entrypoint (beads wild-mh5.1, wild-mh5.2, wild-nic.1).
+// Responsibilities: Parse the `extract --request <file> --output <dir>`,
+//   `check --request <file> --format json --report <file>` and
+//   `update plan --request <file> --output <file>` command lines,
 //   load and validate the local-1 requests through wild::formats /
 //   wild::extract / wild::check, write the requested record artifacts only
 //   to the requested output locations (extraction: contract/demand/
@@ -13,11 +14,15 @@
 //   failed orchestration, and to never write outside the requested output
 //   locations or perform network access. The check command's facts layout
 //   is part of the declared report contract (docs/wild-local-v1.md), so the
-//   fact records are explicitly requested outputs.
+//   fact records are explicitly requested outputs. The update plan command
+//   is strictly read-only toward the project bundle: it writes only the
+//   requested plan file and never executes project or candidate code
+//   (beads wild-nic.1, state transitions 1-2 of the change design).
 
 use wild::check;
 use wild::extract::{self, PROFILE};
 use wild::formats::{self, Value};
+use wild::update;
 
 fn envelope(command: &str, decision: &str, assurance: &str, diagnostics: Vec<Value>, slots: Vec<String>, checker: Value, coverage: (i64, i64)) -> Value {
     let (numerator, denominator) = coverage;
@@ -293,13 +298,107 @@ fn write_report_outputs(
     Ok(())
 }
 
+fn run_update(args: &[String]) -> i32 {
+    // args: [prog, update, plan, --request, <file>, --output, <file>]
+    let usage = "usage: wild update plan --request <file> --output <file>";
+    if args.len() != 7 || args[2] != "plan" || args[3] != "--request" || args[5] != "--output" {
+        eprintln!("{usage}");
+        let envelope_value = envelope(
+            "update-plan",
+            "refuse",
+            "Unknown",
+            vec![diagnostic("input-mismatch", usage.to_string())],
+            Vec::new(),
+            Value::Null,
+            (0, 0),
+        );
+        println!("{}", formats::canonical(&envelope_value));
+        return 2;
+    }
+    let request_path = std::path::PathBuf::from(&args[4]);
+    let output_path = std::path::PathBuf::from(&args[6]);
+
+    let outcome: Result<update::PlanOutcome, String> = (|| {
+        let text = std::fs::read_to_string(&request_path)
+            .map_err(|e| format!("input-mismatch: request unreadable: {e}"))?;
+        let request = formats::parse(&text)
+            .map_err(|e| format!("input-mismatch: malformed request: {e}"))?;
+        update::plan(&request)
+    })();
+
+    let (exit_code, envelope_value, plan) = match &outcome {
+        Ok(outcome) => (
+            0,
+            envelope(
+                "update-plan",
+                "accept",
+                "Unknown",
+                Vec::new(),
+                Vec::new(),
+                formats::s(&formats::sha256_digest(b"wild-planner-v0")),
+                (0, 0),
+            ),
+            Some(&outcome.plan),
+        ),
+        Err(msg) => {
+            // Diagnostic kodu mesajın prefixindən çıxarılır (məs. "ambiguous-package: ...").
+            let code = msg.split(':').next().unwrap_or("input-mismatch");
+            let code_static: &'static str = match code {
+                "ambiguous-package"     => "ambiguous-package",
+                "inherited-range"       => "inherited-range",
+                "unsupported-lock"      => "unsupported-lock",
+                "unsupported-manifest"  => "unsupported-manifest",
+                "unknown-package"       => "unknown-package",
+                "base-changed"          => "base-changed",
+                _                        => "input-mismatch",
+            };
+            let reason = match msg.split_once(": ") {
+                Some((_, rest)) => rest.to_string(),
+                None => msg.clone(),
+            };
+            // Malformed/unreadable input = error (exit 2); semantic refusals = exit 1.
+            let is_error = code_static == "input-mismatch";
+            (
+                if is_error { 2 } else { 1 },
+                envelope(
+                    "update-plan",
+                    "refuse",
+                    "Unknown",
+                    vec![diagnostic(code_static, reason)],
+                    Vec::new(),
+                    Value::Null,
+                    (0, 0),
+                ),
+                None,
+            )
+        }
+    };
+
+    // Yalnız istənilən plan faylı yazılır — layihəyə heç bir yazı yoxdur.
+    if let Some(plan) = plan {
+        if let Some(parent) = output_path.parent() {
+            if let Err(e) = std::fs::create_dir_all(parent) {
+                eprintln!("error: cannot create output directory: {e}");
+                return 2;
+            }
+        }
+        if let Err(e) = std::fs::write(&output_path, formats::canonical(plan)) {
+            eprintln!("error: cannot write plan `{}`: {e}", output_path.display());
+            return 2;
+        }
+    }
+    println!("{}", formats::canonical(&envelope_value));
+    exit_code
+}
+
 fn run() -> i32 {
     let args: Vec<String> = std::env::args().collect();
     match args.get(1).map(String::as_str) {
         Some("extract") => run_extract(&args),
         Some("check") => run_check(&args),
+        Some("update") => run_update(&args),
         _ => {
-            let usage = "usage: wild <extract|check> ...";
+            let usage = "usage: wild <extract|check|update> ...";
             eprintln!("{usage}");
             let envelope = envelope(
                 "unknown",

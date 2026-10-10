@@ -28,6 +28,28 @@ in [examples-local.json](../schemas/examples-local.json).
 | Check report | `check-report` | Consumer scope, policy, per-slot verdicts, obligation verdicts, obligation changes, transition echo, law evidence (`law_methods`), invocation commitment, per-side extraction summaries, disposition, decision, assurance, stable diagnostics |
 | Obligations document | `obligations` | Accepted and proposed obligation records: stable id, consumer/boundary scope, origin (`human` or `agent`), state, accepting authority (name plus digest), and a digest-bound predicate (structural contract record or executable law suite digest); prose is never an executable predicate |
 | Transition record | `transition` (check-request field) | Externally authorized old-to-new obligation change: old and new digest, reason, affected consumers, authority digest; supplied by the trusted caller, never by the candidate |
+| Update request | `update-request` | Bundle root with per-file sha256 commitments, explicit manifest path (bundle-relative), package id, exact desired release, source artifact digest, target/toolchain/features, consumer scope, policy and catalog snapshot, planner identity, optional migration patch digest; every filesystem reference confined to the supplied bundle (beads wild-nic.1) |
+| Update plan | `update-plan` | Request digest (canonical v1 hash), original range, exact proposed manifest edit (`from` range → `to` `=<release>` pin with owning table), the reason the constraint changes (`why`, plus `excluded_by_original_range`), target artifact digest, lock version, base-file digest preconditions (manifest + lock), allowed changed paths, full `pending_checks` set; `assurance` is always `Unknown` and `disposition` is always `plan-ready` — a plan never claims a delivered update or checked compatibility (beads wild-nic.1) |
+
+### Update planning (`wild update plan --request <file> --output <file>`)
+
+Planning is strictly read-only toward the caller's project: it reads only
+the supplied bundle and writes only the requested plan file. No project or
+candidate code is executed (design state transitions 1–2). The adapter
+verifies the manifest and adjacent `Cargo.lock` digests against the
+request commitments (a mismatch is a `base-changed` refusal — a stale
+request cannot plan against drifted bytes), then locates the dependency
+declaration and refuses without guessing when:
+
+- `ambiguous-package` — the package is declared in more than one dependency table;
+- `inherited-range` — the declaration uses `workspace = true` (no identified owner);
+- `unsupported-manifest` — the declaration has no version range (path/git spec) or the manifest is not valid TOML;
+- `unsupported-lock` — the `Cargo.lock` version is outside {3, 4};
+- `unknown-package` — the package is not declared in any supported table.
+
+Exit mapping: plan-ready accept = 0, refusal = 1, malformed/unreadable
+input = 2. The plan's `preconditions` are re-verified by evaluation before
+any edit is applied (beads wild-nic.2).
 
 Slot ids derive from crate identity (package name plus version) and the
 qualified declaration path — never from line numbers. Semantic contract

@@ -160,6 +160,83 @@
      "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
     }
    }
+  },
+  {
+   "version": "local-1",
+   "kind": "update-request",
+   "bundle_root": "/tmp/supplied-bundle",
+   "files": {
+    "Cargo.toml": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "Cargo.lock": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "src/lib.rs": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+   },
+   "manifest": "Cargo.toml",
+   "package": "provider",
+   "release": "2.0.0",
+   "source_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+   "target": "x86_64-unknown-linux-gnu",
+   "toolchain": "stable",
+   "features": [],
+   "consumer": "consumer",
+   "policy": {
+    "structural": "accretion"
+   },
+   "catalog": {
+    "kind": "local-fixture",
+    "digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555"
+   },
+   "migration_digest": null,
+   "planner": {
+    "name": "wild",
+    "digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666"
+   }
+  },
+  {
+   "version": "local-1",
+   "kind": "update-plan",
+   "consumer": "consumer",
+   "package": "provider",
+   "release": "2.0.0",
+   "request_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+   "original_range": "1.0",
+   "edit": {
+    "file": "Cargo.toml",
+    "table": "dependencies",
+    "package": "provider",
+    "from": "1.0",
+    "to": "=2.0.0"
+   },
+   "why": "requested release 2.0.0 is outside the original range; the pin narrows the declared constraint to the exact release",
+   "excluded_by_original_range": true,
+   "source_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+   "lock_version": "4",
+   "preconditions": {
+    "Cargo.toml": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "Cargo.lock": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+   },
+   "allowed_changed_paths": [
+    "Cargo.toml",
+    "Cargo.lock"
+   ],
+   "pending_checks": [
+    "baseline-build",
+    "baseline-test",
+    "cargo-resolution",
+    "closure-inspection",
+    "contract-checks",
+    "protected-obligations"
+   ],
+   "assurance": "Unknown",
+   "disposition": "plan-ready",
+   "diagnostics": [
+    {
+     "code": "plan-ready",
+     "severity": "info",
+     "source": null,
+     "slots": [],
+     "reason": "plan-ready: exact pin provider@=2.0.0 recorded; validation remains pending"
+    }
+   ]
   }
  ]
 }
