@@ -22,6 +22,7 @@
 use wild::check;
 use wild::extract::{self, PROFILE};
 use wild::formats::{self, Value};
+use wild::cargo_host;
 use wild::update;
 
 fn envelope(command: &str, decision: &str, assurance: &str, diagnostics: Vec<Value>, slots: Vec<String>, checker: Value, coverage: (i64, i64)) -> Value {
@@ -304,6 +305,9 @@ fn write_report_outputs(
 
 fn run_update(args: &[String]) -> i32 {
     // args: [prog, update, plan, --request, <file>, --output, <file>]
+    if args.len() > 2 && args[2] == "evaluate" {
+        return run_update_evaluate(args);
+    }
     let usage = "usage: wild update plan --request <file> --output <file>";
     if args.len() != 7 || args[2] != "plan" || args[3] != "--request" || args[5] != "--output" {
         eprintln!("{usage}");
@@ -388,6 +392,116 @@ fn run_update(args: &[String]) -> i32 {
         }
         if let Err(e) = std::fs::write(&output_path, formats::canonical(plan)) {
             eprintln!("error: cannot write plan `{}`: {e}", output_path.display());
+            return 2;
+        }
+    }
+    println!("{}", formats::canonical(&envelope_value));
+    exit_code
+}
+
+fn run_update_evaluate(args: &[String]) -> i32 {
+    // args: [prog, update, evaluate, --plan, <file>, --authority, <file>,
+    //        --pin, <file>, --output, <dir>]
+    let usage = "usage: wild update evaluate --plan <file> --authority <file> --pin <file> --output <dir>";
+    if args.len() != 11
+        || args[3] != "--plan"
+        || args[5] != "--authority"
+        || args[7] != "--pin"
+        || args[9] != "--output"
+    {
+        eprintln!("{usage}");
+        let envelope_value = envelope(
+            "update-evaluate",
+            "refuse",
+            "Unknown",
+            vec![diagnostic("input-mismatch", usage.to_string())],
+            Vec::new(),
+            Value::Null,
+            (0, 0),
+        );
+        println!("{}", formats::canonical(&envelope_value));
+        return 2;
+    }
+    let output_dir = std::path::PathBuf::from(&args[10]);
+
+    let read_record = |path: &str, what: &str| -> Result<Value, String> {
+        let text = std::fs::read_to_string(path)
+            .map_err(|e| format!("input-mismatch: {what} unreadable: {e}"))?;
+        formats::parse(&text).map_err(|e| format!("input-mismatch: malformed {what}: {e}"))
+    };
+    let outcome: Result<cargo_host::Evaluated, String> = (|| {
+        let plan = read_record(&args[4], "plan")?;
+        let authority = read_record(&args[6], "authority")?;
+        let pin = read_record(&args[8], "authority pin")?;
+        cargo_host::evaluate(&plan, &authority, &pin, &output_dir)
+    })();
+
+    let (exit_code, envelope_value, report) = match outcome {
+        Ok(evaluated) => {
+            let accept = evaluated.decision == "accept";
+            let diagnostics: Vec<Value> = if accept {
+                Vec::new()
+            } else {
+                evaluated
+                    .report
+                    .get("diagnostics")
+                    .and_then(Value::as_arr)
+                    .map(|d| d.to_vec())
+                    .unwrap_or_default()
+            };
+            (
+                if accept { 0 } else { 1 },
+                envelope(
+                    "update-evaluate",
+                    evaluated.decision,
+                    "Unknown",
+                    diagnostics,
+                    Vec::new(),
+                    formats::s(&formats::sha256_digest(b"wild-update-evaluator-v0")),
+                    (0, 0),
+                ),
+                Some(evaluated.report),
+            )
+        }
+        Err(msg) => {
+            let code = msg.split(':').next().unwrap_or("input-mismatch").to_string();
+            let code_static: &'static str = match code.as_str() {
+                "authority-untrusted"    => "authority-untrusted",
+                "base-changed"           => "base-changed",
+                "isolation-refused"      => "isolation-refused",
+                "edit-mismatch"          => "edit-mismatch",
+                "host-resolution-failed" => "host-resolution-failed",
+                "missing-evidence"       => "missing-evidence",
+                _                        => "input-mismatch",
+            };
+            let reason = match msg.split_once(": ") {
+                Some((_, rest)) => rest.to_string(),
+                None => msg.clone(),
+            };
+            let is_error = code_static == "input-mismatch";
+            (
+                if is_error { 2 } else { 1 },
+                envelope(
+                    "update-evaluate",
+                    "refuse",
+                    "Unknown",
+                    vec![diagnostic(code_static, reason)],
+                    Vec::new(),
+                    Value::Null,
+                    (0, 0),
+                ),
+                None,
+            )
+        }
+    };
+
+    if let Some(report) = report {
+        if let Err(e) = std::fs::create_dir_all(&output_dir) {
+            eprintln!("error: cannot create output directory: {e}");
+            return 2;
+        }
+        if let Err(e) = std::fs::write(output_dir.join("report.json"), formats::canonical(&report)) {
+            eprintln!("error: cannot write report: {e}");
             return 2;
         }
     }

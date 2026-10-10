@@ -16,5 +16,6 @@ pub mod extract;
 pub mod formats;
 pub mod harness;
 pub(crate) mod obligations;
+pub mod cargo_host;
 pub mod update;
 pub mod v1;

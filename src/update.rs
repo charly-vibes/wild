@@ -238,7 +238,7 @@ fn lock_path_of(manifest_rel: &str) -> Result<String, String> {
 }
 
 /// Refuse paths that escape the bundle (absolute, dot, dot-dot components).
-fn confined(bundle_root: &str, rel: &str, what: &str) -> Result<std::path::PathBuf, String> {
+pub(crate) fn confined(bundle_root: &str, rel: &str, what: &str) -> Result<std::path::PathBuf, String> {
     if rel.starts_with('/') || rel.contains('\\') {
         return Err(format!("input-mismatch: {what} path `{rel}` must be bundle-relative"));
     }
@@ -279,7 +279,7 @@ fn verify_commitment(
     Ok(())
 }
 
-fn diagnostic(code: &str, severity: &str, reason: &str) -> Value {
+pub(crate) fn diagnostic(code: &str, severity: &str, reason: &str) -> Value {
     formats::obj(vec![
         ("code", formats::s(code)),
         ("severity", formats::s(severity)),

@@ -22,6 +22,15 @@
   },
   {
    "$ref": "#/$defs/update_plan"
+  },
+  {
+   "$ref": "#/$defs/update_authority"
+  },
+  {
+   "$ref": "#/$defs/update_authority_pin"
+  },
+  {
+   "$ref": "#/$defs/update_report"
   }
  ],
  "$defs": {
@@ -1033,6 +1042,254 @@
     "environment",
     "evaluation_time",
     "sandbox"
+   ],
+   "additionalProperties": false
+  },
+  "update_authority": {
+   "type": "object",
+   "description": "Trusted external invocation authority for one update plan (beads wild-nic.2). Supplied outside candidate control; the invocation pin commits its exact digest before anything runs.",
+   "properties": {
+    "version": {
+     "const": "local-1"
+    },
+    "kind": {
+     "const": "update-authority"
+    },
+    "plan_digest": {
+     "$ref": "#/$defs/digest"
+    },
+    "bundle_root": {
+     "type": "string"
+    },
+    "invocation": {
+     "$ref": "#/$defs/invocation_identity"
+    },
+    "allowed_actions": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "enum": [
+       "evaluate"
+      ]
+     }
+    },
+    "environment": {
+     "$ref": "#/$defs/update_environment"
+    },
+    "policy": {
+     "type": "object"
+    }
+   },
+   "required": [
+    "version",
+    "kind",
+    "plan_digest",
+    "bundle_root",
+    "invocation",
+    "allowed_actions",
+    "environment",
+    "policy"
+   ],
+   "additionalProperties": false
+  },
+  "invocation_identity": {
+   "type": "object",
+   "description": "Named trusted invocation identity (CI job or local policy owner) pinned out of band.",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "digest": {
+     "$ref": "#/$defs/digest"
+    }
+   },
+   "required": [
+    "name",
+    "digest"
+   ],
+   "additionalProperties": false
+  },
+  "update_environment": {
+   "type": "object",
+   "description": "Pinned validity context of the authorized evaluation: toolchain, target platform, features.",
+   "properties": {
+    "toolchain": {
+     "type": "string"
+    },
+    "target": {
+     "type": "string"
+    },
+    "features": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   },
+   "required": [
+    "toolchain",
+    "target"
+   ],
+   "additionalProperties": false
+  },
+  "update_authority_pin": {
+   "type": "object",
+   "description": "External commitment by the trusted invocation that authorizes exactly one plan and one authority record; without this pin an authority file is not trusted.",
+   "properties": {
+    "version": {
+     "const": "local-1"
+    },
+    "kind": {
+     "const": "update-authority-pin"
+    },
+    "invocation": {
+     "$ref": "#/$defs/invocation_identity"
+    },
+    "plan_digest": {
+     "$ref": "#/$defs/digest"
+    },
+    "authority_digest": {
+     "$ref": "#/$defs/digest"
+    }
+   },
+   "required": [
+    "version",
+    "kind",
+    "invocation",
+    "plan_digest",
+    "authority_digest"
+   ],
+   "additionalProperties": false
+  },
+  "update_report": {
+   "type": "object",
+   "description": "Evaluated host evidence for one authorized update plan (beads wild-nic.2). Records requested and actual identities; delivered-update status stays pending until the integrated checks land in U3.",
+   "properties": {
+    "version": {
+     "const": "local-1"
+    },
+    "kind": {
+     "const": "update-report"
+    },
+    "package": {
+     "$ref": "#/$defs/id"
+    },
+    "release": {
+     "type": "string"
+    },
+    "plan_digest": {
+     "$ref": "#/$defs/digest"
+    },
+    "authority_digest": {
+     "$ref": "#/$defs/digest"
+    },
+    "requested": {
+     "type": "object",
+     "properties": {
+      "release": {
+       "type": "string"
+      },
+      "source_digest": {
+       "anyOf": [
+        {
+         "$ref": "#/$defs/digest"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      }
+     },
+     "required": [
+      "release",
+      "source_digest"
+     ],
+     "additionalProperties": false
+    },
+    "actual": {
+     "type": "object",
+     "properties": {
+      "version": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "source_digest": {
+       "anyOf": [
+        {
+         "$ref": "#/$defs/digest"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "lock_source": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      }
+     },
+     "required": [
+      "version",
+      "source_digest",
+      "lock_source"
+     ],
+     "additionalProperties": false
+    },
+    "lock_version": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "disposition": {
+     "enum": [
+      "host-evidence",
+      "refused"
+     ]
+    },
+    "assurance": {
+     "const": "Unknown"
+    },
+    "pending_checks": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "diagnostics": {
+     "type": "array"
+    }
+   },
+   "required": [
+    "version",
+    "kind",
+    "package",
+    "release",
+    "plan_digest",
+    "authority_digest",
+    "requested",
+    "actual",
+    "lock_version",
+    "disposition",
+    "assurance",
+    "pending_checks",
+    "diagnostics"
    ],
    "additionalProperties": false
   }
