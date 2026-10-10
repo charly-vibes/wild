@@ -1,0 +1,11 @@
+id = "consumer-repair-is-a-migration"
+description = "An update that passes only after a supplied consumer-code patch is delivered with that patch included and reports migration rather than direct compatibility"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.11.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_update_migration.py::test_consumer_repair_migration_is_labelled_migration", timeout_seconds = 300},
+]

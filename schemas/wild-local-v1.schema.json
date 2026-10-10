@@ -234,7 +234,22 @@
       {
        "type": "null"
       }
-     ]
+     ],
+     "description": "Binds the optional migration patch: sha256 of the canonical {target: source-digest | null} map (beads wild-nic.4)"
+    },
+    "migration_patch": {
+     "type": "object",
+     "description": "Supplied consumer/adapter migration: target bundle-relative path -> source bundle-relative path, or null to delete the target",
+     "additionalProperties": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
     },
     "planner": {
      "$ref": "#/$defs/extractor_identity"
@@ -347,6 +362,10 @@
      "items": {
       "type": "string"
      }
+    },
+    "migration": {
+     "$ref": "#/$defs/supplied_migration",
+     "description": "Echo of the validated supplied migration patch; null/absent means a direct update (beads wild-nic.4)"
     },
     "contracts": {
      "type": [
@@ -1079,9 +1098,11 @@
      "items": {
       "type": "string",
       "enum": [
-       "evaluate"
+       "evaluate",
+       "intent-change"
       ]
-     }
+     },
+     "description": "`evaluate` is required for every evaluation; `intent-change` additionally authorizes an intentional obligation transition (beads wild-nic.4)"
     },
     "environment": {
      "$ref": "#/$defs/update_environment"
@@ -1168,6 +1189,33 @@
     "invocation",
     "plan_digest",
     "authority_digest"
+   ],
+   "additionalProperties": false
+  },
+  "supplied_migration": {
+   "type": "object",
+   "description": "Validated supplied consumer/adapter migration patch (beads wild-nic.4): digest binds the canonical {target: source-digest | null} map",
+   "properties": {
+    "digest": {
+     "$ref": "#/$defs/digest"
+    },
+    "patch": {
+     "type": "object",
+     "additionalProperties": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    }
+   },
+   "required": [
+    "digest",
+    "patch"
    ],
    "additionalProperties": false
   },
@@ -1299,6 +1347,10 @@
       "intent-change"
      ]
     },
+    "migration": {
+     "$ref": "#/$defs/supplied_migration",
+     "description": "The supplied migration patch included in the delivered result (beads wild-nic.4)"
+    },
     "closure": {
      "type": "array",
      "description": "Every lock entry with its coverage status and assurance; uncontracted entries remain visible as Unknown",
@@ -1362,7 +1414,7 @@
     },
     "diff": {
      "type": "array",
-     "description": "The pinned output diff: only manifest/lock files with before and after digests",
+     "description": "The pinned output diff: manifest/lock files plus supplied migration targets, with before and after digests (null after_digest records a deletion)",
      "items": {
       "type": "object",
       "properties": {
@@ -1373,7 +1425,14 @@
         "$ref": "#/$defs/digest"
        },
        "after_digest": {
-        "$ref": "#/$defs/digest"
+        "anyOf": [
+         {
+          "$ref": "#/$defs/digest"
+         },
+         {
+          "type": "null"
+         }
+        ]
        }
       },
       "required": [

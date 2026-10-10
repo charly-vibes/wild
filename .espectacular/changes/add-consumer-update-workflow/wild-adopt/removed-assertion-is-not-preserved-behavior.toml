@@ -1,0 +1,12 @@
+id = "removed-assertion-is-not-preserved-behavior"
+description = "A migration that deletes a protected consumer test or obligation is refused without a separately authorized intent transition; the original obligation remains required and the deletion cannot make delivery pass"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.11.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_update_migration.py::test_removed_assertion_cannot_deliver_without_intent_authority", timeout_seconds = 300},
+  {flags = "tests/runtime/test_update_migration.py::test_authorized_intent_transition_is_separately_labelled", timeout_seconds = 300},
+]

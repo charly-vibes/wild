@@ -28,8 +28,9 @@ in [examples-local.json](../schemas/examples-local.json).
 | Check report | `check-report` | Consumer scope, policy, per-slot verdicts, obligation verdicts, obligation changes, transition echo, law evidence (`law_methods`), invocation commitment, per-side extraction summaries, disposition, decision, assurance, stable diagnostics |
 | Obligations document | `obligations` | Accepted and proposed obligation records: stable id, consumer/boundary scope, origin (`human` or `agent`), state, accepting authority (name plus digest), and a digest-bound predicate (structural contract record or executable law suite digest); prose is never an executable predicate |
 | Transition record | `transition` (check-request field) | Externally authorized old-to-new obligation change: old and new digest, reason, affected consumers, authority digest; supplied by the trusted caller, never by the candidate |
-| Update request | `update-request` | Bundle root with per-file sha256 commitments, explicit manifest path (bundle-relative), package id, exact desired release, source artifact digest, target/toolchain/features, consumer scope, policy and catalog snapshot, planner identity, optional migration patch digest; every filesystem reference confined to the supplied bundle (beads wild-nic.1) |
-| Update plan | `update-plan` | Request digest (canonical v1 hash), original range, exact proposed manifest edit (`from` range → `to` `=<release>` pin with owning table), the reason the constraint changes (`why`, plus `excluded_by_original_range`), target artifact digest, lock version, base-file digest preconditions (manifest + lock), allowed changed paths, full `pending_checks` set; `assurance` is always `Unknown` and `disposition` is always `plan-ready` — a plan never claims a delivered update or checked compatibility (beads wild-nic.1) |
+| Update request | `update-request` | Bundle root with per-file sha256 commitments, explicit manifest path (bundle-relative), package id, exact desired release, source artifact digest, target/toolchain/features, consumer scope, policy and catalog snapshot, planner identity, optional migration patch (`migration_patch`: target path → source path or null) bound by `migration_digest` (sha256 over the canonical `{target: source-digest | null}` map); every filesystem reference confined to the supplied bundle (beads wild-nic.1, wild-nic.4) |
+| Update plan | `update-plan` | Request digest (canonical v1 hash), original range, exact proposed manifest edit (`from` range → `to` `=<release>` pin with owning table), the reason the constraint changes (`why`, plus `excluded_by_original_range`), target artifact digest, lock version, base-file digest preconditions (manifest + lock), allowed changed paths, optional validated `migration` echo (digest + patch), full `pending_checks` set; `assurance` is always `Unknown` and `disposition` is always `plan-ready` — a plan never claims a delivered update or checked compatibility (beads wild-nic.1, wild-nic.4) |
+| Supplied migration | `migration` (plan/report field) | Validated caller-committed consumer/adapter patch: `digest` binding the canonical `{target: source-digest | null}` map and the `patch` map itself; targets are confined to the bundle, must not be the manifest/lock the edit owns, and every source and target must be digest-committed (beads wild-nic.4) |
 
 ### Update planning (`wild update plan --request <file> --output <file>`)
 
@@ -50,6 +51,30 @@ declaration and refuses without guessing when:
 Exit mapping: plan-ready accept = 0, refusal = 1, malformed/unreadable
 input = 2. The plan's `preconditions` are re-verified by evaluation before
 any edit is applied (beads wild-nic.2).
+
+### Supplied migrations (beads wild-nic.4)
+
+A request may carry a `migration_patch` map (target bundle-relative path →
+source bundle-relative path, or null for a deletion) bound by
+`migration_digest` (sha256 over the canonical `{target: source-digest |
+null}` map). Planning validates the patch against its committed source and
+target files, echoes it into the plan's `migration` field, and extends the
+allowed changed paths with the patch targets; the manifest and its lock
+remain owned by the proposed edit.
+
+Evaluation adjudicates the patch against the bundle's committed protected
+obligations before anything runs: a `tests/` target must keep its `#[test]`
+count, still assert, and still exercise the target crate; any other target
+must keep exercising the target crate when the committed baseline did. A
+preserved patch is applied in the isolated workspace before the fixed-lock
+build/test and delivered with `update_class: migration`, the patch echoed
+in the report, its targets in the diff (null `after_digest` records a
+deletion) and the pinned output. A removal refuses with
+`protected-obligation-removed` — the removed assertion is not preserved
+behavior and cannot manufacture a direct-update success — unless the
+authority's `allowed_actions` also authorizes `intent-change`, in which
+case the result is delivered as `update_class: intent-change`, separately
+labelled and excluded from backward-compatible direct results.
 
 Slot ids derive from crate identity (package name plus version) and the
 qualified declaration path — never from line numbers. Semantic contract

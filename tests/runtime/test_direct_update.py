@@ -2,7 +2,10 @@
 #   update slice (beads wild-nic.3, change add-consumer-update-workflow): the
 #   `wild update evaluate` pipeline that connects baseline validation, real
 #   offline Cargo resolution, fixed-lock build/test, full closure coverage,
-#   and a durable pinned diff into one delivered/refused decision.
+#   and a durable pinned diff into one delivered/refused decision. The
+#   request builder also carries the optional supplied-migration fields
+#   (wild-nic.4): a caller-committed `migration_patch` map bound by
+#   `migration_digest` (sha256 of the canonical target -> source-digest map).
 # Responsibilities: Assemble the e5 fixture consumers with their frozen
 #   local-registry mirrors, plan the exact candidate, pin an external
 #   authority, and run evaluation as a subprocess against real Cargo.
@@ -101,7 +104,16 @@ def tmp_cargo_home(root: Path) -> Path:
     return home.resolve()
 
 
-def run_plan(root: Path, tmp_path: Path, release: str, contracts: dict) -> dict:
+def migration_digest(patch: dict[str, str | None], root: Path) -> str:
+    """sha256 of the canonical {target: source-digest | None} binding map."""
+    bound = {
+        target: (sha_bytes((root / source).read_bytes()) if source else None)
+        for target, source in sorted(patch.items())
+    }
+    return digest(bound)
+
+
+def run_plan(root: Path, tmp_path: Path, release: str, contracts: dict, migration: dict[str, str | None] | None = None) -> dict:
     request = {
         "version": "local-1",
         "kind": "update-request",
@@ -120,6 +132,9 @@ def run_plan(root: Path, tmp_path: Path, release: str, contracts: dict) -> dict:
         "planner": {"name": "wild", "digest": sha_bytes(b"wild-planner-v0")},
         "contracts": contracts,
     }
+    if migration is not None:
+        request["migration_patch"] = migration
+        request["migration_digest"] = migration_digest(migration, root)
     request_path = tmp_path / "update-request.json"
     request_path.write_text(canonical(request))
     output = tmp_path / "plan.json"

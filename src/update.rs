@@ -5,11 +5,16 @@
 //   Cargo.lock, locate the single dependency declaration for the requested
 //   package id, refuse ambiguous identities, inherited workspace ranges,
 //   unsupported manifest layouts, and unsupported lock versions with
+//   diagnostics instead of guessing, unsupported lock versions with
 //   diagnostics instead of guessing, and produce a local-1 `update-plan`
 //   record that names the original range, the exact proposed manifest edit
 //   (pinning `=<release>`), the base-file digest preconditions, the allowed
 //   changed paths, and the full pending-check set — with Unknown assurance
-//   and never a delivered-update or checked-compatibility claim.
+//   and never a delivered-update or checked-compatibility claim. A supplied
+//   migration patch (beads wild-nic.4) is validated against its committed
+//   source files and bound by the request's migration digest, echoed into
+//   the plan, and added to the allowed changed paths; the plan still claims
+//   nothing about compatibility.
 // Rationale: The design's state transitions 1-2 require planning to read
 //   only supplied inputs, write only the requested plan, and never execute
 //   project or candidate code: planning success is a well-formed eligible
@@ -69,6 +74,13 @@ pub fn plan(request: &Value) -> Result<PlanOutcome, String> {
 
     let excluded = excluded_by_original_range(&found.range, release);
     let pinned = format!("={release}");
+    let migration = supplied_migration(request, files, bundle_root, manifest_rel, lock_rel.as_str())?;
+    let mut allowed_changed = vec![manifest_rel.to_string(), lock_rel.clone()];
+    if let Some(Value::Obj(entries)) = migration.get("patch") {
+        for (target, _) in entries {
+            allowed_changed.push(target.clone());
+        }
+    }
     let preconditions = vec![
         (manifest_rel, commitment_of(files, manifest_rel)),
         (lock_rel.as_str(), commitment_of(files, &lock_rel)),
@@ -124,7 +136,11 @@ pub fn plan(request: &Value) -> Result<PlanOutcome, String> {
         ),
         (
             "allowed_changed_paths",
-            formats::arr(vec![formats::s(&manifest_rel), formats::s(&lock_rel)]),
+            formats::arr(allowed_changed.iter().map(|p| formats::s(p)).collect()),
+        ),
+        (
+            "migration",
+            migration,
         ),
         (
             "pending_checks",
@@ -147,6 +163,97 @@ pub fn plan(request: &Value) -> Result<PlanOutcome, String> {
         ("diagnostics", formats::arr(diagnostics)),
     ]);
     Ok(PlanOutcome { plan })
+}
+
+/// Validate the optional supplied migration patch (beads wild-nic.4).
+/// A migration is a caller-committed map of bundle-relative target paths to
+/// source paths (or null for a deletion); its `migration_digest` must bind
+/// the canonical {target: source-digest | null} map. Every source and
+/// target must be digest-committed in the request, confined to the bundle,
+/// and distinct from the manifest/lock files the edit owns. The plan echoes
+/// the binding; it claims nothing about the migration's outcome.
+fn supplied_migration(
+    request: &Value,
+    files: &[(String, Value)],
+    bundle_root: &str,
+    manifest_rel: &str,
+    lock_rel: &str,
+) -> Result<Value, String> {
+    let patch = match request.get("migration_patch") {
+        None | Some(Value::Null) => {
+            if let Some(Value::Str(_)) = request.get("migration_digest") {
+                return Err(
+                    "input-mismatch: request carries a migration digest but no migration patch"
+                        .to_string(),
+                );
+            }
+            return Ok(Value::Null);
+        }
+        Some(patch @ Value::Obj(_)) => patch,
+        Some(_) => {
+            return Err(
+                "input-mismatch: migration_patch must be a map of target paths to source paths or null"
+                    .to_string(),
+            )
+        }
+    };
+    let files_entries = files;
+    let mut bound: Vec<(String, Value)> = Vec::new();
+    let Value::Obj(entries) = patch else {
+        return Ok(Value::Null);
+    };
+    for (target, source) in entries {
+        if target.as_str() == manifest_rel || target.as_str() == lock_rel {
+            return Err(format!(
+                "input-mismatch: migration target `{target}` is owned by the proposed manifest edit"
+            ));
+        }
+        let target_path = confined(bundle_root, target, "migration target")?;
+        let target_bytes = std::fs::read(&target_path)
+            .map_err(|e| format!("input-mismatch: migration target `{target}` unreadable: {e}"))?;
+        verify_commitment(files_entries, target, &target_bytes)?;
+        let source_digest = match source {
+            Value::Null => {
+                bound.push((target.clone(), Value::Null));
+                continue;
+            }
+            Value::Str(rel) => {
+                let source_path = confined(bundle_root, rel, "migration source")?;
+                let bytes = std::fs::read(&source_path).map_err(|e| {
+                    format!("input-mismatch: migration source `{rel}` unreadable: {e}")
+                })?;
+                verify_commitment(files_entries, rel, &bytes)?;
+                let digest = formats::sha256_digest(&bytes);
+                bound.push((target.clone(), formats::s(&digest)));
+                digest
+            }
+            _ => {
+                return Err(format!(
+                    "input-mismatch: migration target `{target}` must name a source path or null"
+                ))
+            }
+        };
+        let _ = source_digest;
+    }
+    let digest = formats::sha256_digest(formats::canonical(&Value::Obj(bound)).as_bytes());
+    match request.get("migration_digest") {
+        Some(Value::Str(expected)) if *expected == digest => {}
+        Some(Value::Str(expected)) => {
+            return Err(format!(
+                "input-mismatch: supplied migration digest does not bind the committed patch contents (expected {expected}, computed {digest})"
+            ));
+        }
+        _ => {
+            return Err(
+                "input-mismatch: request carries a migration patch but no migration digest"
+                    .to_string(),
+            )
+        }
+    }
+    Ok(formats::obj(vec![
+        ("digest", formats::s(&digest)),
+        ("patch", patch.clone()),
+    ]))
 }
 
 /// Refuse rather than guess: exactly one dependency declaration must name

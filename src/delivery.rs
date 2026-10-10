@@ -8,7 +8,14 @@
 //   produce the durable pinned diff — written and digest-verified under
 //   the output directory. Every stage refusal carries the requested and
 //   actual identities; wrong targets, failed tests, changed inputs, or
-//   failed persistence never claim a delivered update.
+//   failed persistence never claim a delivered update. A supplied migration
+//   patch (beads wild-nic.4) is adjudicated against the bundle's committed
+//   protected obligations before anything runs, applied in the isolated
+//   workspace before the fixed-lock checks, included in the scope check and
+//   the durable diff, and classified: a preserved-obligation patch is a
+//   `migration`, a removal under explicit intent authority is an
+//   `intent-change`, and a removal without that authority is refused and
+//   never relabelled as a direct-update success.
 // Rationale: The design's state transitions 5-8 separate adjudicated
 //   refusals (consumer break, unknown dependency, scope violation) from
 //   execution errors (persistence), and make delivery require actual
@@ -120,6 +127,64 @@ pub(crate) fn validate_and_deliver(
         0,
     )];
 
+    // Supplied migration (wild-nic.4): adjudicate the patch against the
+    // bundle's committed protected obligations before mutating anything.
+    let patch: Vec<(String, Option<String>)> = plan
+        .get("migration")
+        .and_then(|m| m.get("patch"))
+        .and_then(Value::as_obj)
+        .map(|entries| -> Result<Vec<(String, Option<String>)>, String> {
+            entries
+                .iter()
+                .map(|(k, v)| {
+                    let source = match v {
+                        Value::Str(s) => Some(s.to_string()),
+                        Value::Null => None,
+                        _ => {
+                            return Err(
+                                "input-mismatch: migration patch values must be source paths or null"
+                                    .to_string(),
+                            )
+                        }
+                    };
+                    Ok((k.clone(), source))
+                })
+                .collect()
+        })
+        .transpose()?
+        .unwrap_or_default();
+    let removed = protected_removals(&patch, &bundle_root, package)?;
+    let intent_authority = authority
+        .get("allowed_actions")
+        .and_then(Value::as_arr)
+        .map(|actions| actions.iter().any(|a| a.as_str() == Some("intent-change")))
+        .unwrap_or(false);
+    if !removed.is_empty() && !intent_authority {
+        let evaluated = stage.refusal(
+            "refused",
+            vec![diagnostic(
+                "protected-obligation-removed",
+                "error",
+                &format!(
+                    "the supplied migration removes protected obligations {}; the removed assertion is not preserved behavior and the deletion cannot make delivery pass without an authorized intent transition",
+                    removed.join(", ")
+                ),
+            )],
+            evidence,
+            None,
+        )?;
+        write_report(output_dir, &evaluated.report)?;
+        return Ok(evaluated);
+    }
+    let update_class = if removed.is_empty() {
+        if patch.is_empty() { "direct" } else { "migration" }
+    } else {
+        // Only reachable with intent authority: a removal without it was
+        // already refused above.
+        "intent-change"
+    };
+    apply_migration(&patch, &bundle_root, workspace)?;
+
     // Fixed-lock build and test in the same frozen environment.
     let mut state = match fixed_lock_checks(workspace, cargo_home, &stage, output_dir, evidence)? {
         Ok(evidence) => evidence,
@@ -134,8 +199,11 @@ pub(crate) fn validate_and_deliver(
         Ok(evidence) => evidence,
         Err(refusal) => return Ok(refusal),
     };
-    // A direct update changes only manifest/lock.
-    let evidence = match scope_check(&manifest_rel, &bundle_root, workspace, &stage, output_dir, state)? {
+    // A direct update changes only manifest/lock; a migration may also
+    // change its supplied patch targets.
+    let mut allowed: Vec<&str> = vec![manifest_rel.as_str(), "Cargo.lock"];
+    allowed.extend(patch.iter().map(|(t, _)| t.as_str()));
+    let evidence = match scope_check(&allowed, &bundle_root, workspace, &stage, output_dir, state)? {
         Ok(evidence) => evidence,
         Err(refusal) => return Ok(refusal),
     };
@@ -149,7 +217,89 @@ pub(crate) fn validate_and_deliver(
         workspace,
         &closure,
         evidence,
+        &patch,
+        update_class,
     )
+}
+
+/// Mechanical protected-obligation profile (wild-nic.4): a migration target
+/// under `tests/` must keep its committed `#[test]` count, still assert,
+/// and still exercise the target crate; any other target (consumer/adapter
+/// source) must keep exercising the target crate if the committed baseline
+/// did. A deleted target is a removal. Returns the removed target paths.
+fn protected_removals(
+    patch: &[(String, Option<String>)],
+    bundle_root: &str,
+    package: &str,
+) -> Result<Vec<String>, String> {
+    let mut removed = Vec::new();
+    for (target, source) in patch {
+        let baseline = std::fs::read(confined(bundle_root, target, "migration target")?)
+            .map_err(|e| format!("input-mismatch: migration target `{target}` unreadable: {e}"))?;
+        let migrated: Vec<u8> = match source {
+            Some(rel) => std::fs::read(confined(bundle_root, rel, "migration source")?)
+                .map_err(|e| format!("input-mismatch: migration source `{rel}` unreadable: {e}"))?,
+            None => Vec::new(),
+        };
+        let removed_here = if migrated.is_empty() {
+            true
+        } else if target.starts_with("tests/") {
+            count(&baseline, "#[test]") > count(&migrated, "#[test]")
+                || !has_assert(&migrated)
+                || (contains_usage(&baseline, package) && !contains_usage(&migrated, package))
+        } else {
+            contains_usage(&baseline, package) && !contains_usage(&migrated, package)
+        };
+        if removed_here {
+            removed.push(target.clone());
+        }
+    }
+    Ok(removed)
+}
+
+fn count(bytes: &[u8], needle: &str) -> usize {
+    bytes.windows(needle.len()).filter(|w| *w == needle.as_bytes()).count()
+}
+
+fn has_assert(bytes: &[u8]) -> bool {
+    ["assert!", "assert_eq!", "assert_ne!"]
+        .iter()
+        .any(|a| bytes.windows(a.len()).any(|w| w == a.as_bytes()))
+}
+
+/// `package::` usage in Rust source bytes.
+fn contains_usage(bytes: &[u8], package: &str) -> bool {
+    let needle = format!("{package}::");
+    bytes.windows(needle.len()).any(|w| w == needle.as_bytes())
+}
+
+/// Apply the adjudicated migration patch inside the disposable workspace.
+fn apply_migration(
+    patch: &[(String, Option<String>)],
+    bundle_root: &str,
+    workspace: &Path,
+) -> Result<(), String> {
+    for (target, source) in patch {
+        let ws_path = confined(&workspace.to_string_lossy(), target, "migration target")?;
+        match source {
+            Some(rel) => {
+                let bytes = std::fs::read(confined(bundle_root, rel, "migration source")?)
+                    .map_err(|e| format!("input-mismatch: migration source `{rel}` unreadable: {e}"))?;
+                if let Some(parent) = ws_path.parent() {
+                    std::fs::create_dir_all(parent).map_err(|e| {
+                        format!("isolation-refused: cannot create migration directory: {e}")
+                    })?;
+                }
+                std::fs::write(&ws_path, bytes)
+                    .map_err(|e| format!("isolation-refused: cannot write migration target `{target}`: {e}"))?;
+            }
+            None => {
+                std::fs::remove_file(&ws_path)
+                    .map_err(|e| format!("isolation-refused: cannot remove migration target `{target}`: {e}"))?;
+            }
+        }
+    }
+    Ok(())
 }
 
 /// The bundle's committed test suite carries the protected base obligations
@@ -227,18 +377,18 @@ fn closure_check(
     Ok(Err(evaluated))
 }
 
-/// A direct update changes only manifest/lock. Everything else that changed
-/// in the workspace is a scope violation.
+/// A direct update changes only manifest/lock; a migration may also change
+/// its supplied patch targets. Everything else that changed in the
+/// workspace is a scope violation.
 #[allow(clippy::too_many_arguments)]
 fn scope_check(
-    manifest_rel: &str,
+    allowed: &[&str],
     bundle_root: &str,
     workspace: &Path,
     stage: &Stage<'_>,
     output_dir: &Path,
     evidence: Vec<Value>,
 ) -> Result<Result<Vec<Value>, Evaluated>, String> {
-    let allowed = [manifest_rel, "Cargo.lock"];
     let mirror_rel = local_registry_of(workspace)?;
     let excludes = ["target", ".wild-cargo-home", mirror_rel.as_str()];
     let before_files = scan_changed_files(Path::new(bundle_root), &excludes);
@@ -289,12 +439,14 @@ fn deliver(
     workspace: &Path,
     closure: &[ClosureEntry],
     evidence: Vec<Value>,
+    patch: &[(String, Option<String>)],
+    update_class: &str,
 ) -> Result<Evaluated, String> {
     let manifest_after = std::fs::read_to_string(workspace.join(manifest_rel))
         .map_err(|e| format!("persistence-failed: manifest unreadable after update: {e}"))?;
     let lock_after = std::fs::read_to_string(workspace.join("Cargo.lock"))
         .map_err(|e| format!("persistence-failed: lock unreadable after update: {e}"))?;
-    let diff = vec![
+    let mut diff = vec![
         (
             manifest_rel,
             std::fs::read_to_string(confined(bundle_root, manifest_rel, "precondition")?)
@@ -318,10 +470,35 @@ fn deliver(
         ])
     })
     .collect::<Vec<_>>();
+    // A migration includes the supplied consumer/adapter patch in the diff.
+    let mut migration_files: Vec<(String, String)> = Vec::new();
+    for (target, _) in patch {
+        let before = std::fs::read(confined(bundle_root, target, "precondition")?)
+            .map_err(|e| format!("persistence-failed: {e}"))?;
+        let ws_path = confined(&workspace.to_string_lossy(), target, "migration target")?;
+        let after = std::fs::read(&ws_path);
+        let after_digest = match &after {
+            Ok(bytes) => formats::s(&formats::sha256_digest(bytes)),
+            Err(_) => Value::Null, // the patch deleted the target
+        };
+        diff.push(formats::obj(vec![
+            ("path", formats::s(target)),
+            ("before_digest", formats::s(&formats::sha256_digest(&before))),
+            ("after_digest", after_digest),
+        ]));
+        if let Ok(bytes) = &after {
+            migration_files.push((
+                target.clone(),
+                String::from_utf8(bytes.clone()).map_err(|e| {
+                    format!("persistence-failed: migrated `{target}` is not UTF-8: {e}")
+                })?,
+            ));
+        }
+    }
     let diff_digest = formats::sha256_digest(
         formats::canonical(&formats::arr(diff.clone())).as_bytes(),
     );
-    if let Err(msg) = persist_pinned(output_dir, &manifest_after, &lock_after) {
+    if let Err(msg) = persist_pinned(output_dir, &manifest_after, &lock_after, &migration_files) {
         // Failed output persistence cannot deliver: record the error cause
         // with zero delivered-update claim.
         let evaluated = stage.refusal(
@@ -353,7 +530,8 @@ fn deliver(
         vec![
             ("scope", formats::s("local")),
             ("resolution", formats::s("host-selected")),
-            ("update_class", formats::s("direct")),
+            ("update_class", formats::s(update_class)),
+            ("migration", plan.get("migration").cloned().unwrap_or(Value::Null)),
             ("closure", formats::arr(closure_values(closure))),
             ("evidence", formats::arr(evidence)),
             ("diff", formats::arr(diff)),
@@ -367,10 +545,25 @@ fn deliver(
     })
 }
 
-fn persist_pinned(output_dir: &Path, manifest_after: &str, lock_after: &str) -> Result<(), String> {
+fn persist_pinned(
+    output_dir: &Path,
+    manifest_after: &str,
+    lock_after: &str,
+    migration_files: &[(String, String)],
+) -> Result<(), String> {
     let pinned_dir = output_dir.join("pinned");
     write_pinned(&pinned_dir, "Cargo.toml", manifest_after)?;
     write_pinned(&pinned_dir, "Cargo.lock", lock_after)?;
+    for (target, content) in migration_files {
+        let path = pinned_dir.join(target);
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| {
+                format!("persistence-failed: cannot create pinned directory for `{target}`: {e}")
+            })?;
+        }
+        std::fs::write(&path, content)
+            .map_err(|e| format!("persistence-failed: cannot write pinned `{target}`: {e}"))?;
+    }
     for (name, content) in [("Cargo.toml", manifest_after), ("Cargo.lock", lock_after)] {
         let path = pinned_dir.join(name);
         let read_back = std::fs::read_to_string(&path)
@@ -378,6 +571,17 @@ fn persist_pinned(output_dir: &Path, manifest_after: &str, lock_after: &str) -> 
         if read_back != content {
             return Err(format!(
                 "persistence-failed: pinned {name} does not read back identical"
+            ));
+        }
+    }
+    for (target, content) in migration_files {
+        let path = pinned_dir.join(target);
+        let read_back = std::fs::read_to_string(&path).map_err(|e| {
+            format!("persistence-failed: pinned `{target}` cannot be read back: {e}")
+        })?;
+        if &read_back != content {
+            return Err(format!(
+                "persistence-failed: pinned `{target}` does not read back identical"
             ));
         }
     }
