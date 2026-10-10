@@ -24,4 +24,5 @@ default = "testaruda-adapter-python"
 # ending in ".venv"). The default list covers common tool/build artifacts.
 exclude = ["target", ".git", "node_modules", ".venv", "venv",
           "__pycache__", ".mypy_cache", ".pytest_cache",
-          "build", "dist", ".tox"]
+          "build", "dist", ".tox",
+          "experiments"]
