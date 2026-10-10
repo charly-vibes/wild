@@ -2,6 +2,10 @@
 # Responsibilities: Declare the repo-root Rust CLI/library that implements
 #   the rust-cargo-local-1 extraction profile: strict v1 JSON handling,
 #   syn-based inventory, and the `wild` binary entrypoint.
+# Rationale (package name): the `wild` crate name on crates.io belongs to an
+#   unrelated glob-expansion crate (kornelski/wild), so publication is deferred
+#   under `wild-vibes` (verified available); the repository, binary, and
+#   wire-format extractor identity remain `wild` (beads wild-6ig).
 # Rationale: The slice requires a pinned parser inventoring Rust source
 #   without executing it. syn is pinned to vampiro-rust-frontend's exact
 #   parser version (2.0.119) with the feature set settled in the
@@ -13,9 +17,15 @@
 #   sandbox dependency), which needs the C ABI surface.
 
 [package]
-name = "wild"
+name = "wild-vibes"
 version = "0.1.0"
 edition = "2021"
+
+# The repository and command are `wild`; only the publishable package name
+# carries the -vibes suffix (crates.io collision, see header rationale).
+[[bin]]
+name = "wild"
+path = "src/main.rs"
 
 [dependencies]
 syn = { version = "=2.0.119", features = ["full", "visit", "extra-traits"] }
