@@ -21,6 +21,11 @@ name = "wild-vibes"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+# Internal crate name stays `wild` so module imports (`use wild::...`)
+# and the wire-format identity are untouched by the publish rename.
+name = "wild"
+
 # The repository and command are `wild`; only the publishable package name
 # carries the -vibes suffix (crates.io collision, see header rationale).
 [[bin]]
