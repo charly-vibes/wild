@@ -27,6 +27,12 @@ spec-lint:
 # CI contract (TIA-CI-001..004): 0 = selection complete, 10 = full run,
 # 20 = nothing to run — all green. Any other code = runner failure or
 # hard error, red.
+#
+# wild-z56: a stale local calibration store can select test paths that no
+# longer exist at HEAD (e.g. after a branch switch), making the runner
+# exit 4 (file not found) on local state, not real breakage. Self-heal:
+# on exit 4 only, prune the store, re-init, and retry exec exactly once.
+# Hard errors keep the gate red without a wasteful full re-run.
 testaruda-gate:
     #!/usr/bin/env bash
     set -uo pipefail
@@ -35,5 +41,10 @@ testaruda-gate:
     testaruda exec --base origin/main --head HEAD || code=$?
     case "$code" in
       0|10|20) exit 0 ;;
+      4)
+        echo "⚠️ runner exit 4 — pruning stale local calibration and retrying once (wild-z56)" >&2
+        rm -rf .testaruda
+        testaruda init || { echo "❌ testaruda re-init failed" >&2; exit 1; }
+        testaruda exec --base origin/main --head HEAD ;;
       *) echo "❌ testaruda gate failed (exit $code — test runner or hard error)" >&2; exit 1 ;;
     esac
