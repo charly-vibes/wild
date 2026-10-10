@@ -1,0 +1,48 @@
+# wild
+
+> Machine-checked compatibility and composition of software components, modelled
+> as a category of contracts. Machine-checked compatibility for software
+> components, first-party or third-party.
+
+wild is a design with a prototype and a Rust implementation. The `wild extract`
+and `wild check` subcommands are implemented and runtime-tested; the manual
+describes the intended interface and marks what is implemented. The publishable
+package name is `wild-vibes` (crates.io collision); the repository, binary, and
+wire-format identities remain `wild`.
+
+- [Manual](docs/wild-manual.md): how the tool works and how to use it (start here).
+- [Wild v1 formats](docs/wild-formats-v1.md): normative design protocol for
+  contracts, manifests, locks, sidecars, policy and certificate bundles.
+- [JSON Schema](schemas/wild-v1.schema.json): validation for the v1 protocol.
+- [Structural examples](schemas/examples-v1.json): worked examples of the v1 protocol.
+
+## Specs
+
+- [wild](https://wild.charlyvibes.com/specs/wild.html): root spec; software-updates adoption path.
+- [wild-core](https://wild.charlyvibes.com/specs/wild-core.html): core notions (contracts, tiers, compatibility).
+- [wild-tiers](https://wild.charlyvibes.com/specs/wild-tiers.html): tier ordering and accretion.
+- [wild-compose](https://wild.charlyvibes.com/specs/wild-compose.html): composition, subsumption, and identity.
+- [wild-registry](https://wild.charlyvibes.com/specs/wild-registry.html): registry and lock behavior.
+- [wild-bridge](https://wild.charlyvibes.com/specs/wild-bridge.html): bridging contracts across ecosystems.
+- [wild-adopt](https://wild.charlyvibes.com/specs/wild-adopt.html): adoption workflow and evidence.
+- [wild-deploy](https://wild.charlyvibes.com/specs/wild-deploy.html): deployment and release gating.
+- [wild-extract](https://wild.charlyvibes.com/specs/wild-extract.html): extraction profiles and extractor protocol.
+
+## Integration failures
+
+- [Part 1](docs/integration-failures.md): 112 integration failure cases with
+  verdicts against the design.
+- [Part 2](docs/integration-failures-part2.md): 50 more cases (113 to 162);
+  rows 113 to 122 web-checked, the rest from memory.
+
+## Layout
+
+| Path | What it is |
+|--------|----------|
+| `src/` | Rust implementation of the `wild extract` and `wild check` subcommands |
+| `openspec/specs/` | Nine specodelic specs (see above) |
+| `prototype/` | Toy checkers and prototype extractors (Python) |
+| `experiments/` | Real-project experiments; see `experiments/RESULTS.md` |
+| `docs/` | Manual, formats, and integration failure reports |
+| `schemas/` | v1 JSON Schema and structural examples |
+| `book.toml`, `docs/src/` | mdBook sources for the deployed site |

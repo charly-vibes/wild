@@ -1,0 +1,27 @@
+[book]
+authors = ["sasha"]
+language = "en"
+multilingual = false
+src = "docs/src"
+title = "wild"
+
+[output.html]
+site-url = "/wild/"
+git-repository-url = "https://github.com/charly-vibes/wild"
+edit-url-template = "https://github.com/charly-vibes/wild/edit/main/{path}"
+cname = "wild.charlyvibes.com"
+no-section-label = false
+mathjax-support = false
+
+[output.html.search]
+enable = true
+limit-results = 30
+use-boolean-and = true
+boost-title = 2
+boost-hierarchy = 2
+boost-paragraph = 1
+expand = true
+heading-split = 3
+
+[preprocessor.generate-release]
+command = "scripts/generate-release-notes.py"
