@@ -617,3 +617,160 @@ call_hidden!();
         assert proc.returncode == 0, proc.stderr
         after = {rel: (tmp_path / "bundle" / rel).read_bytes() for rel in files}
         assert before == after, "extraction must not write to the source bundle"
+
+    # format_args! demand support + format-capture disclosure
+    # (add-format-args-demand-support, bd wild-1gm). The routed receiver is a
+    # free function taking std::fmt::Arguments — every method call is already
+    # gapped by the walker, so a method-call route would mask the macro
+    # behavior. The provider fixture carries a pub const because provider
+    # VALUE items are the capture hole: fn items implement no formatting
+    # traits (compiler-refused) and fn-pointer flow via path expressions is
+    # already disclosed by visit_expr_path.
+
+    PROVIDER_WITH_CONST = PROVIDER_LIB + "pub const MAX: u32 = 42;\n"
+
+    def test_format_args_does_not_block_complete_claim(self, tmp_path):
+        # (a) routed format_args! with positional literal args alongside a
+        # direct provider call: no incomplete-demand from the macro, the
+        # provider call still resolves, extraction stays complete
+        lib = (
+            "fn take_args(a: std::fmt::Arguments) -> u32 { 7 }\n"
+            + CONSUMER_LIB
+            + "pub fn routed() -> u32 { take_args(format_args!(\"hello {}\", \"world\")); provider::add_one(1) }\n"
+        )
+        files = write_bundle(tmp_path / "bundle", consumer_lib=lib)
+        for i in range(2):
+            proc = run_extract(
+                request_record(tmp_path / "bundle", files), tmp_path / f"facts{i}"
+            )
+            assert proc.returncode == 0, f"format_args must not refuse: {proc.stdout}"
+            report = facts_json(tmp_path / f"facts{i}", "report.json")
+            assert report["complete_inventory"] is True
+            assert report["diagnostics"] == []
+        contract = (tmp_path / "facts0" / "contract.json").read_bytes()
+        assert (tmp_path / "facts1" / "contract.json").read_bytes() == contract
+        demand = facts_json(tmp_path / "facts0", "demand.json")
+        assert "provider::add_one" in json.dumps(demand)
+
+    def test_format_args_arguments_record_demands_like_direct_calls(self, tmp_path):
+        # (b) a provider call inside format_args! positional arguments is the
+        # ONLY reference to that provider fn; the demand is recorded like a
+        # direct call
+        lib = (
+            "fn take_args(a: std::fmt::Arguments) -> u32 { 7 }\n"
+            + CONSUMER_LIB
+            + "pub fn routed() -> u32 { take_args(format_args!(\"v={} plus {}\", provider::add_one(1), 2)); 7 }\n"
+        )
+        files = write_bundle(tmp_path / "bundle", consumer_lib=lib)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 0, f"argument demands must resolve: {proc.stdout}"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is True
+        assert report["diagnostics"] == []
+        demand = facts_json(tmp_path / "facts", "demand.json")
+        assert "provider::add_one" in json.dumps(demand)
+
+    def test_format_args_named_argument_values_record_demands(self, tmp_path):
+        # (c) a provider call inside a named-argument value (`x = expr` parses
+        # as Expr::Assign, probe-corrected) is descended and recorded like a
+        # direct call — refusing it would invent incompleteness
+        lib = (
+            "fn take_args(a: std::fmt::Arguments) -> u32 { 7 }\n"
+            + CONSUMER_LIB
+            + "pub fn routed() -> u32 { take_args(format_args!(\"{x} then {x}\", x = provider::add_one(1))); 7 }\n"
+        )
+        files = write_bundle(tmp_path / "bundle", consumer_lib=lib)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 0, f"named-argument demands must resolve: {proc.stdout}"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is True
+        assert report["diagnostics"] == []
+        demand = facts_json(tmp_path / "facts", "demand.json")
+        assert "provider::add_one" in json.dumps(demand)
+
+    def test_named_argument_shadowing_provider_name_emits_no_capture_gap(self, tmp_path):
+        # (c2) `{MAX}` here references the named argument `MAX = 1`, not a
+        # scope variable; the capture check must not misfire on it
+        lib = (
+            "fn take_args(a: std::fmt::Arguments) -> u32 { 7 }\n"
+            + CONSUMER_LIB
+            + "pub fn routed() -> u32 { take_args(format_args!(\"{MAX}\", MAX = 1)); 7 }\n"
+        )
+        files = write_bundle(
+            tmp_path / "bundle", consumer_lib=lib, provider_lib=self.PROVIDER_WITH_CONST
+        )
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 0, f"named-arg shadow must not gap: {proc.stdout}"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is True
+        assert report["diagnostics"] == []
+
+    def test_format_capture_of_provider_value_item_is_disclosed(self, tmp_path):
+        # (d) direct capture: the format string captures MAX, which names a
+        # provider value item — walker-invisible today (silent acceptance of
+        # a provider reference); the capture must be disclosed
+        lib = (
+            "fn take_args(a: std::fmt::Arguments) -> u32 { 7 }\n"
+            "use provider::MAX;\n"
+            + CONSUMER_LIB
+            + "pub fn captured() -> u32 { println!(\"max={MAX}\"); 7 }\n"
+        )
+        files = write_bundle(
+            tmp_path / "bundle", consumer_lib=lib, provider_lib=self.PROVIDER_WITH_CONST
+        )
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 1, "provider-item capture must be disclosed"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is False
+        codes = {d["code"] for d in report["diagnostics"]}
+        assert "incomplete-demand" in codes
+
+    def test_format_capture_via_alias_is_disclosed(self, tmp_path):
+        # (d) alias variant: the capture names the consumer-side alias of a
+        # provider value item; matching only crate-local provider names would
+        # leave the hole open through the alias path the profile supports
+        lib = (
+            "fn take_args(a: std::fmt::Arguments) -> u32 { 7 }\n"
+            "use provider::MAX as LIMIT;\n"
+            + CONSUMER_LIB
+            + "pub fn captured() -> u32 { take_args(format_args!(\"{LIMIT}\")); 7 }\n"
+        )
+        files = write_bundle(
+            tmp_path / "bundle", consumer_lib=lib, provider_lib=self.PROVIDER_WITH_CONST
+        )
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 1, "aliased provider-item capture must be disclosed"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is False
+        codes = {d["code"] for d in report["diagnostics"]}
+        assert "incomplete-demand" in codes
+
+    def test_format_capture_of_plain_local_stays_demand_inert(self, tmp_path):
+        # (e) a capture of a plain local is not provider demand; the provider
+        # call in the initializer still resolves and nothing is disclosed
+        lib = (
+            CONSUMER_LIB
+            + "pub fn local_capture() -> u32 { let x = provider::add_one(1); println!(\"{x}\"); x }\n"
+        )
+        files = write_bundle(tmp_path / "bundle", consumer_lib=lib)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 0, f"plain-local capture must stay inert: {proc.stdout}"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is True
+        assert report["diagnostics"] == []
+        demand = facts_json(tmp_path / "facts", "demand.json")
+        assert "provider::add_one" in json.dumps(demand)
+
+    def test_escaped_braces_emit_no_capture_and_no_gap(self, tmp_path):
+        # (f) escaped braces render literal text, not captures; the scan must
+        # not misfire (green-pinned guard)
+        lib = (
+            CONSUMER_LIB
+            + "pub fn braces() -> u32 { println!(\"{{literal}} v={}\", provider::add_one(1)); 7 }\n"
+        )
+        files = write_bundle(tmp_path / "bundle", consumer_lib=lib)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 0, f"escaped braces must not gap: {proc.stdout}"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is True
+        assert report["diagnostics"] == []

@@ -1,0 +1,18 @@
+## 1. Red — conformance fixtures (bd wild-1gm, red phase)
+- [x] 1.1 Add failing tests to `tests/runtime/test_extract.py` per the design test shape: (a) routed `format_args!` with positional literal args alongside a direct provider call yields no `incomplete-demand` and the provider call still resolves; (b) routed `format_args!` with a provider call in positional args (`take_args(format_args!("v={} plus {}", provider::add_one(1), 2));`) records the demand like a direct call; (c) routed `format_args!` with a provider call inside a named-argument value (`x = provider::add_one(1)`) records that demand like a direct call — `name = expr` parses as `Expr::Assign` (probe-corrected; the RO5U-passed fallback claim was wrong); (c2) a format string capture that is actually a named-argument reference (`format_args!("{MAX}", MAX = 1)` with provider const MAX) emits no capture gap — the named argument shadows the scope name; (d) format capture naming a provider value item — directly (`println!("max={MAX}");` statement position, family regression) and via a consumer-side alias (`use provider::MAX as LIMIT;` + `take_args(format_args!("{LIMIT}"));`) — retains `incomplete-demand` instead of silent acceptance (evidence note: fn-item captures do not compile — no Display/Debug/Pointer impl — and fn-pointer flow via path expressions is already disclosed; value items are the hole); (e) format capture of a plain local (`{x}`) stays demand-inert (no gap, existing green behavior pinned); (f) escaped braces in the format string (`{{literal}}`) emit no capture and no gap (green-pinned guard for the scan)
+- [x] 1.2 Confirmed reds are for the right reason ((a)–(b) red because `format_args` is not in the whitelist; (c)–(d) red because captures are walker-invisible — silent acceptance) and the existing determinism/invariance gates still pass. Bundles avoid non-scalar public fn returns (wild-73j panic bug, out of scope)
+
+## 2. Green — extractor semantics (bd wild-1gm, green phase)
+- [x] 2.1 Add `"format_args"` to `ARGUMENT_CONFINED_STD_MACROS` and implement the format-capture cross-check (scan capture idents from the invocation's string-literal arguments; alias-named captures whose target head is a declared dependency are disclosed in the walk; leaf-name matches checked at demand-resolution time against recorded slot meanings; match → existing `incomplete-demand` gap path), per design decisions 2 and 4
+- [x] 2.2 All suites green: pytest tests/runtime/test_extract.py, full pytest tests/, JUST_TEMPDIR=/tmp just ci exit 0, openspec strict, ah check, spk lint
+
+## 3. Held-out re-run — disclosed verification (bd wild-1gm)
+- [ ] 3.1 Re-freeze (rewrites committed `freeze.json`, disclosed — only the wild binary digest is expected to change), re-run compare + report against the committed corpus/oracle; expected: wild-arm verdicts byte-identical to the wild-f4i run (e5 cohort has no `format_args!` use and no provider-item captures). Any movement is a finding to investigate, never silently accepted
+- [ ] 3.2 Record the re-run outcome (expected no-op confirmed or findings) in `experiments/heldout/README.md` and the refreshed `report.md`/`compare.json`
+
+## 4. Tidy (refactor while green, separate commit)
+- [ ] 4.1 Tidy pass over the capture-scan and whitelist code while green
+
+## 5. Validation and archive
+- [ ] 5.1 `openspec validate add-format-args-demand-support --strict`; `spk lint openspec`; `ah check`
+- [ ] 5.2 On archive (AFTER `add-std-macro-demand-support` is archived — ordering constraint, both modify the same requirement and this delta is the superset): mirror the modified requirement into the dual-format `openspec/specs/wild-extract/spec.md` Requirements section and confirm `linter.requirement_drift` stays satisfied

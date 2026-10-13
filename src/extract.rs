@@ -28,38 +28,13 @@ use syn::visit::Visit;
 pub const PROFILE: &str = "rust-cargo-local-1";
 pub const LOCAL_VERSION: &str = "local-1";
 
-/// Std expression macros whose expansion is a closed definition that
-/// evaluates only their syntactic arguments and cannot reference
-/// consumer-visible functions outside them (add-std-macro-demand-support,
-/// design decision 2). Auditable data, not control flow.
-const ARGUMENT_CONFINED_STD_MACROS: &[&str] = &[
-    "println",
-    "print",
-    "eprintln",
-    "eprint",
-    "format",
-    "panic",
-    "assert",
-    "assert_eq",
-    "assert_ne",
-    "debug_assert",
-    "debug_assert_eq",
-    "debug_assert_ne",
-    "todo",
-    "unimplemented",
-    "unreachable",
-];
+// Whitelisted std macro demand handling lives in the child module
+// `macro_demands` (add-std-macro-demand-support +
+// add-format-args-demand-support): the closed whitelist, the argument
+// grammar, format-capture scanning, and the capture cross-check.
+mod macro_demands;
 
-/// A comma-separated expression list with optional trailing comma — the
-/// argument grammar every whitelisted macro's expansion consumes
-/// (add-std-macro-demand-support, design decision 3).
-struct ArgumentExprList(syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>);
-
-impl syn::parse::Parse for ArgumentExprList {
-    fn parse(input: syn::parse::ParseStream) -> syn::parse::Result<Self> {
-        Ok(ArgumentExprList(syn::punctuated::Punctuated::parse_terminated(input)?))
-    }
-}
+use macro_demands::{CaptureRef, check_capture_disclosure};
 
 const REQUEST_FIELDS: &[&str] = &[
     "version",
@@ -389,6 +364,11 @@ struct SourceWalk<'a> {
     complete: bool,
     callee_spans: BTreeSet<(usize, usize)>,
     current_file: String,
+    /// capture identifiers parsed from whitelisted macro format-string
+    /// literals (add-format-args-demand-support, design decision 4). Alias
+    /// named captures are disclosed in the walk; these feed the leaf-name
+    /// check at demand-resolution time.
+    capture_idents: Vec<String>,
 }
 
 impl<'a> SourceWalk<'a> {
@@ -467,47 +447,6 @@ impl<'a> SourceWalk<'a> {
                 self.module_prefix.join("::")
             )
         }
-    }
-
-    /// Whitelist + parse + descend for macro invocations in expression or
-    /// statement position (add-std-macro-demand-support). A whitelisted
-    /// argument-confined std macro has its token trees parsed as a
-    /// comma-separated expression list and each argument walked like a
-    /// direct-call site; any other head, or a parse failure, keeps the
-    /// honest `incomplete-demand` refusal. Never guesses.
-    fn handle_invocation_macro(&mut self, mac: &syn::Macro) {
-        let head = mac
-            .path
-            .segments
-            .last()
-            .map(|s| s.ident.to_string())
-            .unwrap_or_default();
-        if !ARGUMENT_CONFINED_STD_MACROS.contains(&head.as_str()) {
-            self.refuse_invocation(
-                &head,
-                "may introduce usages the profile cannot inventory",
-            );
-            return;
-        }
-        match mac.parse_body::<ArgumentExprList>() {
-            Ok(exprs) => {
-                for expr in exprs.0 {
-                    self.visit_expr(&expr);
-                }
-            }
-            Err(_) => self.refuse_invocation(
-                &head,
-                "arguments do not parse as a comma-separated expression list; the expansion cannot be tracked",
-            ),
-        }
-    }
-
-    fn refuse_invocation(&mut self, head: &str, why: &str) {
-        self.gap(
-            "incomplete-demand",
-            format!("macro invocation `{head}!` {why}"),
-            true,
-        );
     }
 
     fn path_key(path: &syn::Path) -> (usize, usize) {
@@ -981,6 +920,7 @@ fn walk_crates(
             complete: true,
             callee_spans: BTreeSet::new(),
             current_file: manifest.source_path.clone(),
+            capture_idents: Vec::new(),
         };
         walk.visit_file(&file);
         out.complete = out.complete && walk.complete;
@@ -988,6 +928,13 @@ fn walk_crates(
         out.demand.append(&mut walk.demand);
         out.diagnostics.append(&mut walk.diagnostics);
         out.locations.append(&mut walk.locations);
+        for ident in walk.capture_idents {
+            out.captures.push(CaptureRef {
+                ident,
+                crate_name: manifest.name.clone(),
+                file: manifest.source_path.clone(),
+            });
+        }
     }
     Ok(())
 }
@@ -998,6 +945,7 @@ struct WalkAccumulator {
     diagnostics: Vec<Diagnostic>,
     locations: Vec<Value>,
     complete: bool,
+    captures: Vec<CaptureRef>,
 }
 
 /// Cross-check every demand entry against the supplied provider slots.
@@ -1135,11 +1083,18 @@ pub fn extract(request: &Value) -> Result<ExtractionOutcome, String> {
         diagnostics: Vec::new(),
         locations: Vec::new(),
         complete: true,
+        captures: Vec::new(),
     };
     walk_crates(&manifests, &loaded, &versions, &mut accumulated)?;
     check_demand_resolution(
         &accumulated.slots,
         &accumulated.demand,
+        &mut accumulated.diagnostics,
+        &mut accumulated.complete,
+    );
+    check_capture_disclosure(
+        &accumulated.slots,
+        &accumulated.captures,
         &mut accumulated.diagnostics,
         &mut accumulated.complete,
     );
