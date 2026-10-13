@@ -1,0 +1,11 @@
+id = "demands-inside-format-args-named-argument-values-are-recorded"
+description = "a routed format_args! invocation whose named-argument value references a provider function (e.g. take_args(format_args!('{x} then {x}', x = add_one(1)));) and no other consumer code calls add_one -> the demand for add_one is recorded exactly like a direct call and no incomplete-demand gap is emitted"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_format_args_named_argument_values_record_demands", timeout_seconds = 300},
+]

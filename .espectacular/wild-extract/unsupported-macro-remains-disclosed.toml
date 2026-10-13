@@ -1,0 +1,14 @@
+id = "unsupported-macro-remains-disclosed"
+description = "a macro invocation in expression or statement position with an unlisted head, or a whitelisted macro whose tokens do not parse as a comma-separated expression list -> the report retains the incomplete-demand gap and refuses scoped acceptance with Unknown structural assurance"
+archetype = "NR"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_nested_macro_inside_whitelisted_args_retains_gap", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_statement_position_non_whitelisted_macro_retains_gap", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_expression_position_non_whitelisted_macro_retains_gap", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_unparseable_whitelisted_head_retains_gap", timeout_seconds = 300},
+]

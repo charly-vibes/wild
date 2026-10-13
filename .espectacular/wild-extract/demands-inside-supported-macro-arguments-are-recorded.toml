@@ -1,0 +1,12 @@
+id = "demands-inside-supported-macro-arguments-are-recorded"
+description = "a whitelisted macro invocation in expression or statement position whose arguments reference provider functions (e.g. assert_eq!(a(), b())) and no other consumer code calls those functions -> the demands for a and b are recorded exactly like direct calls"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_statement_macro_arguments_record_demands_like_direct_calls", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_expression_position_whitelisted_macro_descends_arguments", timeout_seconds = 300},
+]

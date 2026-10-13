@@ -1,0 +1,11 @@
+id = "argument-confined-std-macro-does-not-block-a-scoped-claim"
+description = "a consumer whose code contains a whitelisted std macro invocation in statement position (e.g. println!('v={}', 1);) alongside a direct dependency-qualified provider call -> the std macro emits no incomplete-demand gap and the provider call still resolves to a provider slot"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_whitelisted_std_macro_does_not_block_complete_claim", timeout_seconds = 300},
+]

@@ -1,0 +1,15 @@
+id = "format-capture-naming-a-provider-item-is-disclosed"
+description = "a consumer with a whitelisted macro invocation whose format string implicitly captures an identifier naming a provider value item — directly (use provider::MAX; followed by println!('max={MAX}');) or through a consumer-side alias (use provider::MAX as LIMIT; followed by take_args(format_args!('{LIMIT}'));) — and no other consumer code references that provider item -> the report retains the incomplete-demand gap and refuses scoped acceptance with Unknown structural assurance"
+archetype = "NR"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_format_capture_of_provider_value_item_is_disclosed", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_format_capture_via_alias_is_disclosed", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_named_argument_shadowing_provider_name_emits_no_capture_gap", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_format_capture_of_plain_local_stays_demand_inert", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_escaped_braces_emit_no_capture_and_no_gap", timeout_seconds = 300},
+]

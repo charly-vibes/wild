@@ -1,0 +1,11 @@
+id = "format-args-does-not-block-a-scoped-claim"
+description = "a consumer whose code contains a routed format_args! invocation with positional arguments (e.g. writer.write_fmt(format_args!('hello {}', 'world'));) alongside a direct dependency-qualified provider call -> the format_args! invocation emits no incomplete-demand gap and the provider call still resolves to a provider slot"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_format_args_does_not_block_complete_claim", timeout_seconds = 300},
+]

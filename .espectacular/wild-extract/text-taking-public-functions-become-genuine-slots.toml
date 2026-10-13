@@ -1,0 +1,11 @@
+id = "text-taking-public-functions-become-genuine-slots"
+description = "a provider whose public functions take or return text (arguments of &str, String, or &String, and a String return) -> the functions surface as function-type slots whose arguments and results carry the text-borrowed/text-owned scalars with no interval fields, &String normalizes to text-borrowed, and the report claims complete inventory with no diagnostics"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_string_signature_types_become_function_slots", timeout_seconds = 300},
+]

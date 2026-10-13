@@ -1,0 +1,11 @@
+id = "demands-inside-format-args-arguments-are-recorded"
+description = "a routed format_args! invocation with positional arguments referencing provider functions (e.g. writer.write_fmt(format_args!('v={} plus {}', add_one(1), 2));) and no other consumer code calls add_one -> the demand for add_one is recorded exactly like a direct call"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_format_args_arguments_record_demands_like_direct_calls", timeout_seconds = 300},
+]

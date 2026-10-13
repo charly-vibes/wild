@@ -1,0 +1,11 @@
+id = "mutable-and-bare-text-stays-unsupported"
+description = "a provider with a public function taking &mut str (or bare str, char, Cow<str>) -> the report retains the unsupported-construct gap, the function surfaces as an opaque slot, and inventory is incomplete"
+archetype = "NR"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_mutable_text_borrow_stays_unsupported", timeout_seconds = 300},
+]
