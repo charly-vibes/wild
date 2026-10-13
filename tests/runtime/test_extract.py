@@ -100,7 +100,9 @@ def sha(text: str) -> str:
     return "sha256:" + hashlib.sha256(text.encode()).hexdigest()
 
 
-def write_bundle(root: Path, consumer_lib: str = CONSUMER_LIB) -> dict[str, str]:
+def write_bundle(
+    root: Path, consumer_lib: str = CONSUMER_LIB, provider_lib: str = PROVIDER_LIB
+) -> dict[str, str]:
     root.mkdir(parents=True, exist_ok=True)
     files = {
         "Cargo.toml": WORKSPACE_TOML,
@@ -108,7 +110,7 @@ def write_bundle(root: Path, consumer_lib: str = CONSUMER_LIB) -> dict[str, str]
         "consumer/Cargo.toml": CONSUMER_TOML,
         "consumer/src/lib.rs": consumer_lib,
         "provider/Cargo.toml": PROVIDER_TOML,
-        "provider/src/lib.rs": PROVIDER_LIB,
+        "provider/src/lib.rs": provider_lib,
     }
     for rel, text in files.items():
         dest = root / rel
@@ -216,6 +218,36 @@ make_export!();
         contract = facts_json(tmp_path / "facts", "contract.json")
         slot_blob = json.dumps(contract)
         assert "generated" not in slot_blob
+
+    def test_public_fn_with_non_scalar_return_is_opaque_gap_not_panic(self, tmp_path):
+        # beads wild-73j: shape_supported in visit_item_fn did not gate on the
+        # return type, so a public fn returning Vec<u32> reached
+        # result_ok.expect("unit fallback") and panicked exit 101. The honest
+        # behavior mirrors the args_ok else-branch: an unsupported-construct
+        # gap plus an opaque slot, never a panic and never an invented
+        # function-type slot.
+        provider_lib = """pub fn add_one(x: u32) -> u32 { x + 1 }
+pub fn make_vec(x: u32) -> Vec<u32> { vec![x] }
+"""
+        files = write_bundle(tmp_path / "bundle", provider_lib=provider_lib)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 1, (
+            f"non-scalar return must be a refusal, not a panic: "
+            f"rc={proc.returncode} stderr={proc.stderr[-500:]}"
+        )
+        env = envelope(proc)
+        assert env["decision"] == "refuse"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is False
+        codes = {d["code"] for d in report["diagnostics"]}
+        assert "unsupported-construct" in codes
+        contract = facts_json(tmp_path / "facts", "contract.json")
+        slots = {s["name"]: s for s in contract["slots"]}
+        vec_slot = slots.get("provider::make_vec")
+        assert vec_slot is not None, "fn must still surface as an opaque slot"
+        assert vec_slot["type"]["shape"] == "opaque"
+        # the supported fn beside it keeps its genuine function type
+        assert slots["provider::add_one"]["type"]["shape"] == "function"
 
     def test_changed_build_input_requires_fresh_extraction(self, tmp_path):
         files_a = write_bundle(tmp_path / "a")

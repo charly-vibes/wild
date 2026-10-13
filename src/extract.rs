@@ -639,7 +639,10 @@ impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
                 syn::ReturnType::Default => Some(unit_scalar()),
                 syn::ReturnType::Type(_, ty) => scalar_type(ty),
             };
-            if shape_supported && args_ok {
+            // wild-73j: a non-scalar return type is as unsupported as a
+            // non-scalar argument — it must take the opaque-slot gap branch,
+            // never reach result_ok.expect below.
+            if shape_supported && args_ok && result_ok.is_some() {
                 let qualified = if self.module_prefix.is_empty() {
                     name.clone()
                 } else {
