@@ -8,6 +8,11 @@
 
 default: ci
 
+# Install locally to ~/.cargo/bin (org justfile standard, see dulce-de-leche).
+# Installs the `wild` binary ([[bin]] name); the package publishes as wild-vibes.
+install:
+    cargo install --path .
+
 # CI: same command lefthook pre-push runs. Exactly one entry point.
 ci: ah-gate pretender-gate spec-lint testaruda-gate
 
