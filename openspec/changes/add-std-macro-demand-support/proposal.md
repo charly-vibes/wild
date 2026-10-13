@@ -15,7 +15,7 @@ it is never a fixture rewrite to manufacture agreement.
 
 ## What Changes
 
-- `src/extract.rs`: expression macros whose head is a whitelisted std macro
+- `src/extract.rs`: macro invocations whose head is a whitelisted std macro
   with a closed, argument-confined expansion (`println!`, `print!`, `eprintln!`, `eprint!`,
   `format!`, `panic!`, `assert!`, `assert_eq!`, `assert_ne!`,
   `debug_assert!`, `debug_assert_eq!`, `debug_assert_ne!`, `todo!`,
@@ -24,6 +24,13 @@ it is never a fixture rewrite to manufacture agreement.
   descended, so demands inside the arguments (e.g. `assert_eq!(a(), b())`)
   are recorded like direct calls. Any macro that fails that parse, or whose
   head is not whitelisted, keeps the existing `incomplete-demand` refusal.
+  RED-phase amendment: the rule applies in BOTH expression position
+  (`ExprMacro`) and statement position (`StmtMacro`). The incumbent never
+  visits statement-position invocations at all (syn parses them as
+  `Stmt::Macro`, not `Expr::Macro`) — silently accepted, arguments never
+  descended, demands inside never recorded — so a new `visit_stmt_macro`
+  override applies the same whitelist/descend/refuse rule there instead of
+  leaving a silent-acceptance hole.
 - Item-position macros (`visit_item_macro`, e.g. `macro_rules!` definitions
   and `lazy_static!`-style invocations) are unchanged: they can still
   generate declarations the profile cannot inventory and remain refused.

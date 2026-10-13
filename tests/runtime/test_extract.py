@@ -361,6 +361,121 @@ call_hidden!();
         demand_blob = json.dumps(demand)
         assert "provider::add_one" in demand_blob
 
+    # argument-confined std macro support (add-std-macro-demand-support)
+    # test shape defined in the change design.md before implementation.
+    # RED-phase position amendment: macro invocations in STATEMENT position
+    # (syn Stmt::Macro) are the default under test — the incumbent walker
+    # never visits them (silent acceptance, arguments not descended, demands
+    # inside not recorded). Expression position keeps today's visit and is
+    # covered as a refusal guard. Provider references sit ONLY inside the
+    # macro under test so demand assertions cannot be satisfied spuriously
+    # by surrounding direct calls. Bundles avoid non-scalar public fn
+    # returns (wild-73j panic bug, out of scope here).
+
+    def test_whitelisted_std_macro_does_not_block_complete_claim(self, tmp_path):
+        # (a) a statement-position println! alongside a direct provider call
+        # yields no incomplete-demand from the std macro; the provider call
+        # still resolves and the extraction stays complete
+        print_lib = CONSUMER_LIB + 'pub fn with_print() -> u32 { println!("v={}", 1); 7 }\n'
+        files = write_bundle(tmp_path / "bundle", consumer_lib=print_lib)
+        for i in range(2):
+            proc = run_extract(
+                request_record(tmp_path / "bundle", files), tmp_path / f"facts{i}"
+            )
+            assert proc.returncode == 0, f"std macro must not refuse: {proc.stdout}"
+            report = facts_json(tmp_path / f"facts{i}", "report.json")
+            assert report["complete_inventory"] is True
+            assert report["diagnostics"] == []
+        # determinism gate unchanged: repeated extraction yields identical
+        # contract bytes with the std macro present
+        contract = (tmp_path / "facts0" / "contract.json").read_bytes()
+        assert (tmp_path / "facts1" / "contract.json").read_bytes() == contract
+        demand = facts_json(tmp_path / "facts0", "demand.json")
+        assert "provider::add_one" in json.dumps(demand)
+
+    def test_statement_macro_arguments_record_demands_like_direct_calls(self, tmp_path):
+        # (b) a statement-position whitelisted macro whose arguments are the
+        # ONLY consumer references to provider functions records demands for
+        # those functions like direct calls
+        assert_lib = (
+            "pub fn assert_both() -> u32 {"
+            " assert_eq!(provider::add_one(1), provider::greet(2)); 7 }\n"
+        )
+        files = write_bundle(tmp_path / "bundle", consumer_lib=assert_lib)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 0, f"argument demands must resolve: {proc.stdout}"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is True
+        assert report["diagnostics"] == []
+        demand = facts_json(tmp_path / "facts", "demand.json")
+        demand_blob = json.dumps(demand)
+        assert "provider::add_one" in demand_blob
+        assert "provider::greet" in demand_blob
+
+    def test_expression_position_whitelisted_macro_descends_arguments(self, tmp_path):
+        # (c) an expression-position whitelisted macro whose arguments
+        # reference a provider function records that demand like a direct
+        # call instead of refusing the whole invocation
+        fmt_lib = (
+            'pub fn with_format() -> u32 { let msg = format!("{}", provider::add_one(1)); 7 }\n'
+        )
+        files = write_bundle(tmp_path / "bundle", consumer_lib=fmt_lib)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 0, f"expression descent must support: {proc.stdout}"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is True
+        assert report["diagnostics"] == []
+        demand = facts_json(tmp_path / "facts", "demand.json")
+        assert "provider::add_one" in json.dumps(demand)
+
+    def test_nested_macro_inside_whitelisted_args_retains_gap(self, tmp_path):
+        # (d) refusal composes: a nested macro inside a whitelisted macro's
+        # arguments keeps the incomplete-demand disclosure
+        nested_lib = CONSUMER_LIB + 'pub fn nested() -> u32 { println!("{}", foo!()); 7 }\n'
+        files = write_bundle(tmp_path / "bundle", consumer_lib=nested_lib)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 1, "nested unsupported macro must refuse"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is False
+        codes = {d["code"] for d in report["diagnostics"]}
+        assert "incomplete-demand" in codes
+
+    def test_statement_position_non_whitelisted_macro_retains_gap(self, tmp_path):
+        # (e) a statement-position macro outside the whitelist must keep the
+        # refusal, not be silently skipped as the incumbent does today
+        vec_lib = CONSUMER_LIB + "pub fn with_vec() -> u32 { vec![1, 2]; 7 }\n"
+        files = write_bundle(tmp_path / "bundle", consumer_lib=vec_lib)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 1, "non-whitelisted statement macro must refuse"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is False
+        codes = {d["code"] for d in report["diagnostics"]}
+        assert "incomplete-demand" in codes
+
+    def test_expression_position_non_whitelisted_macro_retains_gap(self, tmp_path):
+        # (f) an expression-position macro outside the whitelist keeps the
+        # refusal (regression guard for today's visit_expr_macro behavior)
+        vec_lib = CONSUMER_LIB + "pub fn with_vec() -> u32 { let v = vec![1, 2]; 7 }\n"
+        files = write_bundle(tmp_path / "bundle", consumer_lib=vec_lib)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 1, "non-whitelisted expression macro must refuse"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is False
+        codes = {d["code"] for d in report["diagnostics"]}
+        assert "incomplete-demand" in codes
+
+    def test_unparseable_whitelisted_head_retains_gap(self, tmp_path):
+        # (g) a whitelisted head whose tokens do not parse as a
+        # comma-separated expression list keeps the refusal — never guess
+        bad_lib = CONSUMER_LIB + "pub fn unparseable() -> u32 { println!(a; b); 7 }\n"
+        files = write_bundle(tmp_path / "bundle", consumer_lib=bad_lib)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 1, "unparseable whitelisted head must refuse"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is False
+        codes = {d["code"] for d in report["diagnostics"]}
+        assert "incomplete-demand" in codes
+
     def test_unsupported_source_writes_nothing_and_no_network(self, tmp_path):
         files = write_bundle(tmp_path / "bundle")
         before = {rel: (tmp_path / "bundle" / rel).read_bytes() for rel in files}

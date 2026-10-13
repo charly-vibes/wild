@@ -28,6 +28,39 @@ use syn::visit::Visit;
 pub const PROFILE: &str = "rust-cargo-local-1";
 pub const LOCAL_VERSION: &str = "local-1";
 
+/// Std expression macros whose expansion is a closed definition that
+/// evaluates only their syntactic arguments and cannot reference
+/// consumer-visible functions outside them (add-std-macro-demand-support,
+/// design decision 2). Auditable data, not control flow.
+const ARGUMENT_CONFINED_STD_MACROS: &[&str] = &[
+    "println",
+    "print",
+    "eprintln",
+    "eprint",
+    "format",
+    "panic",
+    "assert",
+    "assert_eq",
+    "assert_ne",
+    "debug_assert",
+    "debug_assert_eq",
+    "debug_assert_ne",
+    "todo",
+    "unimplemented",
+    "unreachable",
+];
+
+/// A comma-separated expression list with optional trailing comma — the
+/// argument grammar every whitelisted macro's expansion consumes
+/// (add-std-macro-demand-support, design decision 3).
+struct ArgumentExprList(syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>);
+
+impl syn::parse::Parse for ArgumentExprList {
+    fn parse(input: syn::parse::ParseStream) -> syn::parse::Result<Self> {
+        Ok(ArgumentExprList(syn::punctuated::Punctuated::parse_terminated(input)?))
+    }
+}
+
 const REQUEST_FIELDS: &[&str] = &[
     "version",
     "kind",
@@ -422,6 +455,47 @@ impl<'a> SourceWalk<'a> {
         }
     }
 
+    /// Whitelist + parse + descend for macro invocations in expression or
+    /// statement position (add-std-macro-demand-support). A whitelisted
+    /// argument-confined std macro has its token trees parsed as a
+    /// comma-separated expression list and each argument walked like a
+    /// direct-call site; any other head, or a parse failure, keeps the
+    /// honest `incomplete-demand` refusal. Never guesses.
+    fn handle_invocation_macro(&mut self, mac: &syn::Macro) {
+        let head = mac
+            .path
+            .segments
+            .last()
+            .map(|s| s.ident.to_string())
+            .unwrap_or_default();
+        if !ARGUMENT_CONFINED_STD_MACROS.contains(&head.as_str()) {
+            self.refuse_invocation(
+                &head,
+                "may introduce usages the profile cannot inventory",
+            );
+            return;
+        }
+        match mac.parse_body::<ArgumentExprList>() {
+            Ok(exprs) => {
+                for expr in exprs.0 {
+                    self.visit_expr(&expr);
+                }
+            }
+            Err(_) => self.refuse_invocation(
+                &head,
+                "arguments do not parse as a comma-separated expression list; the expansion cannot be tracked",
+            ),
+        }
+    }
+
+    fn refuse_invocation(&mut self, head: &str, why: &str) {
+        self.gap(
+            "incomplete-demand",
+            format!("macro invocation `{head}!` {why}"),
+            true,
+        );
+    }
+
     fn path_key(path: &syn::Path) -> (usize, usize) {
         let start = path.span().start();
         (start.line, start.column)
@@ -495,8 +569,12 @@ impl<'a> SourceWalk<'a> {
     }
 }
 
-impl<'a> Visit<'a> for SourceWalk<'a> {
-    fn visit_item_mod(&mut self, node: &'a syn::ItemMod) {
+// The visit lifetime ('b) is independent of the borrowed-context
+// lifetime ('a): macro-descent parses whitelisted arguments into owned
+// expressions with a shorter lifetime and walks them through the same
+// visitor (add-std-macro-demand-support, design decision 3).
+impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
+    fn visit_item_mod(&mut self, node: &'b syn::ItemMod) {
         let name = node.ident.to_string();
         let is_public = matches!(node.vis, syn::Visibility::Public(_));
         let cfg_gated = node.attrs.iter().any(attr_is_cfg);
@@ -525,7 +603,7 @@ impl<'a> Visit<'a> for SourceWalk<'a> {
         }
     }
 
-    fn visit_item_fn(&mut self, node: &'a syn::ItemFn) {
+    fn visit_item_fn(&mut self, node: &'b syn::ItemFn) {
         let is_public = matches!(node.vis, syn::Visibility::Public(_));
         let name = node.sig.ident.to_string();
         if is_public {
@@ -597,7 +675,7 @@ impl<'a> Visit<'a> for SourceWalk<'a> {
         syn::visit::visit_item_fn(self, node);
     }
 
-    fn visit_item_impl(&mut self, node: &'a syn::ItemImpl) {
+    fn visit_item_impl(&mut self, node: &'b syn::ItemImpl) {
         self.gap(
             "unsupported-construct",
             "method implementations are outside the supported profile".to_string(),
@@ -617,7 +695,7 @@ impl<'a> Visit<'a> for SourceWalk<'a> {
         }
     }
 
-    fn visit_item_trait(&mut self, node: &'a syn::ItemTrait) {
+    fn visit_item_trait(&mut self, node: &'b syn::ItemTrait) {
         self.gap(
             "unsupported-construct",
             format!("trait `{}` is outside the supported profile", node.ident),
@@ -625,42 +703,42 @@ impl<'a> Visit<'a> for SourceWalk<'a> {
         );
     }
 
-    fn visit_item_struct(&mut self, node: &'a syn::ItemStruct) {
+    fn visit_item_struct(&mut self, node: &'b syn::ItemStruct) {
         if matches!(node.vis, syn::Visibility::Public(_)) {
             self.opaque_pub_item(&node.ident, node, node.attrs.iter().any(attr_is_cfg));
         }
         syn::visit::visit_item_struct(self, node);
     }
 
-    fn visit_item_enum(&mut self, node: &'a syn::ItemEnum) {
+    fn visit_item_enum(&mut self, node: &'b syn::ItemEnum) {
         if matches!(node.vis, syn::Visibility::Public(_)) {
             self.opaque_pub_item(&node.ident, node, node.attrs.iter().any(attr_is_cfg));
         }
         syn::visit::visit_item_enum(self, node);
     }
 
-    fn visit_item_const(&mut self, node: &'a syn::ItemConst) {
+    fn visit_item_const(&mut self, node: &'b syn::ItemConst) {
         if matches!(node.vis, syn::Visibility::Public(_)) {
             self.opaque_pub_item(&node.ident, node, node.attrs.iter().any(attr_is_cfg));
         }
         syn::visit::visit_item_const(self, node);
     }
 
-    fn visit_item_static(&mut self, node: &'a syn::ItemStatic) {
+    fn visit_item_static(&mut self, node: &'b syn::ItemStatic) {
         if matches!(node.vis, syn::Visibility::Public(_)) {
             self.opaque_pub_item(&node.ident, node, node.attrs.iter().any(attr_is_cfg));
         }
         syn::visit::visit_item_static(self, node);
     }
 
-    fn visit_item_type(&mut self, node: &'a syn::ItemType) {
+    fn visit_item_type(&mut self, node: &'b syn::ItemType) {
         if matches!(node.vis, syn::Visibility::Public(_)) {
             self.opaque_pub_item(&node.ident, node, node.attrs.iter().any(attr_is_cfg));
         }
         syn::visit::visit_item_type(self, node);
     }
 
-    fn visit_item_foreign_mod(&mut self, _node: &'a syn::ItemForeignMod) {
+    fn visit_item_foreign_mod(&mut self, _node: &'b syn::ItemForeignMod) {
         self.gap(
             "unsupported-construct",
             "FFI declarations are outside the supported profile".to_string(),
@@ -668,7 +746,7 @@ impl<'a> Visit<'a> for SourceWalk<'a> {
         );
     }
 
-    fn visit_item_macro(&mut self, node: &'a syn::ItemMacro) {
+    fn visit_item_macro(&mut self, node: &'b syn::ItemMacro) {
         let head = node
             .mac
             .path
@@ -689,22 +767,19 @@ impl<'a> Visit<'a> for SourceWalk<'a> {
         // deliberately not descended: macro bodies are unexpanded input
     }
 
-    fn visit_expr_macro(&mut self, node: &'a syn::ExprMacro) {
-        let head = node
-            .mac
-            .path
-            .segments
-            .last()
-            .map(|s| s.ident.to_string())
-            .unwrap_or_default();
-        self.gap(
-            "incomplete-demand",
-            format!("macro invocation `{head}!` may introduce usages the profile cannot inventory"),
-            true,
-        );
+    fn visit_expr_macro(&mut self, node: &'b syn::ExprMacro) {
+        self.handle_invocation_macro(&node.mac);
     }
 
-    fn visit_expr_method_call(&mut self, node: &'a syn::ExprMethodCall) {
+    // statement-position invocations (`println!("x");`) are syn
+    // `Stmt::Macro`, never `Expr::Macro` — without this override they are
+    // silently skipped: accepted, not descended, demands inside unrecorded
+    // (add-std-macro-demand-support, design decision 3a)
+    fn visit_stmt_macro(&mut self, node: &'b syn::StmtMacro) {
+        self.handle_invocation_macro(&node.mac);
+    }
+
+    fn visit_expr_method_call(&mut self, node: &'b syn::ExprMethodCall) {
         self.gap(
             "incomplete-demand",
             format!(
@@ -715,7 +790,7 @@ impl<'a> Visit<'a> for SourceWalk<'a> {
         );
     }
 
-    fn visit_expr_call(&mut self, node: &'a syn::ExprCall) {
+    fn visit_expr_call(&mut self, node: &'b syn::ExprCall) {
         if let syn::Expr::Path(path) = &*node.func {
             let callee: String = path
                 .path
@@ -731,7 +806,7 @@ impl<'a> Visit<'a> for SourceWalk<'a> {
         syn::visit::visit_expr_call(self, node);
     }
 
-    fn visit_expr_path(&mut self, node: &'a syn::ExprPath) {
+    fn visit_expr_path(&mut self, node: &'b syn::ExprPath) {
         let callee: String = node
             .path
             .segments

@@ -103,6 +103,24 @@ fixtures, and the held-out re-run is the broader completeness measurement.
   checkout-path invariance (the existing
   `test_repeated_extraction_formatting_invariance`-style gate) holds.
 
+### Decision 3a (RED-phase amendment): statement-position invocations get the same rule
+
+- **Discovery:** the design originally assumed `visit_expr_macro` sees
+  statement-position invocations. It does not: syn parses `println!("x");`
+  as `Stmt::Macro`, and the walker has no `visit_stmt_macro` override, so
+  statement-position macros are silently accepted, never descended, and
+  demands inside them are never recorded (verified empirically: extraction
+  exits 0 with `complete_inventory: true` and empty demand entries for a
+  consumer whose only provider references sit inside `assert_eq!(...)`).
+- **Decision:** macro invocations in statement position follow the exact
+  whitelist + parse + descend + refuse rule of Decision 3, via a new
+  `visit_stmt_macro` override sharing the same helper. A silently accepted
+  unvisited macro is a stronger violation of the
+  disclose-every-unsupported-mechanism law than an over-broad refusal.
+- **Scope note:** expression-position macros keep today's visit; only the
+  missing statement-position visit is added. Item-position macros
+  (`visit_item_macro`) stay unchanged.
+
 ### Decision 4: Unknown macro heads keep the current refusal
 
 - **Decision:** `visit_expr_macro` for a non-whitelisted head emits the
@@ -148,24 +166,37 @@ fixtures, and the held-out re-run is the broader completeness measurement.
 ## Test shape (defined before implementation, per the design law)
 
 - **Inputs:** consumer bundles (built with the existing `write_bundle`
-  helper) containing, alongside a direct dependency-qualified provider
-  call:
-  1. a `println!` expression macro;
-  2. a whitelisted macro whose arguments reference provider functions
-     (`assert_eq!(a(), b())`);
-  3. a nested macro inside a whitelisted macro's arguments
-     (`println!("{}", foo!())`);
-  4. a non-whitelisted expression macro (`vec![...]`);
-  5. a whitelisted head whose tokens do not parse as a comma-separated
-     expression list (e.g. `println!(a; b)` — syn accepts the macro body as
-     raw tokens and extraction never compiles the bundle).
+  helper) whose provider references sit ONLY inside the macro under test
+  (isolating the macro's contribution — surrounding direct calls would
+  satisfy demand assertions spuriously). RED-phase position amendment:
+  statement position is the default under test because that is where the
+  incumbent silently skips; expression position is covered as a refusal
+  guard. The consumer library for demand-recording cases contains no other
+  call to the referenced provider functions.
+  1. a `println!` statement-position macro alongside a direct
+     dependency-qualified provider call;
+  2. a statement-position whitelisted macro whose arguments reference
+     provider functions (`assert_eq!(provider::add_one(1),
+     provider::greet(2));`) with no other calls to those functions;
+  3. an expression-position whitelisted macro whose arguments reference
+     provider functions (`let msg = format!("{}", provider::add_one(1));`);
+  4. a nested macro inside a whitelisted macro's arguments
+     (`println!("{}", foo!());` — statement position);
+  5. a statement-position non-whitelisted macro (`vec![1, 2];`);
+  6. an expression-position non-whitelisted macro (`let v = vec![1, 2];`);
+  7. a whitelisted head whose tokens do not parse as a comma-separated
+     expression list, statement position (`println!(a; b);` — syn accepts
+     the macro body as raw tokens and extraction never compiles the
+     bundle).
 - **Outputs:**
   1. no `incomplete-demand` from the std macro; the provider call still
      resolves to a provider slot; scoped claim not refused for the macro;
-  2. demands for `a` and `b` recorded like direct calls;
-  3. `incomplete-demand` retained (nested macro refuses);
-  4. `incomplete-demand` retained for the non-whitelisted macro;
-  5. `incomplete-demand` retained for the unparseable whitelisted head.
+  2. demands for `add_one` and `greet` recorded like direct calls;
+  3. same as 2, in expression position;
+  4. `incomplete-demand` retained (nested macro refuses);
+  5. `incomplete-demand` retained for the non-whitelisted statement macro;
+  6. `incomplete-demand` retained for the non-whitelisted expression macro;
+  7. `incomplete-demand` retained for the unparseable whitelisted head.
 - **Invariants checked in the same tests:** repeated extraction of the same
   bundle yields identical contract bytes (determinism gate unchanged); the
   held-out re-run uses `experiments/heldout_eval.py` machinery unchanged.
