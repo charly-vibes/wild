@@ -296,12 +296,7 @@ fn join_rel(dir: &Path, rel: &str) -> String {
         .join("/")
 }
 
-fn unit_scalar() -> Value {
-    formats::obj(vec![
-        ("shape", formats::s("scalar")),
-        ("name", formats::s("unit")),
-    ])
-}
+
 
 fn integer_scalar(min: i64, max: i64) -> Value {
     formats::obj(vec![
@@ -312,11 +307,32 @@ fn integer_scalar(min: i64, max: i64) -> Value {
     ])
 }
 
+/// scalar without interval fields; text is unbounded (boolean precedent).
+fn scalar_named(name: &str) -> Value {
+    formats::obj(vec![
+        ("shape", formats::s("scalar")),
+        ("name", formats::s(name)),
+    ])
+}
+
 /// Map a Rust type to a v1 type value for the supported scalar subset.
 fn scalar_type(ty: &syn::Type) -> Option<Value> {
     match ty {
-        syn::Type::Tuple(tuple) if tuple.elems.is_empty() => Some(unit_scalar()),
+        syn::Type::Tuple(tuple) if tuple.elems.is_empty() => Some(scalar_named("unit")),
         syn::Type::Paren(paren) => scalar_type(&paren.elem),
+        // beads wild-7e9: borrowed text; mutable borrows stay outside the v1 value-transfer model.
+        syn::Type::Reference(reference) => match reference.elem.as_ref() {
+            syn::Type::Path(elem) if reference.mutability.is_none()
+                && elem.qself.is_none()
+                    && elem.path.segments.len() == 1
+                    && elem.path.segments.last().is_some_and(|seg| {
+                        matches!(seg.ident.to_string().as_str(), "str" | "String")
+                    }) =>
+            {
+                Some(scalar_named("text-borrowed"))
+            }
+            _ => None,
+        },
         syn::Type::Path(path) => {
             if path.qself.is_some() || path.path.segments.len() != 1 {
                 return None;
@@ -326,10 +342,8 @@ fn scalar_type(ty: &syn::Type) -> Option<Value> {
                 return None;
             }
             match seg.ident.to_string().as_str() {
-                "bool" => Some(formats::obj(vec![
-                    ("shape", formats::s("scalar")),
-                    ("name", formats::s("boolean")),
-                ])),
+                "bool" => Some(scalar_named("boolean")),
+                "String" => Some(scalar_named("text-owned")),
                 "u8" => Some(integer_scalar(0, 255)),
                 "u16" => Some(integer_scalar(0, 65535)),
                 "u32" => Some(integer_scalar(0, 4294967295)),
@@ -636,7 +650,7 @@ impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
                 }
             }
             let result_ok = match &node.sig.output {
-                syn::ReturnType::Default => Some(unit_scalar()),
+                syn::ReturnType::Default => Some(scalar_named("unit")),
                 syn::ReturnType::Type(_, ty) => scalar_type(ty),
             };
             // wild-73j: a non-scalar return type is as unsupported as a

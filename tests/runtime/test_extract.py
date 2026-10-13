@@ -249,6 +249,77 @@ pub fn make_vec(x: u32) -> Vec<u32> { vec![x] }
         # the supported fn beside it keeps its genuine function type
         assert slots["provider::add_one"]["type"]["shape"] == "function"
 
+    def test_string_signature_types_become_function_slots(self, tmp_path):
+        # beads wild-7e9: &str, String, and &String in public fn signatures
+        # are supported scalar text types — String maps to text-owned, while
+        # &str and &String normalize to text-borrowed (deref coercion is
+        # standard Rust semantics, not a widening) — so text-taking public
+        # fns surface genuine function-type slots instead of
+        # unsupported-construct opaque gaps. Text is unbounded, so the
+        # scalars carry no min/max fields (boolean precedent).
+        # todo!() bodies: the whitelisted argument-confined macro (m7f)
+        # records no demands, so the fixture isolates the signature subset.
+        provider_lib = '''pub fn shout(x: &str) -> String { todo!() }
+pub fn owned_len(s: String) -> u32 { todo!() }
+pub fn alias_len(s: &String) -> u32 { todo!() }
+'''
+        consumer_lib = "pub fn plain() -> u32 { 7 }\n"
+        files = write_bundle(
+            tmp_path / "bundle", consumer_lib=consumer_lib, provider_lib=provider_lib
+        )
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 0, (
+            f"text-taking public fns must extract, not refuse: "
+            f"rc={proc.returncode} stderr={proc.stderr[-500:]}"
+        )
+        env = envelope(proc)
+        assert env["decision"] == "accept"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is True
+        assert report["diagnostics"] == []
+        contract = facts_json(tmp_path / "facts", "contract.json")
+        slots = {s["name"]: s for s in contract["slots"]}
+        shout = slots["provider::shout"]["type"]
+        assert shout["shape"] == "function"
+        assert shout["arguments"] == [{"shape": "scalar", "name": "text-borrowed"}]
+        assert shout["result"] == {"shape": "scalar", "name": "text-owned"}
+        owned = slots["provider::owned_len"]["type"]
+        assert owned["shape"] == "function"
+        assert owned["arguments"] == [{"shape": "scalar", "name": "text-owned"}]
+        assert owned["result"]["shape"] == "scalar"
+        assert owned["result"]["name"] == "integer"
+        assert "min" in owned["result"] and "max" in owned["result"]
+        alias = slots["provider::alias_len"]["type"]
+        assert alias["shape"] == "function"
+        # deref coercion normalizes &String to the borrowed-text scalar
+        assert alias["arguments"] == [{"shape": "scalar", "name": "text-borrowed"}]
+
+    def test_mutable_text_borrow_stays_unsupported(self, tmp_path):
+        # beads wild-7e9 (D2): mutable text borrows are outside the v1
+        # value-transfer model — &mut str keeps the unsupported-construct
+        # refusal and an opaque slot, never a text scalar.
+        provider_lib = "pub fn mut_len(s: &mut str) -> u32 { todo!() }\n"
+        consumer_lib = "pub fn plain() -> u32 { 7 }\n"
+        files = write_bundle(
+            tmp_path / "bundle", consumer_lib=consumer_lib, provider_lib=provider_lib
+        )
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 1, (
+            f"&mut str must stay a refusal, not a panic: "
+            f"rc={proc.returncode} stderr={proc.stderr[-500:]}"
+        )
+        env = envelope(proc)
+        assert env["decision"] == "refuse"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is False
+        codes = {d["code"] for d in report["diagnostics"]}
+        assert "unsupported-construct" in codes
+        contract = facts_json(tmp_path / "facts", "contract.json")
+        slots = {s["name"]: s for s in contract["slots"]}
+        mut_slot = slots.get("provider::mut_len")
+        assert mut_slot is not None, "fn must still surface as an opaque slot"
+        assert mut_slot["type"]["shape"] == "opaque"
+
     def test_changed_build_input_requires_fresh_extraction(self, tmp_path):
         files_a = write_bundle(tmp_path / "a")
         stale_request = request_record(tmp_path / "a", files_a)
