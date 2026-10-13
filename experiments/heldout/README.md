@@ -67,6 +67,20 @@ is only auditable if the committed artifacts carry their own story.
    false-block 0/3, coverage 3/4, unknown-rate 1/4. Per the epic
    wild-m7f goal gate, real coverage > 0 makes the epic a close
    candidate.
+1c. **Post-wild-1gm re-run (2026-10-13): expected no-op confirmed — all
+   wild-arm verdicts byte-identical to the wild-f4i run.** The
+   `add-format-args-demand-support` extension (`format_args!` admitted to
+   the argument-confined whitelist + family-wide format-capture disclosure
+   for provider value items) moved none of the held-out verdicts:
+   accept/accept/unknown/accept on
+   intent-change/migration-supplied/platform-ineligibility/
+   transitive-addition, exactly as before. The re-freeze REWROTE the
+   committed `freeze.json` — only the wild binary digest changed
+   (`d8788765…` → `3a37cad8…`); harness, corpus, adapters, oracle, seal,
+   and split are byte-identical. This is the disclosed verification the
+   change promised: the e5 cohort has no `format_args!` use and no
+   provider-item captures, and the run confirms it — had any verdict
+   moved, that would have been a corpus/adapter finding to investigate.
 2. **The wild adapter mirrors `src/main.rs` into `src/lib.rs`.** The profile
    extracts from `src/lib.rs` per member; the e5 consumers are binaries.
    The mirroring is applied identically to base and candidate (same demand

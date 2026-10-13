@@ -3,10 +3,10 @@
 This is validation of the value proposition, not evidence that the future v1 runtime has the prototype failure rates.
 
 ## execution-cost
-- ci: 1.930075s measured (sum of per-run elapsed_seconds)
-- ecosystem: 0.18326s measured (sum of per-run elapsed_seconds)
-- host_ranges: 0.188305s measured (sum of per-run elapsed_seconds)
-- wild: 0.517697s measured (sum of per-run elapsed_seconds)
+- ci: 1.850588s measured (sum of per-run elapsed_seconds)
+- ecosystem: 0.17075s measured (sum of per-run elapsed_seconds)
+- host_ranges: 0.182185s measured (sum of per-run elapsed_seconds)
+- wild: 0.502522s measured (sum of per-run elapsed_seconds)
 
 ## human-contract-maintenance-time
 - intent-change: unavailable (basis: unavailable)
