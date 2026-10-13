@@ -7,12 +7,12 @@
 - [x] 2.2 All suites green: pytest tests/runtime/test_extract.py 17/17, full pytest tests/ 239 passed, JUST_TEMPDIR=/tmp just ci exit 0, openspec strict 11/11, ah check 0 issues, spk lint 0 issues
 
 ## 3. Held-out re-run (bd wild-m7f.4)
-- [ ] 3.1 Re-run the held-out comparison with `experiments/heldout_eval.py` split/dev-select/seal/compare/report machinery unchanged, against the committed corpus and oracle — beginning with an explicit `heldout_eval.py freeze` re-freeze (required: `cmd_compare` refuses on freeze drift with the new wild binary digest) that rewrites the committed `freeze/freeze.json`; disclose the rewrite
-- [ ] 3.2 Record the coverage/unknown-rate deltas for the wild arm in `experiments/heldout/README.md` and the refreshed `report.md`/`compare.json`; disclose that the extension (not a fixture rewrite) moved the numbers
+- [x] 3.1 Re-run the held-out comparison with `experiments/heldout_eval.py` split/dev-select/seal/compare/report machinery unchanged, against the committed corpus and oracle — beginning with an explicit `heldout_eval.py freeze` re-freeze (required: `cmd_compare` refuses on freeze drift with the new wild binary digest) that rewrites the committed `freeze/freeze.json`; disclose the rewrite
+- [x] 3.2 Record the coverage/unknown-rate deltas for the wild arm in `experiments/heldout/README.md` and the refreshed `report.md`/`compare.json`; disclose that the extension (not a fixture rewrite) moved the numbers
 
 ## 4. Tidy (bd wild-m7f.5, refactor while green)
 - [x] 4.1 Tidy applied during the same green cycle (disclosed as one commit): refusal paths decomposed into `refuse_invocation` helper, early-return shape for the unlisted-head branch; whitelist already a const table; all suites stayed green. NOTE: held-out re-run (3) deliberately ordered AFTER tidy so the freeze binds the final binary digest
 
 ## 5. Validation and archive
-- [ ] 5.1 `openspec validate add-std-macro-demand-support --strict`; `spk lint openspec`; `ah check`
+- [x] 5.1 `openspec validate add-std-macro-demand-support --strict`; `spk lint openspec`; `ah check`
 - [ ] 5.2 On archive: mirror the modified requirement into the dual-format `openspec/specs/wild-extract/spec.md` Requirements section and confirm `linter.requirement_drift` stays satisfied
