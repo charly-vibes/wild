@@ -20,6 +20,48 @@
 name = "wild-vibes"
 version = "0.1.0"
 edition = "2021"
+description = "Scoped dependency-contract checker for Rust/Cargo updates: extracts crate inventories (rust-cargo-local-1), validates v1 contract documents, and evaluates consumer update plans."
+license = "Apache-2.0"
+repository = "https://github.com/charly-vibes/wild"
+# Publish hygiene: the crate ships source, schemas, docs source, and the
+# runtime conformance tests. The repo-root test_*.py suite and the workflow
+# files below are repo infrastructure (they depend on openspec/, experiments/,
+# .espectacular/), not crate content. exclude is used instead of include
+# because cargo's include is additive over the git-tracked default set, and
+# exclude is ignored when include is present (cargo 1.98). exclude also
+# overrides cargo's auto-inclusion of every README/LICENSE found in the tree
+# (which otherwise drags in .devenv venv licenses, .beads, .pytest_cache).
+exclude = [
+  ".github/**",
+  ".espectacular/**",
+  ".wai/**",
+  ".beads/**",
+  ".devenv/**",
+  ".pytest_cache/**",
+  "cv/**",
+  "experiments/**",
+  "openspec/**",
+  "results/**",
+  "superseded/**",
+  "prototype/**",
+  "theme/**",
+  "docs/book/**",
+  "**/__pycache__/**",
+  "target/**",
+  "AGENTS.md",
+  "CLAUDE.md",
+  "book.toml",
+  "devenv.nix",
+  "devenv.yaml",
+  "justfile",
+  "lefthook.yml",
+  "llms.txt",
+  "pretender.toml",
+  "requirements-dev.txt",
+  "testaruda.toml",
+  "versions.ddl.toml",
+  "tests/*.py",
+]
 
 [lib]
 # Internal crate name stays `wild` so module imports (`use wild::...`)
