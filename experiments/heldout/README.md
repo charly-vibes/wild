@@ -33,6 +33,24 @@ is only auditable if the committed artifacts carry their own story.
    refusal; that would manufacture agreement. Extending the extractor's
    supported set is a runtime-semantics change (OpenSpec territory), out of
    scope for wild-1xk. The 0/4 coverage is itself a comparison finding.
+
+1a. **Post-wild-m7f.3 re-run (2026-10-13): coverage unchanged at 0/4 —
+   the macro extension was necessary but not sufficient.** The
+   add-std-macro-demand-support change (whitelist of 15 argument-confined
+   std macros + statement-position coverage) landed and is exercised by
+   the re-run; the re-freeze REWROTE the committed `freeze.json` — only the
+   wild binary digest changed (`d5f4c2ec…` → `77ccd5b4…`), the harness,
+   corpus, adapters, oracle, seal, and split are byte-identical. The wild
+   arm still refuses all four cases Unknown, and the diagnostics moved off
+   macros entirely: the e5 provider API is string-shaped
+   (`dept::greet(name: &str) -> String`, `farewell`, `farewell_spanish`),
+   and the profile's signature subset supports only unit/bool/i8-u32 — so
+   the provider's public functions are `unsupported-construct` gaps, the
+   consumer demand `dept::greet` resolves to no supplied slot, and the
+   scoped claim stays refused (`incomplete-demand`). The remaining blocker
+   is a provider-side signature-subset extension (string types), a further
+   runtime-semantics change tracked separately in beads; the adapter and
+   corpus remain untouched.
 2. **The wild adapter mirrors `src/main.rs` into `src/lib.rs`.** The profile
    extracts from `src/lib.rs` per member; the e5 consumers are binaries.
    The mirroring is applied identically to base and candidate (same demand
@@ -61,6 +79,10 @@ is only auditable if the committed artifacts carry their own story.
 | ci | 0/1 | 1/3 (intent-change 1.2.4: the behavior change fails the suite though the update is compatible) | 4/4 | 0 |
 | ecosystem | 1/1 (platform-ineligibility 1.8.0: caret-compatible yet breaks) | 1/3 (migration-supplied 2.1.0) | 4/4 | 0 |
 | wild | — | — | 0/4 | 4/4 |
+
+(wild row unchanged by the wild-m7f.3 macro extension: the re-run's wild
+refusals are provider signature-subset gaps, not macro gaps — see ruling
+1a.)
 
 The separate columns are the point: aggregate accuracy would hide that the
 ecosystem caret rule misses the one real breakage while CI false-blocks an
