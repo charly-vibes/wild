@@ -476,6 +476,37 @@ call_hidden!();
         codes = {d["code"] for d in report["diagnostics"]}
         assert "incomplete-demand" in codes
 
+    def test_relocation_and_formatting_preserve_semantic_identity_with_macro(self, tmp_path):
+        # the determinism split must survive macro descent: the demand walk
+        # inside whitelisted macro arguments is name-based; locations (which
+        # stay location-accurate, including macro-arg call sites) live only
+        # in provenance
+        lib_a = (
+            "pub fn f() -> u32 {"
+            " assert_eq!(provider::add_one(1), provider::greet(2)); 7 }\n"
+        )
+        lib_b = (
+            "pub fn f() -> u32 {\n"
+            "    // reformatted variant of the same code\n"
+            "    assert_eq!(\n"
+            "        provider::add_one(1),\n"
+            "        provider::greet(2),\n"
+            "    );\n"
+            "    7\n"
+            "}\n"
+        )
+        files_a = write_bundle(tmp_path / "a", consumer_lib=lib_a)
+        files_b = write_bundle(tmp_path / "b-deeper", consumer_lib=lib_b)
+        pa, pb = tmp_path / "fa", tmp_path / "fb"
+        ra = run_extract(request_record(tmp_path / "a", files_a), pa)
+        rb = run_extract(request_record(tmp_path / "b-deeper", files_b), pb)
+        assert ra.returncode == 0, ra.stderr
+        assert rb.returncode == 0, rb.stderr
+        assert (pa / "contract.json").read_bytes() == (pb / "contract.json").read_bytes()
+        prov_a = (pa / "provenance.json").read_bytes()
+        prov_b = (pb / "provenance.json").read_bytes()
+        assert prov_a != prov_b, "raw provenance must stay location-accurate"
+
     def test_unsupported_source_writes_nothing_and_no_network(self, tmp_path):
         files = write_bundle(tmp_path / "bundle")
         before = {rel: (tmp_path / "bundle" / rel).read_bytes() for rel in files}

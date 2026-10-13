@@ -74,6 +74,11 @@ fixtures, and the held-out re-run is the broader completeness measurement.
   - Item-position macros (`visit_item_macro`) — they may generate
     declarations the inventory cannot see; the existing two-gap refusal is
     unchanged.
+  - Note (RO5U M1, review finding): `format_args!` is also argument-
+    confined std (it is the expansion core of the print/format family) but
+    is deliberately NOT in this whitelist — expanding here would exceed the
+    approved proposal semantics; tracked as a follow-up candidate with its
+    own conformance fixture.
 
 ### Decision 3: Parse token trees as a comma-separated expression list, then descend
 
