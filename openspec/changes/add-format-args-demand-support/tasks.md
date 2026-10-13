@@ -7,12 +7,12 @@
 - [x] 2.2 All suites green: pytest tests/runtime/test_extract.py, full pytest tests/, JUST_TEMPDIR=/tmp just ci exit 0, openspec strict, ah check, spk lint
 
 ## 3. Held-out re-run — disclosed verification (bd wild-1gm)
-- [ ] 3.1 Re-freeze (rewrites committed `freeze.json`, disclosed — only the wild binary digest is expected to change), re-run compare + report against the committed corpus/oracle; expected: wild-arm verdicts byte-identical to the wild-f4i run (e5 cohort has no `format_args!` use and no provider-item captures). Any movement is a finding to investigate, never silently accepted
-- [ ] 3.2 Record the re-run outcome (expected no-op confirmed or findings) in `experiments/heldout/README.md` and the refreshed `report.md`/`compare.json`
+- [x] 3.1 Re-freeze (rewrites committed `freeze.json`, disclosed — only the wild binary digest is expected to change), re-run compare + report against the committed corpus/oracle; expected: wild-arm verdicts byte-identical to the wild-f4i run (e5 cohort has no `format_args!` use and no provider-item captures). Any movement is a finding to investigate, never silently accepted
+- [x] 3.2 Record the re-run outcome (expected no-op confirmed or findings) in `experiments/heldout/README.md` and the refreshed `report.md`/`compare.json`
 
 ## 4. Tidy (refactor while green, separate commit)
-- [ ] 4.1 Tidy pass over the capture-scan and whitelist code while green
+- [x] 4.1 Tidy delivered inside the green commit (disclosed): the pretender ratchet forced the module extraction — all macro-handling machinery (whitelist const, argument grammar, capture scan, capture cross-check) moved to child module src/extract/macro_demands.rs; extract.rs 1375 -> 1154 lines, all suites stayed green. No further tidy debt observed
 
 ## 5. Validation and archive
-- [ ] 5.1 `openspec validate add-format-args-demand-support --strict`; `spk lint openspec`; `ah check`
+- [x] 5.1 `openspec validate add-format-args-demand-support --strict`; `spk lint openspec`; `ah check`
 - [ ] 5.2 On archive (AFTER `add-std-macro-demand-support` is archived — ordering constraint, both modify the same requirement and this delta is the superset): mirror the modified requirement into the dual-format `openspec/specs/wild-extract/spec.md` Requirements section and confirm `linter.requirement_drift` stays satisfied
