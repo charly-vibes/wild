@@ -1,0 +1,54 @@
+{
+  "cases": [
+    {
+      "base": "1.2.3",
+      "consumer": "experiments/update_fixtures/e5/consumer-base",
+      "id": "cell-allowed-compatible-update",
+      "target": "1.2.5"
+    },
+    {
+      "base": "1.2.3",
+      "consumer": "experiments/update_fixtures/e5/consumer-base",
+      "id": "cell-allowed-incompatible-patch",
+      "target": "1.2.4"
+    },
+    {
+      "base": "1.2.3",
+      "consumer": "experiments/update_fixtures/e5/cases/cell-excluded-compatible-major/consumer",
+      "id": "cell-excluded-compatible-major",
+      "target": "2.0.0"
+    },
+    {
+      "base": "1.2.3",
+      "consumer": "experiments/update_fixtures/e5/consumer-base",
+      "id": "cell-excluded-incompatible-major",
+      "target": "3.0.0"
+    },
+    {
+      "base": "1.2.3",
+      "consumer": "experiments/update_fixtures/e5/consumer-base",
+      "id": "intent-change",
+      "target": "1.2.4"
+    },
+    {
+      "base": "1.2.3",
+      "consumer": "experiments/update_fixtures/e5/consumer-base",
+      "id": "migration-supplied",
+      "target": "2.1.0"
+    },
+    {
+      "base": "1.2.3",
+      "consumer": "experiments/update_fixtures/e5/consumer-base",
+      "id": "platform-ineligibility",
+      "target": "1.8.0"
+    },
+    {
+      "base": "1.2.3",
+      "consumer": "experiments/update_fixtures/e5/consumer-base",
+      "id": "transitive-addition",
+      "target": "1.9.0"
+    }
+  ],
+  "kind": "heldout-case-context",
+  "version": 1
+}

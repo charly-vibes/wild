@@ -1,0 +1,78 @@
+{
+  "cases": [
+    {
+      "family": "cell-allowed-compatible-update",
+      "human_minutes": {
+        "basis": "unavailable",
+        "value": null
+      },
+      "id": "cell-allowed-compatible-update",
+      "pool": "development"
+    },
+    {
+      "family": "cell-allowed-incompatible-patch",
+      "human_minutes": {
+        "basis": "unavailable",
+        "value": null
+      },
+      "id": "cell-allowed-incompatible-patch",
+      "pool": "development"
+    },
+    {
+      "family": "cell-excluded-compatible-major",
+      "human_minutes": {
+        "basis": "unavailable",
+        "value": null
+      },
+      "id": "cell-excluded-compatible-major",
+      "pool": "development"
+    },
+    {
+      "family": "cell-excluded-incompatible-major",
+      "human_minutes": {
+        "basis": "unavailable",
+        "value": null
+      },
+      "id": "cell-excluded-incompatible-major",
+      "pool": "development"
+    },
+    {
+      "family": "intent-change",
+      "human_minutes": {
+        "basis": "unavailable",
+        "value": null
+      },
+      "id": "intent-change",
+      "pool": "held_out"
+    },
+    {
+      "family": "migration-supplied",
+      "human_minutes": {
+        "basis": "unavailable",
+        "value": null
+      },
+      "id": "migration-supplied",
+      "pool": "held_out"
+    },
+    {
+      "family": "platform-ineligibility",
+      "human_minutes": {
+        "basis": "unavailable",
+        "value": null
+      },
+      "id": "platform-ineligibility",
+      "pool": "held_out"
+    },
+    {
+      "family": "transitive-addition",
+      "human_minutes": {
+        "basis": "unavailable",
+        "value": null
+      },
+      "id": "transitive-addition",
+      "pool": "held_out"
+    }
+  ],
+  "kind": "heldout-cases",
+  "version": 1
+}

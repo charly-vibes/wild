@@ -1,0 +1,26 @@
+{
+  "excluded": [
+    {
+      "family": "baseline-failure",
+      "id": "baseline-failure",
+      "reason": "oracle-unresolvable: e5 independent_verdict is unresolved (resolution-level refusal, not an upgrade-compatibility outcome)"
+    },
+    {
+      "family": "dynamic-usage-unresolved",
+      "id": "dynamic-usage-unresolved",
+      "reason": "oracle-unresolvable: e5 independent_verdict is unresolved (resolution-level refusal, not an upgrade-compatibility outcome)"
+    },
+    {
+      "family": "singleton-conflict",
+      "id": "singleton-conflict",
+      "reason": "oracle-unresolvable: e5 independent_verdict is unresolved (resolution-level refusal, not an upgrade-compatibility outcome)"
+    },
+    {
+      "family": "wrong-target-selection",
+      "id": "wrong-target-selection",
+      "reason": "oracle-unresolvable: e5 independent_verdict is unresolved (resolution-level refusal, not an upgrade-compatibility outcome)"
+    }
+  ],
+  "kind": "heldout-excluded",
+  "version": 1
+}

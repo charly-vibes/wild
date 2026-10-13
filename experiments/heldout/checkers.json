@@ -1,0 +1,42 @@
+{
+  "checkers": [
+    {
+      "cmd": [
+        "python3",
+        "experiments/heldout_adapters/host_ranges.py",
+        "--context",
+        "experiments/heldout/case_context.json"
+      ],
+      "name": "host_ranges"
+    },
+    {
+      "cmd": [
+        "python3",
+        "experiments/heldout_adapters/ci.py",
+        "--fixtures",
+        "experiments/update_fixtures/e5"
+      ],
+      "name": "ci"
+    },
+    {
+      "cmd": [
+        "python3",
+        "experiments/heldout_adapters/ecosystem.py",
+        "--context",
+        "experiments/heldout/case_context.json"
+      ],
+      "name": "ecosystem"
+    },
+    {
+      "cmd": [
+        "python3",
+        "experiments/heldout_adapters/wild.py",
+        "--context",
+        "experiments/heldout/case_context.json"
+      ],
+      "name": "wild"
+    }
+  ],
+  "kind": "heldout-checkers",
+  "version": 1
+}

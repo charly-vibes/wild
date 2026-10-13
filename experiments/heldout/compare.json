@@ -1,0 +1,137 @@
+{
+  "freeze_sha256": "da15a36395cc64e00761445a0ee2169fbf5cd4e39bda4b436c98b0b83adc8c81",
+  "kind": "heldout-compare",
+  "oracle_sha256": "9fccce21fe5c65c23286e2696c2fe74ab2e4ccb16e2b24d022e1b98706118f11",
+  "pool": "held_out",
+  "runs": [
+    {
+      "case_id": "intent-change",
+      "checker": "host_ranges",
+      "elapsed_seconds": 0.044624,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "migration-supplied",
+      "checker": "host_ranges",
+      "elapsed_seconds": 0.045373,
+      "note": "",
+      "outcome_class": "false-block",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "platform-ineligibility",
+      "checker": "host_ranges",
+      "elapsed_seconds": 0.044967,
+      "note": "",
+      "outcome_class": "correct-reject",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "transitive-addition",
+      "checker": "host_ranges",
+      "elapsed_seconds": 0.045848,
+      "note": "",
+      "outcome_class": "false-block",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "intent-change",
+      "checker": "ci",
+      "elapsed_seconds": 0.433918,
+      "note": "",
+      "outcome_class": "false-block",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "migration-supplied",
+      "checker": "ci",
+      "elapsed_seconds": 0.576422,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "platform-ineligibility",
+      "checker": "ci",
+      "elapsed_seconds": 0.38167,
+      "note": "",
+      "outcome_class": "correct-reject",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "transitive-addition",
+      "checker": "ci",
+      "elapsed_seconds": 0.503504,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "intent-change",
+      "checker": "ecosystem",
+      "elapsed_seconds": 0.045158,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "migration-supplied",
+      "checker": "ecosystem",
+      "elapsed_seconds": 0.048407,
+      "note": "",
+      "outcome_class": "false-block",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "platform-ineligibility",
+      "checker": "ecosystem",
+      "elapsed_seconds": 0.044594,
+      "note": "",
+      "outcome_class": "missed-breakage",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "transitive-addition",
+      "checker": "ecosystem",
+      "elapsed_seconds": 0.044225,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "intent-change",
+      "checker": "wild",
+      "elapsed_seconds": 0.129795,
+      "note": "",
+      "outcome_class": "unknown",
+      "verdict": "unknown"
+    },
+    {
+      "case_id": "migration-supplied",
+      "checker": "wild",
+      "elapsed_seconds": 0.126258,
+      "note": "",
+      "outcome_class": "unknown",
+      "verdict": "unknown"
+    },
+    {
+      "case_id": "platform-ineligibility",
+      "checker": "wild",
+      "elapsed_seconds": 0.126058,
+      "note": "",
+      "outcome_class": "unknown",
+      "verdict": "unknown"
+    },
+    {
+      "case_id": "transitive-addition",
+      "checker": "wild",
+      "elapsed_seconds": 0.139573,
+      "note": "",
+      "outcome_class": "unknown",
+      "verdict": "unknown"
+    }
+  ],
+  "version": 1
+}

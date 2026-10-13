@@ -1,0 +1,38 @@
+{
+  "kind": "heldout-freeze",
+  "tools": [
+    {
+      "path": "/var/home/sasha/para/areas/dev/gh/charly/wild/experiments/heldout_eval.py",
+      "sha256": "90d6c5aa807a5b115bb3277f59882c1a246e2a45340746907302669c965b72d0"
+    },
+    {
+      "path": "/var/home/sasha/para/areas/dev/gh/charly/wild/experiments/heldout_corpus.py",
+      "sha256": "3e5e8f5d2c573f917931c4dfb9d650b96c779434e5e3304d2ca2d0afddd920bd"
+    },
+    {
+      "path": "/var/home/sasha/para/areas/dev/gh/charly/wild/experiments/heldout_adapters/host_ranges.py",
+      "sha256": "cbeac795ad3a6ead2908f5662e835eb8b0a477559d37bc82fb901711c9e8a253"
+    },
+    {
+      "path": "/var/home/sasha/para/areas/dev/gh/charly/wild/experiments/heldout_adapters/ci.py",
+      "sha256": "7ad247a1db0f8e4cd671f832049cdacb101d89b34a334d4c260ec540221384ba"
+    },
+    {
+      "path": "/var/home/sasha/para/areas/dev/gh/charly/wild/experiments/heldout_adapters/ecosystem.py",
+      "sha256": "5dc87cb237fc0ee8c4d9a13ba61620a444f3a8f233506d27387199a7b8deae0d"
+    },
+    {
+      "path": "/var/home/sasha/para/areas/dev/gh/charly/wild/experiments/heldout_adapters/wild.py",
+      "sha256": "969b46f13b380305d83ad3c3fe06ab8c553cc9592400c78d6638e544062179d0"
+    },
+    {
+      "path": "/var/home/sasha/para/areas/dev/gh/charly/wild/experiments/update_eval.py",
+      "sha256": "94d68358403be3bee409b9905a2f6c4f36d765d7deb13d8cda8da6a71363eb73"
+    },
+    {
+      "path": "/var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild",
+      "sha256": "d5f4c2ecfd357ce8636ede36f73dc626f7fa4e56de3a05a437385214034dfe3c"
+    }
+  ],
+  "version": 1
+}

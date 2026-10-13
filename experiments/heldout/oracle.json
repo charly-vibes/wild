@@ -1,0 +1,37 @@
+{
+  "oracle": "independent-prepared",
+  "outcomes": [
+    {
+      "case_id": "cell-allowed-compatible-update",
+      "outcome": "ok"
+    },
+    {
+      "case_id": "cell-allowed-incompatible-patch",
+      "outcome": "break"
+    },
+    {
+      "case_id": "cell-excluded-compatible-major",
+      "outcome": "ok"
+    },
+    {
+      "case_id": "cell-excluded-incompatible-major",
+      "outcome": "break"
+    },
+    {
+      "case_id": "intent-change",
+      "outcome": "ok"
+    },
+    {
+      "case_id": "migration-supplied",
+      "outcome": "ok"
+    },
+    {
+      "case_id": "platform-ineligibility",
+      "outcome": "break"
+    },
+    {
+      "case_id": "transitive-addition",
+      "outcome": "ok"
+    }
+  ]
+}

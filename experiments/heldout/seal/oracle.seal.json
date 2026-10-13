@@ -1,0 +1,15 @@
+{
+  "case_ids": [
+    "cell-allowed-compatible-update",
+    "cell-allowed-incompatible-patch",
+    "cell-excluded-compatible-major",
+    "cell-excluded-incompatible-major",
+    "intent-change",
+    "migration-supplied",
+    "platform-ineligibility",
+    "transitive-addition"
+  ],
+  "kind": "heldout-oracle-seal",
+  "oracle_sha256": "9fccce21fe5c65c23286e2696c2fe74ab2e4ccb16e2b24d022e1b98706118f11",
+  "version": 1
+}

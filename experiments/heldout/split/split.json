@@ -1,0 +1,24 @@
+{
+  "families": {
+    "cell-allowed-compatible-update": "development",
+    "cell-allowed-incompatible-patch": "development",
+    "cell-excluded-compatible-major": "development",
+    "cell-excluded-incompatible-major": "development",
+    "intent-change": "held_out",
+    "migration-supplied": "held_out",
+    "platform-ineligibility": "held_out",
+    "transitive-addition": "held_out"
+  },
+  "kind": "heldout-split",
+  "pool_by_case": {
+    "cell-allowed-compatible-update": "development",
+    "cell-allowed-incompatible-patch": "development",
+    "cell-excluded-compatible-major": "development",
+    "cell-excluded-incompatible-major": "development",
+    "intent-change": "held_out",
+    "migration-supplied": "held_out",
+    "platform-ineligibility": "held_out",
+    "transitive-addition": "held_out"
+  },
+  "version": 1
+}
