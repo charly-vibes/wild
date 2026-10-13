@@ -3,10 +3,10 @@
 This is validation of the value proposition, not evidence that the future v1 runtime has the prototype failure rates.
 
 ## execution-cost
-- ci: 2.022519s measured (sum of per-run elapsed_seconds)
-- ecosystem: 0.187652s measured (sum of per-run elapsed_seconds)
-- host_ranges: 0.193823s measured (sum of per-run elapsed_seconds)
-- wild: 0.543666s measured (sum of per-run elapsed_seconds)
+- ci: 1.930075s measured (sum of per-run elapsed_seconds)
+- ecosystem: 0.18326s measured (sum of per-run elapsed_seconds)
+- host_ranges: 0.188305s measured (sum of per-run elapsed_seconds)
+- wild: 0.517697s measured (sum of per-run elapsed_seconds)
 
 ## human-contract-maintenance-time
 - intent-change: unavailable (basis: unavailable)
@@ -94,12 +94,12 @@ This is validation of the value proposition, not evidence that the future v1 run
 - ratio: {"ratio": 0.0, "denominator": 3}
 
 ### unknown-rate
-- count: 4
+- count: 1
 - denominator: 4 (cases run for this checker)
-- ratio: {"ratio": 1.0, "denominator": 4}
+- ratio: {"ratio": 0.25, "denominator": 4}
 
 ### coverage
-- count: 0
+- count: 3
 - denominator: 4 (cases run for this checker)
-- ratio: {"ratio": 0.0, "denominator": 4}
+- ratio: {"ratio": 0.75, "denominator": 4}
 

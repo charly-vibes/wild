@@ -51,6 +51,22 @@ is only auditable if the committed artifacts carry their own story.
    is a provider-side signature-subset extension (string types), a further
    runtime-semantics change tracked separately in beads; the adapter and
    corpus remain untouched.
+1b. **Post-wild-7e9 re-run (2026-10-13): coverage 3/4 — the wild arm now
+   produces real held-out verdicts.** The string-signature extension
+   (wild-7e9: `String` → text-owned, `&str`/`&String` → text-borrowed in
+   the `rust-cargo-local-1` signature subset) resolved the blocker ruling
+   1a disclosed. The re-freeze REWROTE the committed `freeze.json` — only
+   the wild binary digest changed (`77ccd5b4…` → `d8788765…`); the
+   harness, corpus, adapters, oracle, seal, and split are byte-identical.
+   Verdicts: accept on `intent-change`, `migration-supplied`,
+   `transitive-addition` (all three oracle-ok — zero false blocks, better
+   than every other arm on this pool); honest Unknown on
+   `platform-ineligibility` (the one oracle-break case; envelope
+   diagnostics `unsupported-construct, incomplete-demand` — the refusal
+   stands, no fixture rewrite). Metrics: missed-breakage 0/1,
+   false-block 0/3, coverage 3/4, unknown-rate 1/4. Per the epic
+   wild-m7f goal gate, real coverage > 0 makes the epic a close
+   candidate.
 2. **The wild adapter mirrors `src/main.rs` into `src/lib.rs`.** The profile
    extracts from `src/lib.rs` per member; the e5 consumers are binaries.
    The mirroring is applied identically to base and candidate (same demand
@@ -78,11 +94,11 @@ is only auditable if the committed artifacts carry their own story.
 | host_ranges | 0/1 | 2/3 (1.8.0, 1.9.0 range-rejected) | 4/4 | 0 |
 | ci | 0/1 | 1/3 (intent-change 1.2.4: the behavior change fails the suite though the update is compatible) | 4/4 | 0 |
 | ecosystem | 1/1 (platform-ineligibility 1.8.0: caret-compatible yet breaks) | 1/3 (migration-supplied 2.1.0) | 4/4 | 0 |
-| wild | — | — | 0/4 | 4/4 |
+| wild | 0/1 | 0/3 | 3/4 | 1/4 |
 
-(wild row unchanged by the wild-m7f.3 macro extension: the re-run's wild
-refusals are provider signature-subset gaps, not macro gaps — see ruling
-1a.)
+(wild row from the post-wild-7e9 re-run — see ruling 1b. The m7f.3 macro
+extension alone had left the row at 0/4 with provider signature gaps;
+the string-signature extension resolved it.)
 
 The separate columns are the point: aggregate accuracy would hide that the
 ecosystem caret rule misses the one real breakage while CI false-blocks an

@@ -1,5 +1,5 @@
 {
-  "freeze_sha256": "8a68833950ef1c145c700d1be9b205564f29f0387ffe30d41a4e613706061070",
+  "freeze_sha256": "ac8abf5e557548d07feb61efd5e45e31beaaa031ef70804c73886bfd7107e27e",
   "kind": "heldout-compare",
   "oracle_sha256": "9fccce21fe5c65c23286e2696c2fe74ab2e4ccb16e2b24d022e1b98706118f11",
   "pool": "held_out",
@@ -7,7 +7,7 @@
     {
       "case_id": "intent-change",
       "checker": "host_ranges",
-      "elapsed_seconds": 0.048136,
+      "elapsed_seconds": 0.046786,
       "note": "",
       "outcome_class": "correct-accept",
       "verdict": "accept"
@@ -15,7 +15,7 @@
     {
       "case_id": "migration-supplied",
       "checker": "host_ranges",
-      "elapsed_seconds": 0.05094,
+      "elapsed_seconds": 0.051158,
       "note": "",
       "outcome_class": "false-block",
       "verdict": "reject"
@@ -23,7 +23,7 @@
     {
       "case_id": "platform-ineligibility",
       "checker": "host_ranges",
-      "elapsed_seconds": 0.047541,
+      "elapsed_seconds": 0.045663,
       "note": "",
       "outcome_class": "correct-reject",
       "verdict": "reject"
@@ -31,7 +31,7 @@
     {
       "case_id": "transitive-addition",
       "checker": "host_ranges",
-      "elapsed_seconds": 0.047206,
+      "elapsed_seconds": 0.044698,
       "note": "",
       "outcome_class": "false-block",
       "verdict": "reject"
@@ -39,7 +39,7 @@
     {
       "case_id": "intent-change",
       "checker": "ci",
-      "elapsed_seconds": 0.470222,
+      "elapsed_seconds": 0.453411,
       "note": "",
       "outcome_class": "false-block",
       "verdict": "reject"
@@ -47,7 +47,7 @@
     {
       "case_id": "migration-supplied",
       "checker": "ci",
-      "elapsed_seconds": 0.629949,
+      "elapsed_seconds": 0.586431,
       "note": "",
       "outcome_class": "correct-accept",
       "verdict": "accept"
@@ -55,7 +55,7 @@
     {
       "case_id": "platform-ineligibility",
       "checker": "ci",
-      "elapsed_seconds": 0.40778,
+      "elapsed_seconds": 0.392632,
       "note": "",
       "outcome_class": "correct-reject",
       "verdict": "reject"
@@ -63,7 +63,7 @@
     {
       "case_id": "transitive-addition",
       "checker": "ci",
-      "elapsed_seconds": 0.514568,
+      "elapsed_seconds": 0.497601,
       "note": "",
       "outcome_class": "correct-accept",
       "verdict": "accept"
@@ -71,7 +71,7 @@
     {
       "case_id": "intent-change",
       "checker": "ecosystem",
-      "elapsed_seconds": 0.045748,
+      "elapsed_seconds": 0.047298,
       "note": "",
       "outcome_class": "correct-accept",
       "verdict": "accept"
@@ -79,7 +79,7 @@
     {
       "case_id": "migration-supplied",
       "checker": "ecosystem",
-      "elapsed_seconds": 0.04661,
+      "elapsed_seconds": 0.045691,
       "note": "",
       "outcome_class": "false-block",
       "verdict": "reject"
@@ -87,7 +87,7 @@
     {
       "case_id": "platform-ineligibility",
       "checker": "ecosystem",
-      "elapsed_seconds": 0.045582,
+      "elapsed_seconds": 0.045671,
       "note": "",
       "outcome_class": "missed-breakage",
       "verdict": "accept"
@@ -95,7 +95,7 @@
     {
       "case_id": "transitive-addition",
       "checker": "ecosystem",
-      "elapsed_seconds": 0.049712,
+      "elapsed_seconds": 0.0446,
       "note": "",
       "outcome_class": "correct-accept",
       "verdict": "accept"
@@ -103,23 +103,23 @@
     {
       "case_id": "intent-change",
       "checker": "wild",
-      "elapsed_seconds": 0.136605,
+      "elapsed_seconds": 0.124853,
       "note": "",
-      "outcome_class": "unknown",
-      "verdict": "unknown"
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
     },
     {
       "case_id": "migration-supplied",
       "checker": "wild",
-      "elapsed_seconds": 0.135213,
+      "elapsed_seconds": 0.130632,
       "note": "",
-      "outcome_class": "unknown",
-      "verdict": "unknown"
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
     },
     {
       "case_id": "platform-ineligibility",
       "checker": "wild",
-      "elapsed_seconds": 0.129302,
+      "elapsed_seconds": 0.125979,
       "note": "",
       "outcome_class": "unknown",
       "verdict": "unknown"
@@ -127,10 +127,10 @@
     {
       "case_id": "transitive-addition",
       "checker": "wild",
-      "elapsed_seconds": 0.142546,
+      "elapsed_seconds": 0.136233,
       "note": "",
-      "outcome_class": "unknown",
-      "verdict": "unknown"
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
     }
   ],
   "version": 1
