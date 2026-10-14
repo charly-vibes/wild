@@ -666,6 +666,15 @@ fn run_v1(args: &[String]) -> i32 {
 
 fn run() -> i32 {
     let args: Vec<String> = std::env::args().collect();
+    // fleet version probes (ddl status) run `$binary --version` and expect
+    // a plain version line with exit 0 — never the JSON refusal envelope
+    // (wild-9sm)
+    if let Some(flag) = args.get(1).map(String::as_str) {
+        if flag == "--version" || flag == "-V" {
+            println!("wild {}", env!("CARGO_PKG_VERSION"));
+            return 0;
+        }
+    }
     match args.get(1).map(String::as_str) {
         Some("extract") => run_extract(&args),
         Some("check") => run_check(&args),
