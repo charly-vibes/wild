@@ -1,0 +1,18 @@
+Warning: No project session found with id 'wild-158-impl'; creating a new session with that id.
+Done. wild-158 implemented per the brief, all gates green, report written. Summary:
+
+**Commits** (8 total, on top of the orchestrator's brief commit):
+- `7cd5f18` red-first widen tests (6/6 failing proven)
+- `c07053f` D2: enum-variant inventory + bounded same-crate demand resolution
+- `7d73f98` D1+D3: bounded method-call resolution + per-construct impl accounting
+- `04890f8` D5: openspec change + `docs/wild-local-v1.md` supported-set section
+- `1d75fbc` tidy: `Self`-qualified paths outside the demand profile
+- `2be48d7` audit re-run `results/adopt-audit-158-1.txt` + rung-1 addendum 2
+- `67df463` archive `add-method-variant-demand` + 7 contract TOMLs (ah-check-demanded)
+- `e308104` run report at `.wai/projects/software-updates/runs/wild-158.report.md`
+
+**Meters (actual outputs):** red `-k widen` 6 failed → green 6 passed; `pytest tests/runtime -q` **122 passed** (baseline 116, no existing test touched); `cargo test -q` 12 passed; `JUST_TEMPDIR=/tmp just ci` **exit 0** (pre- and post-archive); `openspec validate --all --strict` 11/11 → 10/10 post-archive; `spk lint` 0 findings; `ah check` 0 issues; extract.rs 1133/1200 lines.
+
+**Audit (honest):** 12/12 pairs still abstained (allowed; determinism pass). Categories cleared: `AdapterError::Io`-style variant demands resolve, blanket impl-block gap eliminated (19→0, replaced by named per-construct gaps), impl-method slots now type-qualified. Diagnostic *volume* grew (0.5.5: 81→414 incomplete-demand) from newly-disclosed impl bodies and std references — disclosure expansion, documented in the addendum.
+
+**Follow-ups filed:** wild-8j4 (type inference for non-bounded receivers, D7), wild-90d (std/external-crate awareness). No blockers; nothing pushed, `bd wild-158` left in_progress for the orchestrator.

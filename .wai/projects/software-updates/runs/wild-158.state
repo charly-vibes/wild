@@ -6,3 +6,8 @@ step_history:
 - claim: done @ 6f9ae2e (no file conflicts; only in_progress ticket)
 - gates: done @ 6f9ae2e (openspec strict 10 specs, pytest runtime 116/0)
 - brief: written (.wai/projects/software-updates/briefs/wild-158-widen-demand-profile.md)
+SPAWN pid=4102302
+- spawn: subagent:wild-158-impl transcript wild-158-impl; complete (8 commits 7cd5f18..e308104, report written)
+- verify: done @ e308104 (fresh: pytest runtime 122/0, openspec strict 10/10 post-archive, ah check --run-tests 95 executed 0 findings; commits match report claims; audit file + addendum confirmed on disk)
+- ship: done @ e308104 (pushed 6f9ae2e..e308104, pre-push ci-gates green 193.06s; bd wild-158 closed)
+- stop: complete — next run: wild-cdp.3 (DESIGN lane)
