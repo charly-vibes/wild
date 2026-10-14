@@ -1,0 +1,8 @@
+ticket: wild-158
+branch: main
+head: 6f9ae2e
+brief_path: .wai/projects/software-updates/briefs/wild-158-widen-demand-profile.md
+step_history:
+- claim: done @ 6f9ae2e (no file conflicts; only in_progress ticket)
+- gates: done @ 6f9ae2e (openspec strict 10 specs, pytest runtime 116/0)
+- brief: written (.wai/projects/software-updates/briefs/wild-158-widen-demand-profile.md)
