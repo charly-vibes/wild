@@ -1,0 +1,28 @@
+Done. **wild-cdp.1 complete in the ddl repo** — commit `54c7d45 feat: add wild to the managed tool registry (wild-cdp.1)`, not pushed, not closed.
+
+## What landed (7 files, +22/−5)
+
+| File | Change |
+|---|---|
+| `src/platform.rs` | D1 registry row: `wild` / `wild-vibes` / formula `wild` / `charly-vibes/wild` / Extension / **Experimental** (no `Prototype` variant exists; least-mature used) |
+| `README.md` | D2 block line (12→13, Extension 7→8) + `wild⇄wild-vibes` alias-table row |
+| `docs/src/commands.md` | alias-table row (required by the alias drift test) |
+| `src/compat.rs` | D3 fallback row `("wild", ">=0.0.0")` |
+| `src/manifest.rs` | `"wild": ">=0.0.0"` in `EMBEDDED_COMPATIBILITY` (drift test demands the mirror) |
+| `tests/tool_registry_drift.rs` | wild added to `INSTALL_ONLY`, `EXPECTED_CATEGORY`, ratified-maturity map |
+| `docs/capability-matrix.md` | regenerated row + 12→13 (generated-file sync test) |
+
+## TDD protocol honored
+- **Red**: registry row alone → `tool_registry_drift` failed with 8 distinct test failures (harness proven to move with the row).
+- **Green**: all companions added in the same commit → 10/10 drift tests pass.
+
+## Full meter
+`JUST_TEMPDIR=/tmp just ci` — fmt, clippy, bootstrap-fixtures, build-release all pass; 19 test suites green. One failure: `standard_conformance::s7_ecosystem_landing_cross_linked` ("dont: book SUMMARY does not link the ecosystem landing page") — **verified pre-existing** on a clean tree, unrelated to this slice (dont-repo fleet gap).
+
+## Status probe
+`ddl status` shows `wild | v? [extension/experimental]` — catalog/status presence satisfied.
+
+## D4 finding → follow-up filed
+The brief's premise "`wild --version` emits a version string" is false: wild handles no `--version` at all — it exits 2 and prints the JSON refusal envelope. ddl's generic probe degrades gracefully to `v?` (no crash, no garbage). No per-tool special-casing mechanism exists for non-npm tools, and D5 forbids installer changes, so nothing was added on the ddl side. Filed **wild-9sm** in the wild repo: "wild: implement `--version` so fleet version probes work" (P2) — a one-line wild-side fix that completes the probe story without this slice growing scope.
+
+`versions.ddl.toml` untouched; compat semantics, installer, and the wild repo are all untouched as ordered.

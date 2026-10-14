@@ -6,3 +6,9 @@ brief_path: .wai/projects/software-updates/briefs/wild-cdp.1-ddl-managed-tools.m
 step_history:
 - claim: done @ 89b01d1b41f38922a762d3e62f038f657a1e0864
 - gates: done @ 89b01d1b41f38922a762d3e62f038f657a1e0864 (ddl drift-test baseline 10/10 green)
+SPAWN pid=2371597
+- spawn: subagent:wild-cdp.1 transcript 01a13c09; complete (commit 54c7d45 in ddl, filed follow-up wild-9sm)
+- verify: done @ 85ad39939efa5ab6f6adcc099c111fa646e4a128 (fresh drift meters 10/10; diff matches D1-D3; concurrent DDL-3av actor zero-overlap)
+- ship: 54c7d45 already on ddl origin/main (concurrent actor pushed); bd closed
+- stop: complete — next: wild-cdp.3 (DESIGN lane, interactive)
+- stop: complete @ 85ad39939efa5ab6f6adcc099c111fa646e4a128
