@@ -1,0 +1,11 @@
+id = "unbounded-method-receiver-keeps-gap"
+description = "a consumer with a multi-hop method chain beyond one resolved hop (e.g. Meter::new().tick().untick()) -> the report retains the incomplete-demand gap naming the receiver, and the one-hop demand inside the chain is still recorded"
+archetype = "NR"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_unbounded_method_receiver_keeps_gap", timeout_seconds = 300},
+]

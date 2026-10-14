@@ -1,0 +1,11 @@
+id = "unknown-variant-paths-keep-the-gap"
+description = "a consumer referencing provider::Mode::Huge and a same-crate Flavor::Salty, neither inventoried -> the report retains the incomplete-demand gap naming each path and refuses scoped acceptance with Unknown structural assurance"
+archetype = "NR"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_unknown_variant_path_keeps_gap", timeout_seconds = 300},
+]

@@ -1,0 +1,11 @@
+id = "variant-demand-paths-resolve"
+description = "a consumer that constructs a dep-qualified inventoried variant (e.g. provider::Mode::Slow(1)) and a same-crate inventoried variant in expression position (e.g. let f = Flavor::Sour;) -> both demands are recorded as supported and no incomplete-demand gap is emitted"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_enum_variant_demand_resolves", timeout_seconds = 300},
+]

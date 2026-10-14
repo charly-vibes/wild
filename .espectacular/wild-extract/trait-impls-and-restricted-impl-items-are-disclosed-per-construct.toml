@@ -1,0 +1,11 @@
+id = "trait-impls-and-restricted-impl-items-are-disclosed-per-construct"
+description = "a provider with an inherent impl exposing a public method, a private method, and a pub(crate) method, plus two trait impls on the same type -> the public method inventories as a type-qualified opaque slot, the private method carries no public API surface, and the report retains named unsupported-construct gaps for the pub(crate) method and each trait impl — with no blanket impl-block gap"
+archetype = "NR"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_impl_accounting_is_per_construct", timeout_seconds = 300},
+]

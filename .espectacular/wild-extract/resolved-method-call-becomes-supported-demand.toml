@@ -1,0 +1,11 @@
+id = "resolved-method-call-becomes-supported-demand"
+description = "a consumer whose method call's receiver is a call resolving to an inventoried same-crate constructor with a recorded syntactic return type (e.g. Meter::new().tick() where new returns Meter) -> the demand Meter::tick is recorded and resolves against the inventoried type-qualified impl-method slot with no incomplete-demand gap"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_same_crate_method_call_demand_resolves", timeout_seconds = 300},
+]

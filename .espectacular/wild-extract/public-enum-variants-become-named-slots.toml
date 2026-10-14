@@ -1,0 +1,11 @@
+id = "public-enum-variants-become-named-slots"
+description = "a provider whose public enum declares two variants and a consumer that constructs a dep-qualified variant -> each variant inventories as a named slot under the enum's qualified meaning, the single opaque enum item does not appear, the variant construction resolves as supported demand, and the extraction claims complete inventory with no diagnostics"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_enum_variant_demand_resolves", timeout_seconds = 300},
+]

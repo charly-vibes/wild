@@ -1,0 +1,11 @@
+id = "method-absent-from-inventory-keeps-gap"
+description = "a consumer whose method call's receiver resolves in the bounded shapes but whose method is absent from the inventory (e.g. Meter::new().tock()) -> the report retains the incomplete-demand gap naming the full <crate>::<Type>::<method> path and refuses scoped acceptance with Unknown structural assurance"
+archetype = "NR"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_method_absent_from_inventory_keeps_gap", timeout_seconds = 300},
+]
