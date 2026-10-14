@@ -68,6 +68,8 @@ OCaml functor signatures are contracts-as-modules, machine-checkable at link tim
 - How do actor-grain schema contracts relate to wild-core's existing contract shapes — same category, or a new kind?
 - Who signs the image↔certificate binding, and does the append-only registry need a new artifact class for compositions (vs revisions)? (Overlaps gap 2 — same binding problem from the report side.)
 
+Measured (functor pilot, mirage-skeleton @ 52abe5a, mirage >= "4.9.0" declared by the repo's own opam file): over 59 .ml/.mli files under tutorial/, applications/, and device-usage/ (lead correction: `example/` does not exist at the pin), the pilot counted 3 module-type definitions (9 signature items), 17 functor boundaries carrying 32 parameter constraints, and 1 module application — 20 machine-checked signature boundaries OCaml enforces for free at link time. 9 constructs the extractor does not interpret are disclosed per-kind (5 `with type` constraints, 4 first-class module package expressions), never dropped. 0 behavioral predicates are expressible anywhere in those signatures; per boundary wild adds 4 mechanism classes the type system cannot express (law slots, accretion relation, tombstone eligibility, artifact-bound evidence) = 68 additions over 17 boundaries. Pilot verdict: the signature layer is a floor, not the contract — OCaml gives the shape checking for free and stops exactly where wild's behavioral layer begins. Evidence: results/functor-pilot-2026-10-14.txt; extractor experiments/functor_pilot.py (gap-disclosing, sorted-walk deterministic, byte-identical repeat runs).
+
 ## Status
 
 Research only; no normative spec or runtime behavior changed. Follow-up work tracked under the beads epic.

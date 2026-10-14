@@ -1,0 +1,403 @@
+wild-3yy functor-signature extraction pilot — mirage-skeleton
+pinned commit: 52abe5aedb1f19f6dd3a18dc9ad81c766f813ebc
+corpus: https://github.com/mirage/mirage-skeleton @ pin, dirs ('tutorial', 'applications', 'device-usage'), 59 .ml/.mli files
+mirage version declared by the repo's own files:
+  mirage-skeleton.opam:13: "mirage" {>= "4.9.0"}
+
+== applications/crypto/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== applications/crypto/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== applications/dhcp/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== applications/dhcp/dhcp_config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== applications/dhcp/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 1
+    Main (N: S) : (no result annotation)
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== applications/dns/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== applications/dns/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 1
+    Make (DNS: S) : (no result annotation)
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== applications/docteur/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== applications/docteur/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 1
+    Make (Store: RO) : (no result annotation)
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== applications/git/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== applications/git/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 1
+    Make (Store: S, _: sig(inline; values=0, types=0)) : (no result annotation)
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== applications/http/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== applications/http/connect.ml ==
+  module_type_definitions: 1
+    S: value_specs=2 type_decls=0
+  functors: 1
+    Make (TCP: S, Happy_eyeballs: None) : S
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=1, module_type_of=0, include_module_type_of=0, first_class_modules=2, include_module_type=0, unparsed_error_nodes=0
+
+== applications/http/server.ml ==
+  module_type_definitions: 1
+    S: value_specs=5 type_decls=2
+  functors: 0
+  module_applications: 1
+    callee: Make
+  unsupported_constructs (extractor does not interpret): with_type_constraints=2, module_type_of=0, include_module_type_of=0, first_class_modules=2, include_module_type=0, unparsed_error_nodes=0
+
+== applications/http/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 1
+    Make (Certificate: RO, Key: RO, Tcp: None, Connect: S, HTTP_server: S) : (no result annotation)
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=1, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== applications/static_website_tls/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== applications/static_website_tls/dispatch.ml ==
+  module_type_definitions: 1
+    HTTP: value_specs=0 type_decls=0
+  functors: 2
+    Dispatch (FS: RO, S: HTTP) : (no result annotation)
+    HTTPS (DATA: RO, KEYS: RO, Http: HTTP) : (no result annotation)
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/block/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/block/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 1
+    Main (B: S) : (no result annotation)
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/clock/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/clock/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/conduit_server/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/conduit_server/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 1
+    Main (CON: S) : (no result annotation)
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/disk-lottery/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/disk-lottery/lotto.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/disk-lottery/lotto.mli ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/disk-lottery/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 1
+    Main (Disk: S) : (no result annotation)
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/http-fetch/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/http-fetch/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 1
+    Client (Client: Client) : (no result annotation)
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/kv_ro/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/kv_ro/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 1
+    Main (KV: RO) : (no result annotation)
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/littlefs/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/littlefs/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 1
+    Make (Store: RW) : (no result annotation)
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/network/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/network/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 1
+    Main (S: V4V6) : (no result annotation)
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/pgx/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/pgx/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 1
+    Make (RANDOM: S, TIME: S, PCLOCK: PCLOCK, MCLOCK: MCLOCK, STACK: V4) : (no result annotation)
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/ping6/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== device-usage/ping6/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 1
+    Main (N: S, E: S, I: None) : (no result annotation)
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=1, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/app_info/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/app_info/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/hello/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/hello/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/hello-key/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/hello-key/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/local-library/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/local-library/hello/hello.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/local-library/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/lwt/echo_server/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/lwt/echo_server/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/lwt/heads1/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/lwt/heads1/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/lwt/heads2/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/lwt/heads2/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/lwt/timeout1/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/lwt/timeout1/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/lwt/timeout2/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/lwt/timeout2/unikernel.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== tutorial/noop/config.ml ==
+  module_type_definitions: 0
+  functors: 0
+  module_applications: 0
+  unsupported_constructs (extractor does not interpret): with_type_constraints=0, module_type_of=0, include_module_type_of=0, first_class_modules=0, include_module_type=0, unparsed_error_nodes=0
+
+== summary ==
+files scanned: 59
+module_type_definitions: 3 (signature items: 9)
+functor boundaries: 17 (parameters: 32)
+module_applications: 1
+unsupported_constructs total: with_type_constraints=5, module_type_of=0, include_module_type_of=0, first_class_modules=4, include_module_type=0, unparsed_error_nodes=0 (sum=9)
+
+== WHAT OCAML GIVES FREE ==
+  machine-checked signature boundaries: 20 (3 module types + 17 functor result/parameter constraints over 32 parameters)
+  signature items enforced at every application site: 9
+  every signature item is shape-only: a val/type declaration names a shape, and 0 behavioral predicates (laws, postconditions, history) are expressible — OCaml checks these boundaries at link time for free, and stops there.
+
+== WHAT WILD ADDS PER BOUNDARY (the signature cannot express these) ==
+  vocabulary            | per boundary | pilot-counted quantity
+  ----------------------|--------------|-----------------------
+  law slots             | 1+           | 17 functor boundaries x >=1 law each = >= 17 law slots, 0 expressible in signatures
+  accretion relation    | 1            | 17 boundaries with provides-grow/requires-shrink vs OCaml's any-change-breaks (no monotonicity in signatures)
+  tombstone eligibility | 1            | 17 boundaries whose names could return with different meaning; 0 tombstones expressible
+  artifact-bound evidence| 1           | 17 boundaries need evidence bound to the built image; signatures bind to source text only
+
+== VERDICT ==
+  Pilot verdict: OCaml machine-checks 20 signature boundaries (9 shape items) for free across the corpus, with 9 unsupported constructs disclosed (0 behavioral predicates expressible); wild adds 4 mechanism classes per boundary (law slots, accretion relation, tombstone eligibility, artifact-bound evidence) = 68 additions over 17 functor boundaries that the type system cannot express. The signature layer is a floor, not the contract.
