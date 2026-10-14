@@ -1,0 +1,5 @@
+ticket: wild-m8c
+branch: main
+head: dd1bdb7
+brief_path: .wai/projects/unikernel-cd/briefs/wild-m8c-composition-certificate.md
+step_history: [claim, gates, brief]
