@@ -136,6 +136,44 @@ require the method/variant demand profile to widen, which is a deliberate
 scope decision for the next ticket, not a silent relaxation of the
 signature subset.
 
+**Rung 1 addendum 2 — after demand-profile widening (2026-10-14, beads
+wild-158, change `add-method-variant-demand`).** The two candidate
+categories widened per pre-approved rulings D1–D3: (1) method-call demand
+resolves in bounded shapes (receiver is a path resolving through the
+bounded demand rules, or a call whose head resolves to an inventoried
+same-crate constructor with a recorded syntactic return type — no type
+inference beyond that, D7); (2) public enums inventory their variants as
+named slots (`AdapterError::Io`-style demand paths now resolve); (3) the
+blanket impl-block `unsupported-construct` gap is replaced by per-construct
+accounting (type-qualified pub method slots, named gaps for trait impls and
+`pub(crate)` items, impl bodies now walked instead of silently skipped).
+Re-audit `results/adopt-audit-158-1.txt` vs
+`results/adopt-audit-cdp4-1841.txt`, honestly:
+
+- **Verdicts unchanged: still 12/12 abstained** (refuse/Unknown, exit 1);
+  determinism pass. Abstention persists because testaruda's inventory stays
+  incomplete — expected per the brief ("abstention count MAY still be >0").
+- **Categories cleared:** enum-variant demand gaps (`AdapterError::Io`,
+  `AdapterIO::spawn_in`) now resolve as supported demand against named
+  variant slots; impl-method slots are type-qualified (the prior run's
+  duplicate `adapter::new`-style colliding slots are gone); bounded-receiver
+  method calls resolve. The blanket "method implementations are outside the
+  supported profile" gap is gone (0/12 pairs carry it).
+- **Diagnostic volume grew** (0.5.5: 81→414 incomplete-demand,
+  26→24 unsupported-construct; 0.1.0: ~219/17) — this is disclosure
+  expansion, not regression: per-construct accounting walks impl bodies that
+  were previously silently skipped, and same-crate optimistic recording
+  names previously-invisible std/prelude references (`std::io::Error::new`,
+  `Vec::new`, `json!`, `miette!`). The residual blockers, in order:
+  (1) method calls on non-bounded receivers (locals, literals, std objects —
+  needs real type inference, D7 follow-up threshold), (2) std/third-party
+  references outside the supplied bundle, (3) trait impls (named gaps),
+  (4) non-scalar signature fns (signature subset unchanged, D4).
+- Finding for rung 2: the demand profile is now honest per construct; the
+  abstention rate is carried by std-awareness (a profile for bundling std
+  signatures or declaring trusted external crates) and variable-receiver
+  type inference — both deliberate follow-up tickets, not silent relaxations.
+
 **Rung 2 — shadow: publish contracts, report verdicts, gate nothing.**
 Each tool's release workflow runs `wild extract` on the release tree and
 publishes a contract bundle (v1 extraction artifacts) next to the binary
