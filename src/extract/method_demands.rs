@@ -39,8 +39,8 @@ impl<'a> SourceWalk<'a> {
     /// paths. Module-relative candidates are validated against the
     /// inventory at demand-resolution time — an unknown candidate keeps
     /// the honest incomplete-demand gap there, never an invented
-    /// resolution. Bare single-segment and `self`/`super`-qualified paths
-    /// stay outside the demand profile (unchanged treatment).
+    /// resolution. Bare single-segment and `self`/`Self`/`super`-qualified
+    /// paths stay outside the demand profile (unchanged treatment).
     pub(super) fn bounded_target(
         &self,
         head: &str,
@@ -67,7 +67,10 @@ impl<'a> SourceWalk<'a> {
                 None,
             ));
         }
-        if head == "self" || head == "super" {
+        if head == "self" || head == "Self" || head == "super" {
+            // `self`/`Self`/`super`-qualified paths need scope knowledge the
+            // bounded shapes do not carry; they stay outside the demand
+            // profile (unchanged incumbent treatment)
             return None;
         }
         let joined = format!("{head}::{}", rest.join("::"));
