@@ -966,7 +966,7 @@ pub fn drive() -> u32 { Meter::new().tick(); 7 }
         # (`<Enum>::<Variant>`) instead of a single opaque enum item, and
         # variant demand paths resolve as supported demand — dep-qualified
         # (`provider::Mode::Slow`) and same-crate (`Flavor::Sour`).
-        provider_lib = "pub enum Mode { Fast, Slow(u32) }\n"
+        provider_lib = PROVIDER_LIB + "pub enum Mode { Fast, Slow(u32) }\n"
         consumer_lib = (
             CONSUMER_LIB
             + "pub enum Flavor { Sour, Sweet }\n"
@@ -1001,7 +1001,7 @@ pub fn drive() -> u32 { Meter::new().tick(); 7 }
         # D2: unknown variant paths — dep-qualified or same-crate — keep the
         # honest incomplete-demand gap naming the path (guard: the refusal
         # shape exists pre-widening and must survive it).
-        provider_lib = "pub enum Mode { Fast, Slow(u32) }\n"
+        provider_lib = PROVIDER_LIB + "pub enum Mode { Fast, Slow(u32) }\n"
         consumer_lib = (
             CONSUMER_LIB
             + "pub enum Flavor { Sour, Sweet }\n"

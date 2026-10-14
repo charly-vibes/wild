@@ -33,7 +33,9 @@ pub const LOCAL_VERSION: &str = "local-1";
 // add-format-args-demand-support): the closed whitelist, the argument
 // grammar, format-capture scanning, and the capture cross-check.
 mod macro_demands;
+mod method_demands;
 mod mod_files;
+mod type_inventory;
 
 use macro_demands::{CaptureRef, check_capture_disclosure};
 
@@ -404,6 +406,15 @@ impl<'a> SourceWalk<'a> {
         Some(meaning)
     }
 
+    /// meaning id for an own-crate slot name (wild-158): versioned via
+    /// crate identity like fn slots, so demands resolve against the
+    /// inventory; falls back to the legacy opaque convention only if the
+    /// crate is somehow unversioned.
+    fn meaning_for_slot(&self, slot_name: &str) -> String {
+        self.meaning_of(slot_name)
+            .unwrap_or_else(|| format!("{}.{}", self.crate_name, slot_name.replace("::", ".")))
+    }
+
     fn record_slot(&mut self, name: String, meaning: String, ty: Value, span: proc_macro2::Span) {
         let loc = span.start();
         self.slots.push(SlotRecord { name, meaning, ty });
@@ -461,72 +472,6 @@ impl<'a> SourceWalk<'a> {
         (start.line, start.column)
     }
 
-    fn record_demand(&mut self, callee: &str, span: proc_macro2::Span) {
-        let mut resolved: Option<String> = None;
-        let mut alias: Option<String> = None;
-        let mut parts = callee.split("::");
-        let head = parts.next().unwrap_or("");
-        let rest: Vec<&str> = parts.collect();
-        if rest.is_empty() {
-            if let Some(target) = self.alias_map.get(head) {
-                alias = Some(head.to_string());
-                resolved = Some(target.clone());
-            }
-        } else if self.dep_names.iter().any(|d| d == head) {
-            resolved = Some(callee.to_string());
-        } else if !rest.is_empty()
-            && head != "crate"
-            && head != "self"
-            && head != "super"
-            && head != self.crate_name
-        {
-            // multi-segment path whose head is neither an explicit alias nor
-            // a declared dependency: the demand mechanism is outside the
-            // supported profile, so the inventory is incomplete (never
-            // silently dropped)
-            self.gap(
-                "incomplete-demand",
-                format!(
-                    "demand `{callee}` cannot resolve: `{head}` is not a declared dependency of this crate"
-                ),
-                true,
-            );
-        }
-        if let Some(target) = resolved {
-            if let Some(provider_slot) = self.meaning_of(&target) {
-                self.demand.push(formats::obj(vec![
-                    ("consumer", formats::s(&self.crate_name)),
-                    ("called", formats::s(&target)),
-                    (
-                        "alias",
-                        match &alias {
-                            Some(a) => formats::s(a),
-                            None => Value::Null,
-                        },
-                    ),
-                    ("provider_slot", formats::s(&provider_slot)),
-                ]));
-                let loc = span.start();
-                self.locations.push(formats::obj(vec![
-                    ("slot", formats::s(&target)),
-                    ("file", formats::s(&self.current_file)),
-                    ("line", formats::i(loc.line as i64)),
-                    ("col", formats::i(loc.column as i64)),
-                ]));
-            } else {
-                // dep-qualified call whose provider source/manifest is not
-                // in the bundle: the demand cannot be resolved, so the
-                // inventory is incomplete (never silently dropped)
-                self.gap(
-                    "incomplete-demand",
-                    format!(
-                        "demand `{target}` cannot resolve: provider source is not supplied in the bundle"
-                    ),
-                    true,
-                );
-            }
-        }
-    }
 }
 
 // The visit lifetime ('b) is independent of the borrowed-context
@@ -675,10 +620,7 @@ impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
     }
 
     fn visit_item_enum(&mut self, node: &'b syn::ItemEnum) {
-        if matches!(node.vis, syn::Visibility::Public(_)) {
-            self.opaque_pub_item(&node.ident, node, node.attrs.iter().any(attr_is_cfg));
-        }
-        syn::visit::visit_item_enum(self, node);
+        type_inventory::inventory_enum(self, node);
     }
 
     fn visit_item_const(&mut self, node: &'b syn::ItemConst) {
@@ -789,8 +731,36 @@ impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
                 format!("function-pointer flow `{callee}` is outside the supported demand profile"),
                 true,
             );
+        } else if !is_demand_shaped
+            && callee.contains("::")
+            && !self.callee_spans.contains(&Self::path_key(&node.path))
+        {
+            // multi-segment expression paths (e.g. enum-variant paths in
+            // expression position, wild-158 D2) record demand through the
+            // same bounded resolution as direct calls — never silently
+            // skipped, never invented
+            self.record_demand(&callee, node.path.span());
         }
         syn::visit::visit_expr_path(self, node);
+    }
+
+    fn visit_expr_struct(&mut self, node: &'b syn::ExprStruct) {
+        if node.qself.is_none() {
+            let callee: String = node
+                .path
+                .segments
+                .iter()
+                .map(|s| s.ident.to_string())
+                .collect::<Vec<_>>()
+                .join("::");
+            if callee.contains("::") {
+                // struct-literal constructions (including enum-variant
+                // struct variants, wild-158 D2) record demand through the
+                // same bounded resolution as direct calls
+                self.record_demand(&callee, node.path.span());
+            }
+        }
+        syn::visit::visit_expr_struct(self, node);
     }
 }
 
