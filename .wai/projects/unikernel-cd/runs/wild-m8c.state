@@ -1,5 +1,6 @@
 ticket: wild-m8c
 branch: main
-head: dd1bdb7
+head: 14afd1b
 brief_path: .wai/projects/unikernel-cd/briefs/wild-m8c-composition-certificate.md
-step_history: [claim, gates, brief]
+step_history: [claim, gates, brief:d311089, spawn, verify, ship]
+gates: 2026-10-14-gates-baseline-green-wild-m8c-smoke-4-passed-sims-exit-0

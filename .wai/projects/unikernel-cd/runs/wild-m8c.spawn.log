@@ -1,0 +1,15 @@
+wild-m8c complete. Summary:
+
+**Commits (3, atomic, nothing pushed, no `.beads` staged):**
+- `c4d0086` — red test (`tests/test_prototype_smoke.py`): proven red first with `FileNotFoundError: prototype/wild_compose.py` (pasted in report)
+- `45b56c7` — green feat (`prototype/wild_compose.py`): D1–D6 implemented
+- `14afd1b` — results + report (`results/composition-cert-2026-10-14.txt`, `.wai/projects/unikernel-cd/runs/wild-m8c.report.md`)
+
+**Completion criteria — all demonstrably met:**
+- `python3 -m pytest tests/test_prototype_smoke.py -q` → **5 passed** (red output pasted in report)
+- `python3 prototype/wild_compose.py` → **exit 0**: DAG summary (60 services / 162 edges), certificate summary (`merkle_root=75e7aab7...`, verdict=accept), two distinct tamper labels (`tampered:components` / `tampered:edges`), MEASURED bench (10/60/200 svc: compose 0.5→15.4 ms, verify 0.28→9.78 ms), incremental `recheck_ms=2.84 rechecked_edges=7/162 (changed_leaves=1/222)`
+- `wild_sim.py` and `wild_cd_sim.py` both still exit 0 (untouched, D1 held)
+
+**Design notes:** consumers pin the build-time view of demanded provider slots under globally-unique names, so the per-edge check is exactly the `shape_check(consumer, provider, demand)` accretion relation `wild_cat_sim.verify` uses. The verifier re-derives everything and never trusts the cert's verdict fields. The incremental scenario is a true cached recheck (only incident edges re-run, only the bumped service's leaf re-hashed, root rebuilt from sorted leaves).
+
+**Follow-up threshold:** not triggered — stdlib `hashlib` Merkle + `wild_sim.shape_check` sufficed; no scope expansion anywhere.
