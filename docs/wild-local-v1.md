@@ -137,6 +137,34 @@ invalidates the old request's raw digests; resubmission fails with
 `input-mismatch` and a fresh extraction is required. Changed build inputs
 never silently rebind.
 
+### Extraction supported set (wild-158)
+
+The `rust-cargo-local-1` profile inventories public free functions over
+the unit/bool/i8–u32/text signature subset as typed slots, ordinary public
+modules and non-inline module files, and every other public declaration as
+an opaque slot. Public enums inventory their variants as named slots
+(`<crate>::<Enum>::<Variant>` under the enum's qualified meaning) instead
+of a single opaque enum item. Impl blocks are accounted per construct:
+public inherent impl methods inventory as type-qualified opaque slots,
+plain-private impl items carry no public API surface, and trait impls plus
+restricted-visibility (`pub(crate)`/`pub(in)`) impl items keep named
+unsupported-construct gaps. The signature subset is unchanged by this
+widening.
+
+Consumer demand resolves direct dep-qualified calls, import aliases,
+module-relative multi-segment paths (validated against the inventory —
+unknown candidates keep the honest gap), enum-variant paths, struct
+constructions, and method calls whose receiver resolves in the bounded
+shapes: a path expression resolving through those rules, or a call whose
+head resolves to an inventoried same-crate constructor with a recorded
+syntactic return type. A resolved method call creates the demand
+`<crate>::<Type>::<method>` — an inventoried method yields supported
+demand, an absent method keeps the incomplete-demand gap naming the full
+path. Receivers outside the bounded shapes (multi-hop chains beyond one
+resolved hop, field access, macro output, unknown identifiers) keep the
+honest incomplete-demand gap naming the receiver; no type inference is
+performed beyond these shapes.
+
 ## Protected context
 
 The check request binds accepted obligations through a separate trusted
