@@ -376,6 +376,11 @@ struct SourceWalk<'a> {
     /// named captures are disclosed in the walk; these feed the leaf-name
     /// check at demand-resolution time.
     capture_idents: Vec<String>,
+    /// syntactic return types of inventoried public free fns and public
+    /// inherent impl methods (wild-158 D1): fn target → crate-qualified
+    /// type target, recorded by a per-file pre-pass so one-hop constructor
+    /// receivers resolve without type inference.
+    fn_return_tys: BTreeMap<String, String>,
 }
 
 impl<'a> SourceWalk<'a> {
@@ -585,23 +590,7 @@ impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
     }
 
     fn visit_item_impl(&mut self, node: &'b syn::ItemImpl) {
-        self.gap(
-            "unsupported-construct",
-            "method implementations are outside the supported profile".to_string(),
-            true,
-        );
-        for item in &node.items {
-            if let syn::ImplItem::Fn(method) = item {
-                if matches!(method.vis, syn::Visibility::Public(_)) {
-                    let slot_name = self.slot_name(&method.sig.ident.to_string());
-                    self.slots.push(SlotRecord {
-                        ty: opaque_type(method),
-                        name: slot_name.clone(),
-                        meaning: format!("{}.{}", self.crate_name, slot_name.replace("::", ".")),
-                    });
-                }
-            }
-        }
+        type_inventory::account_impl(self, node);
     }
 
     fn visit_item_trait(&mut self, node: &'b syn::ItemTrait) {
@@ -686,14 +675,10 @@ impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
     }
 
     fn visit_expr_method_call(&mut self, node: &'b syn::ExprMethodCall) {
-        self.gap(
-            "incomplete-demand",
-            format!(
-                "returned-object method call `.{}` is outside the supported demand profile",
-                node.method
-            ),
-            true,
-        );
+        // wild-158 D1: bounded receiver resolution first, then descend —
+        // arguments and nested calls record their own demands either way
+        SourceWalk::handle_method_call(self, node);
+        syn::visit::visit_expr_method_call(self, node);
     }
 
     fn visit_expr_call(&mut self, node: &'b syn::ExprCall) {
@@ -900,7 +885,12 @@ fn walk_crates(
             current_file: manifest.source_path.clone(),
             loaded,
             capture_idents: Vec::new(),
+            fn_return_tys: BTreeMap::new(),
         };
+        // per-file pre-pass: record syntactic return types before the
+        // demand walk so use sites see declarations declared later in the
+        // same file (wild-158 D1, bounded shapes only)
+        SourceWalk::scan_fn_returns(&mut walk, &file.items);
         walk.visit_file(&file);
         out.complete = out.complete && walk.complete;
         out.slots.append(&mut walk.slots);

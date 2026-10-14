@@ -99,6 +99,9 @@ pub(super) fn resolve_mod_file(walk: &mut SourceWalk, name: &str, cfg_gated: boo
     let prev_file = std::mem::replace(&mut walk.current_file, rel);
     let prev_aliases = std::mem::replace(&mut walk.alias_map, scoped);
     walk.module_prefix.push(name.to_string());
+    // per-file pre-pass for the resolved module file (wild-158 D1): the
+    // module prefix is already pushed, so keys match the demand walk's
+    SourceWalk::scan_fn_returns(walk, &file.items);
     walk.visit_file(&file);
     walk.module_prefix.pop();
     walk.alias_map = prev_aliases;

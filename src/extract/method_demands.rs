@@ -127,3 +127,195 @@ impl<'a> SourceWalk<'a> {
         self.record_resolved_demand(&target, alias.as_deref(), span);
     }
 }
+
+/// Outcome of bounded method-receiver resolution (design ruling D1,
+/// beads wild-158).
+pub(super) enum ReceiverOutcome {
+    /// The receiver resolved in a bounded shape to a crate-qualified type
+    /// target: the method demand `<type_target>::<method>` is recorded and
+    /// validated against the full inventory at demand-resolution time.
+    ResolvedType(String),
+    /// The receiver is outside the bounded shapes (multi-hop chains beyond
+    /// one resolved hop, field access, macro output, literals, unknown
+    /// identifiers): the honest gap names the receiver. Never inferred.
+    Unresolved(String),
+}
+
+fn receiver_text(receiver: &syn::Expr) -> String {
+    receiver.to_token_stream().to_string()
+}
+
+/// The syntactic return-type name of a signature when it is a
+/// single-segment, uppercase-initial path type (`-> Meter`); scalars and
+/// complex types record nothing. This is written syntax, not inference.
+fn recorded_return_ty(output: &syn::ReturnType) -> Option<String> {
+    let syn::ReturnType::Type(_, ty) = output else {
+        return None;
+    };
+    let syn::Type::Path(path) = ty.as_ref() else {
+        return None;
+    };
+    if path.qself.is_some() || path.path.segments.len() != 1 {
+        return None;
+    }
+    let ident = path.path.segments.last()?.ident.to_string();
+    if ident.starts_with(|c: char| c.is_ascii_uppercase()) {
+        Some(ident)
+    } else {
+        None
+    }
+}
+
+fn qualify(walk: &SourceWalk, prefix: &[String], suffix: &str) -> String {
+    if prefix.is_empty() {
+        format!("{}::{suffix}", walk.crate_name)
+    } else {
+        format!(
+            "{}::{}::{suffix}",
+            walk.crate_name,
+            prefix.join("::")
+        )
+    }
+}
+
+fn scan_items(walk: &mut SourceWalk, items: &[syn::Item], prefix: Vec<String>) {
+    for item in items {
+        match item {
+            syn::Item::Fn(f) => {
+                if matches!(f.vis, syn::Visibility::Public(_)) {
+                    if let Some(ty) = recorded_return_ty(&f.sig.output) {
+                        // key: fn target; value: crate-qualified type target
+                        // (declaring module base + return type name)
+                        walk.fn_return_tys.insert(
+                            qualify(walk, &prefix, &f.sig.ident.to_string()),
+                            qualify(walk, &prefix, &ty),
+                        );
+                    }
+                }
+            }
+            syn::Item::Impl(imp) => scan_impl(walk, imp, &prefix),
+            syn::Item::Mod(m) => {
+                if let Some((_, nested)) = &m.content {
+                    let mut nested_prefix = prefix.clone();
+                    nested_prefix.push(m.ident.to_string());
+                    scan_items(walk, nested, nested_prefix);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+/// Record constructor return types from one inherent impl on a named path
+/// type; trait impls are outside the profile and record nothing.
+fn scan_impl(walk: &mut SourceWalk, imp: &syn::ItemImpl, prefix: &[String]) {
+    if imp.trait_.is_some() {
+        return;
+    }
+    let syn::Type::Path(path) = imp.self_ty.as_ref() else {
+        return;
+    };
+    if path.qself.is_some() {
+        return;
+    }
+    let Some(seg) = path.path.segments.last() else {
+        return;
+    };
+    let ty_name = seg.ident.to_string();
+    for impl_item in &imp.items {
+        let syn::ImplItem::Fn(m) = impl_item else {
+            continue;
+        };
+        if !matches!(m.vis, syn::Visibility::Public(_)) {
+            continue;
+        }
+        let target = qualify(walk, prefix, &format!("{ty_name}::{}", m.sig.ident));
+        if let Some(ty) = recorded_return_ty(&m.sig.output) {
+            walk.fn_return_tys.insert(target, qualify(walk, prefix, &ty));
+        }
+    }
+}
+
+impl<'a> SourceWalk<'a> {
+    /// Pre-pass over one file's items recording the syntactic return types
+    /// of public free fns and public inherent impl methods (single-segment,
+    /// uppercase-initial path types only) so one-hop constructor receivers
+    /// resolve without type inference (wild-158 D1). Called before the
+    /// demand walk of the same file so use sites see declarations declared
+    /// later in the file; cross-file and cross-crate constructors keep the
+    /// honest gap (D7 threshold — file a follow-up, never approximate).
+    pub(super) fn scan_fn_returns(walk: &mut SourceWalk, items: &[syn::Item]) {
+        scan_items(walk, items, walk.module_prefix.clone());
+    }
+
+    /// Resolve a method-call receiver in the bounded shapes (wild-158 D1):
+    /// a path expression resolving through the bounded demand rules, or a
+    /// call expression whose head resolves to an inventoried constructor
+    /// with a recorded return type. Everything else — chains, field
+    /// access, macro output, literals, bare unknown identifiers — stays
+    /// honestly unresolved.
+    pub(super) fn resolve_method_receiver(&self, receiver: &syn::Expr) -> ReceiverOutcome {
+        match receiver {
+            syn::Expr::Path(p) if p.qself.is_none() => {
+                let mut parts = p
+                    .path
+                    .segments
+                    .iter()
+                    .map(|s| s.ident.to_string())
+                    .collect::<Vec<_>>();
+                let head = parts.drain(..1).next().unwrap_or_default();
+                match self.bounded_target(&head, &parts.iter().map(String::as_str).collect::<Vec<_>>()) {
+                    Some((target, _)) => ReceiverOutcome::ResolvedType(target),
+                    None => ReceiverOutcome::Unresolved(receiver_text(receiver)),
+                }
+            }
+            syn::Expr::Call(call) => {
+                if let syn::Expr::Path(func) = &*call.func {
+                    if func.qself.is_none() {
+                        let mut parts = func
+                            .path
+                            .segments
+                            .iter()
+                            .map(|s| s.ident.to_string())
+                            .collect::<Vec<_>>();
+                        let head = parts.drain(..1).next().unwrap_or_default();
+                        let rest: Vec<&str> = parts.iter().map(String::as_str).collect();
+                        if let Some((fn_target, _)) = self.bounded_target(&head, &rest) {
+                            if let Some(type_target) = self.fn_return_tys.get(&fn_target) {
+                                return ReceiverOutcome::ResolvedType(type_target.clone());
+                            }
+                        }
+                    }
+                }
+                ReceiverOutcome::Unresolved(receiver_text(receiver))
+            }
+            _ => ReceiverOutcome::Unresolved(receiver_text(receiver)),
+        }
+    }
+
+    /// Handle one method call (wild-158 D1). A bounded receiver creates the
+    /// demand `<crate>::<Type>::<method>` — resolving against the inventoried
+    /// impl-method/typed slots yields supported demand, an absent method
+    /// fails demand resolution naming the full path, and a receiver outside
+    /// the bounded shapes keeps the honest incomplete-demand gap naming the
+    /// receiver. The call is always descended afterwards so arguments and
+    /// nested calls record their own demands (never silently dropped).
+    pub(super) fn handle_method_call(walk: &mut SourceWalk, node: &syn::ExprMethodCall) {
+        let method = node.method.to_string();
+        match walk.resolve_method_receiver(&node.receiver) {
+            ReceiverOutcome::ResolvedType(type_target) => {
+                let target = format!("{type_target}::{method}");
+                walk.record_resolved_demand(&target, None, node.method.span());
+            }
+            ReceiverOutcome::Unresolved(receiver) => {
+                walk.gap(
+                    "incomplete-demand",
+                    format!(
+                        "method call `.{method}` on receiver `{receiver}` is outside the supported demand profile: the receiver is not resolvable in the bounded shapes"
+                    ),
+                    true,
+                );
+            }
+        }
+    }
+}
