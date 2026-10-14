@@ -1,12 +1,14 @@
 ---
-tags: [pipeline-run:epic-orchestrator-2026-10-13-wild-7e9-string-signature-subset]
+tags: [unikernel-cd, research]
 ---
 
 # Unikernel CD: mapping wild-deploy onto a compose-replace world
 
 ## Source
 
-Geoffrey Huntley, "unikernels were hard. key word: were." (ghuntley.com/unikernels, 11 Oct 2026) — conversation with Justin Cormack (MirageOS). Recorded in full in session notes; key claims extracted below.
+Geoffrey Huntley, "unikernels were hard. key word: were." (ghuntley.com/unikernels, 11 Oct 2026) — conversation with Justin Cormack (MirageOS). Key claims extracted below.
+
+Claim status in this document follows the sim's discipline: MEASURED = output of a run of `prototype/wild_cd_sim.py` (this session, 2026-10-14), CITED = from the article, ASSUMED = reviewer assumption stated as a parameter, ARGUED = inference requiring its stated premises.
 
 ## Article claims relevant to wild
 
@@ -27,16 +29,16 @@ Every unikernel deploy rebuilds and replaces a whole world (Nix-style fresh comp
 | Unit of deploy | one service revision | whole image = full component closure |
 | When `wild check` runs | CI on a diff, per service | at image composition, over the entire graph, per deploy |
 | Registry role | published revisions, append-only | content-addressed store of contract-certified components (Nix store + certificate) |
-| Ordering | derived topological gate across services | mostly collapses (lockstep made safe by checked composition) |
+| Ordering | derived topological gate across services | mostly collapses (hypothesis — requires lease-based coordination; see the checked-lockstep reconciliation below and open question 1) |
 | Rollback | floor-respecting, barrier-aware | free for compute; lives only in the data plane |
 
 Checker-cost evidence (prototype/wild_cd_sim.py bench D, MEASURED, toy Python): 100k slots = 100.7 ms full check, 0.123 ms two-level Merkle diff, 0.0012 ms cache hit. A full-fleet composition check per deploy is effectively free at these costs. What is prohibitive at deploy-time per-service granularity amortizes into an image build.
 
 ## What collapses in wild-deploy's state machine
 
-- **rolling_overlap_safe** becomes nearly free: Firecracker-class microVMs boot in ~100 ms, so the roll window shrinks from minutes to seconds. Scenario A's 198k failed requests (break, uncoordinated) become a transport-level rounding error. The failures that matter move to the data plane.
-- **gate_order_derived** mostly collapses — a unikernel fleet can atomically swap the entire fleet built against one checked composition. That is lockstep release, which the spec refuses, made safe by machine-checked composition. Key framing: wild's contract checking is what makes the deployment model that eliminates wild's deploy ordering viable. Sim B: random order safe 2.5% baseline vs 8.5% wild; lockstep 5.1% baseline vs 0% wild — the unikernel move is a third strategy: checked lockstep.
-- **floor_declared + provider_live_before_consumer** survive in exactly one place: the data plane. Compute images become stateless; actor state outlives every deploy. Floors, accretion, tombstones, and irreversible_edges_declared migrate from provider services to the storage contract (schema evolution on the S3-backed store; the first-write barrier belongs there). Net simplification: compute rollbacks always safe; only storage evolution carries irreversibility.
+- **rolling_overlap_safe** becomes nearly free: Firecracker-class microVMs boot in ~100 ms (ASSUMED; Firecracker's own docs advertise ~125 ms startup), so the roll window shrinks from minutes to seconds. Scenario A's 198k failed requests (break, uncoordinated) become a transport-level rounding error. The failures that matter move to the data plane.
+- **gate_order_derived** mostly collapses (ARGUED — the reconciliation below is a hypothesis, not a result) — a unikernel fleet can swap the entire fleet built against one checked composition. That is lockstep release, which the spec refuses for unsatisfied prerequisite cycles, made safe by machine-checked composition. Key framing: wild's contract checking is what makes the deployment model that eliminates wild's deploy *ordering* viable — but not its *coordination*. Nodes restart at staggered times; during the swap window a mixed old/new fleet serves traffic, which is exactly the rolling-overlap condition. Checked lockstep therefore still runs on the spec's coordination lease (provider_live_before_consumer, gate_decision_pure); what collapses is the derived ordering edge set, not the lease machinery. Sim B: random order safe 2.5% baseline vs 8.5% wild; lockstep 5.1% baseline vs 0% wild — the unikernel move is a third strategy: checked lockstep.
+- **floor_declared + provider_live_before_consumer** survive in exactly one place: the data plane. Compute images have durable state externalized (they are not stateless — local NVMe caches and in-flight actor memory are state); durable actor state outlives every deploy. Floors, accretion, tombstones, and irreversible_edges_declared migrate from provider services to the storage contract (schema evolution on the S3-backed store; the first-write barrier belongs there). Net simplification: compute rollbacks always safe; only storage evolution carries irreversibility.
 
 ## What gets stronger
 
@@ -48,7 +50,7 @@ Checker-cost evidence (prototype/wild_cd_sim.py bench D, MEASURED, toy Python): 
 
 1. **Composition-level gate.** Spec gates service revisions against floors; needs a `compose` gate over the full graph emitting one image-level certificate. Pieces exist (per-edge check, Merkle cache) but no composition artifact as deploy unit.
 2. **Boot-time attestation as report source.** live_state_fresh assumes a trusted reporter; needs image-hash-signed reports, registry rejects mismatches.
-3. **Storage-plane contract extraction.** irreversible_edges_declared is a deploy-time declaration; should derive from the storage provider's contract — `wild extract` needs data-shape contracts, not just call-shape ones. Extension to wild-core's contract model.
+3. **Storage-plane contract extraction.** irreversible_edges_declared is a deploy-time declaration; should derive from the storage provider's contract — `wild extract` needs data-shape contracts, not just call-shape ones, including cache-invalidation contracts (a rolled-back image with a warm NVMe cache can serve stale reads). Extension to wild-core's contract model.
 
 ## Observation: MirageOS implements a slice of wild's thesis in the language
 
@@ -56,7 +58,7 @@ OCaml functor signatures are contracts-as-modules, machine-checkable at link tim
 
 ## Proposed experiments (not yet run)
 
-1. **Unikernel-parameterized CD sim.** Edit assumptions in wild_cd_sim.py: near-zero boot/roll times, `gated` staging replaced by parallel image builds contending on the build farm (back pressure moves from staging queue to build farm), failure surface concentrated in the data plane. Hypothesis to test: lead-time gap between canary and wild narrows (everything is fast); impact-minutes gap widens if data-plane floor logic is removed. A quantitative version of the whole argument.
+1. **Unikernel-parameterized CD sim.** Edit assumptions in wild_cd_sim.py: near-zero boot/roll times, `gated` staging replaced by parallel image builds contending on the build farm (back pressure moves from staging queue to build farm), failure surface concentrated in the data plane. Hypothesis to test: the lead-time gap between canary and wild narrows (everything is fast); removing data-plane floor logic from the wild variant should erase most of its remaining impact-minutes advantage over canary, and any residual difference isolates the value of floors. A quantitative version of the whole argument. Hybrid fleets (some services unikernelized, some not) are an explicit axis: in the hybrid case floor ordering does not collapse.
 2. **Composition-certificate prototype.** Extend the toy checker to emit a whole-graph composition certificate from per-edge verdicts + Merkle roots; measure end-to-end compose+check cost for a realistic fleet DAG.
 3. **Functor-signature extraction pilot.** Extract contracts from a small MirageOS unikernel's functor signatures; measure what the type system already gives vs what laws/tombstones add.
 
@@ -64,7 +66,7 @@ OCaml functor signatures are contracts-as-modules, machine-checkable at link tim
 
 - Does checked-lockstep fleet swap actually dominate derived-order rolling for mixed fleets (some services third-party/not unikernelized)? Realistic deployments are hybrids for years.
 - How do actor-grain schema contracts relate to wild-core's existing contract shapes — same category, or a new kind?
-- Who signs the image↔certificate binding, and does the append-only registry need a new artifact class for compositions (vs revisions)?
+- Who signs the image↔certificate binding, and does the append-only registry need a new artifact class for compositions (vs revisions)? (Overlaps gap 2 — same binding problem from the report side.)
 
 ## Status
 
