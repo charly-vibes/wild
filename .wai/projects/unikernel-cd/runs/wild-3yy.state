@@ -1,5 +1,13 @@
 ticket: wild-3yy
 branch: main
-head: 70f8106
+head: d4b5535
 brief_path: .wai/projects/unikernel-cd/briefs/wild-3yy-functor-pilot.md
-step_history: [claim, gates, brief]
+step_history: [claim, gates, brief:94d84ac, spawn:died-quota-mid-green, manual-resume:invariant-6, green:d4b5535, verify, ship]
+gates: 2026-10-14-gates-baseline-green-wild-3yy-smoke-5-passed-no-compiler-needed
+lead_corrections:
+- corpus dirs tutorial+example -> tutorial+applications+device-usage (example/ absent at pin; functor devices verified under applications/ by grep)
+spawn_incident:
+- subagent:wild-3yy pid 2871117 died mid-green with provider quota-exceeded termination (VIP.aaa); red commit a27d415 survived; work resumed manually per Invariant 6 (wild-7e9 precedent)
+resume_fixes:
+- str/bytes regex bug in _unsupported_counts
+- grammar-mangled include-module-type-of definitions (ERROR child) excluded from inventory, disclosed in unsupported_constructs

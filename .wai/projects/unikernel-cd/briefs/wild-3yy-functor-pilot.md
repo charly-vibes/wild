@@ -34,8 +34,12 @@ changes to existing prototype files.
   `https://github.com/mirage/mirage-skeleton` shallowly at the pinned commit
   `52abe5aedb1f19f6dd3a18dc9ad81c766f813ebc` (verified reachable at claim time) into
   `~/.cache/wild-functor-pilot/mirage-skeleton` (clone if absent, else reuse and verify
-  HEAD == pin). Corpus = the whole checkout's `*.ml`/`*.mli` under `tutorial/` and
-  `example/` EXCLUDING any `_build`/vendored dirs. Record in the output header: the
+  HEAD == pin). Corpus = the whole checkout's `*.ml`/`*.mli` under `tutorial/`,
+  `applications/`, and `device-usage/` EXCLUDING any `_build`/vendored dirs. **LEAD
+  CORRECTION (disclosed)**: the original D2 named `tutorial/` + `example/`; at the pin
+  `example/` does not exist and the functor-bearing devices the ticket targets (dns,
+  http, git, docteur — verified by grep: `module Make (DNS : Dns_client_mirage.S)` in
+  applications/dns/unikernel.ml:12) live under `applications/`. Corrected before green. Record in the output header: the
   pinned commit and the mirage version declared by the repo's own files (grep
   `dune-project`, `*.opam`, README — report what is found, honestly, even if only an
   opam constraint like `mirage >= 4.x`).
