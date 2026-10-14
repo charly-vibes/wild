@@ -1,0 +1,18 @@
+fleet: 60 services, 162 edges (layers=4, per_layer=[6, 12, 18, 24], fan_out=3, seed=20261014)
+certificate: version=1 kind=composition components=60 edges=162
+  merkle_root=75e7aab7a6f234c4...  verdict=accept
+verify(clean) = ok
+
+== edge-verdict vocabulary (reject / unknown arms on real contracts)
+  reject                   reject: L0S01.out1: output type str->int32
+  unknown                  unknown: no.such.slot in no contract
+
+== tamper evidence (independent verifier, D5)
+  (a) component-digest byte flip -> tampered:components
+  (b) edge verdict accept->reject -> tampered:edges
+
+== MEASURED compose+verify cost (toy Python implementation)
+  10 svc / 20 edges        compose_ms=0.5 verify_ms=0.28 verdict=accept
+  60 svc / 162 edges       compose_ms=4.11 verify_ms=2.61 verdict=accept
+  200 svc / 540 edges      compose_ms=15.4 verify_ms=9.78 verdict=accept
+  incremental: bump L1S00 -> recheck_ms=2.84 rechecked_edges=7/162 (changed_leaves=1/222)
