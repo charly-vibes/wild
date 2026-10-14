@@ -1,0 +1,5 @@
+ticket: wild-3yy
+branch: main
+head: 70f8106
+brief_path: .wai/projects/unikernel-cd/briefs/wild-3yy-functor-pilot.md
+step_history: [claim, gates, brief]
