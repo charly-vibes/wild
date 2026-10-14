@@ -127,3 +127,57 @@ def test_wild_compose_certificate_deterministic_and_verified():
     }
     assert "tampered:components" in labels, labels
     assert "tampered:edges" in labels, labels
+
+
+def load_functor_pilot():
+    """Import experiments/functor_pilot.py by explicit path (no sys.path pollution)."""
+    spec = importlib.util.spec_from_file_location(
+        "functor_pilot_under_test", REPO / "experiments" / "functor_pilot.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_functor_pilot_extracts_fixture():
+    """wild-3yy: functor-signature extractor on an inline OCaml fixture. The
+    module type with two value specs + one type decl is attributed, the functor
+    taking it carries correct parameter/result module types, and the
+    `include module type of` gap is counted, not dropped. Two calls identical."""
+    pilot = load_functor_pilot()
+    fixture = """
+module type SIG = sig
+  val one : int
+  val two : string
+  type t
+end
+
+module Make (X : SIG) : SIG = struct
+  let one = 1
+  let two = "2"
+  type t = int
+end
+
+include module type of SIG
+"""
+    result = pilot.extract_from_source("fixture.ml", fixture)
+
+    # Module type with exact item counts (shape-only surface).
+    mts = {m["name"]: m for m in result["module_type_definitions"]}
+    assert set(mts) == {"SIG"}
+    assert mts["SIG"]["value_specs"] == 2
+    assert mts["SIG"]["type_decls"] == 1
+
+    # Functor boundary: parameter module type and result module type.
+    functors = {f["name"]: f for f in result["functors"]}
+    assert set(functors) == {"Make"}
+    assert functors["Make"]["parameters"] == [{"name": "X", "module_type": "SIG"}]
+    assert functors["Make"]["result_module_type"] == "SIG"
+
+    # Gap disclosure: the uninterpreted include is counted per-kind, not dropped.
+    unsup = result["unsupported_constructs"]
+    assert unsup.get("include_module_type_of") == 1
+    assert sum(unsup.values()) >= 1
+
+    # Determinism: pure in-memory parse, two calls identical.
+    assert pilot.extract_from_source("fixture.ml", fixture) == result
