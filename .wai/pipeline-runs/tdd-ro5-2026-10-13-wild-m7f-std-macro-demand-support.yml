@@ -1,0 +1,12 @@
+run_id: tdd-ro5-2026-10-13-wild-m7f-std-macro-demand-support
+pipeline: tdd-ro5
+topic: wild-m7f-std-macro-demand-support
+created_at: '2026-10-13T17:16:23.838932236+00:00'
+current_step: 9
+approvals:
+  ship-close: '2026-10-13T17:29:10.151627806+00:00'
+epic: null
+child_issues: []
+child_runs: []
+handoff_artifact: null
+bypasses: []

@@ -1,5 +1,5 @@
 ticket: wild-5gb
 branch: main
 brief_path: .wai/projects/unikernel-cd/briefs/wild-5gb-unikernel-cd-sim.md
-step_history: [claim:5370feb, gates, brief]
+step_history: [claim:5370feb, gates, brief:cecdd5b, spawn, verify, ship]
 gates: 0129f5e
