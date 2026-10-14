@@ -33,6 +33,7 @@ pub const LOCAL_VERSION: &str = "local-1";
 // add-format-args-demand-support): the closed whitelist, the argument
 // grammar, format-capture scanning, and the capture cross-check.
 mod macro_demands;
+mod mod_files;
 
 use macro_demands::{CaptureRef, check_capture_disclosure};
 
@@ -364,6 +365,10 @@ struct SourceWalk<'a> {
     complete: bool,
     callee_spans: BTreeSet<(usize, usize)>,
     current_file: String,
+    /// committed bundle bytes, consulted to resolve non-inline module
+    /// files (wild-cdp.4) — resolution happens only against files the
+    /// bundle actually carries, never the host filesystem
+    loaded: &'a BTreeMap<String, Vec<u8>>,
     /// capture identifiers parsed from whitelisted macro format-string
     /// literals (add-format-args-demand-support, design decision 4). Alias
     /// named captures are disclosed in the walk; these feed the leaf-name
@@ -372,6 +377,8 @@ struct SourceWalk<'a> {
 }
 
 impl<'a> SourceWalk<'a> {
+
+
     fn gap(&mut self, code: &'static str, reason: String, complete_killer: bool) {
         if complete_killer {
             self.complete = false;
@@ -545,11 +552,12 @@ impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
                 self.module_prefix.pop();
             }
             None => {
-                self.gap(
-                    "unsupported-construct",
-                    format!("non-inline module `{name}` requires file resolution"),
-                    true,
-                );
+                if !is_public {
+                    // private modules carry no public API surface, exactly
+                    // like the private inline branch below
+                    return;
+                }
+                mod_files::resolve_mod_file(self, &name, cfg_gated);
             }
             // private modules carry no public API surface
             Some((_, _items)) => {}
@@ -920,6 +928,7 @@ fn walk_crates(
             complete: true,
             callee_spans: BTreeSet::new(),
             current_file: manifest.source_path.clone(),
+            loaded,
             capture_idents: Vec::new(),
         };
         walk.visit_file(&file);

@@ -112,6 +112,30 @@ corpus proves the audit machinery itself computes real accept/reject verdicts
 when inventory is complete (minor bump removing a demanded fn audits
 DISAGREEMENT; patch bump with unchanged surface audits consistent).
 
+**Rung 1 addendum — after mod-path resolution (2026-10-14, beads wild-cdp.4).**
+`rust-cargo-local-1` now resolves public non-inline modules against the
+committed bundle (`src/name.rs`, `src/name/mod.rs`, recursive, with
+rustc's entry-file rule: `lib.rs`/`main.rs` resolve modules in their own
+directory). Red-first tests in `tests/runtime/test_extract.py`: resolved
+module fns become genuine inventory slots and dep-qualified calls into
+them resolve as demand; an absent module file keeps the honest gap; a
+private non-inline module carries no public surface. Re-running the audit
+(`results/adopt-audit-cdp4-1841.txt`, 12 consecutive pairs over 13
+versions): **abstention is still 100%, but the gap composition changed** —
+the previous run's blocker is gone. Every release now surfaces
+`testaruda::adapter::*` slots that the prior run never saw (grep for
+`adapter::` in the old log: 0 hits), and "non-inline module requires file
+resolution" no longer appears. The residual abstention causes, in order
+of measured frequency, are: `impl` blocks / method implementations
+("outside the supported profile"), returned-object method calls
+(`.to_string()`, `.is_empty()` — "outside the supported demand profile"),
+enum-variant demand paths (`AdapterError::Io`), and public fns outside the
+scalar signature subset. Finding for rung 2: mod-path resolution was
+necessary but not sufficient — verdicts on real fleet code additionally
+require the method/variant demand profile to widen, which is a deliberate
+scope decision for the next ticket, not a silent relaxation of the
+signature subset.
+
 **Rung 2 — shadow: publish contracts, report verdicts, gate nothing.**
 Each tool's release workflow runs `wild extract` on the release tree and
 publishes a contract bundle (v1 extraction artifacts) next to the binary

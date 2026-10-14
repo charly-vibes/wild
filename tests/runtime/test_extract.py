@@ -352,6 +352,108 @@ pub fn alias_len(s: &String) -> u32 { todo!() }
         assert "provider::add_one" in demand_blob
         assert "say_greet" in demand_blob and "provider::greet" in demand_blob
 
+    def test_non_inline_module_public_fn_is_inventoried(self, tmp_path):
+        # beads wild-cdp.4: the rung-1 adopt audit measured 11/11 testaruda
+        # release pairs abstaining because release crates declare their
+        # public API via non-inline modules (`pub mod x;` + src/x.rs) and the
+        # extractor walked only src/lib.rs. Mod-path resolution must make
+        # the verdict computable: the resolved module file's public fns
+        # become genuine inventory slots and dep-qualified calls into them
+        # resolve as demand — never fabricated, never silently dropped.
+        provider_lib = """pub mod inner;
+
+pub fn add_one(x: u32) -> u32 { x + 1 }
+pub fn greet(x: u32) -> u32 { x + 2 }
+"""
+        consumer_lib = CONSUMER_LIB + """
+pub fn call_inner() -> u32 { provider::inner::ping(1) }
+"""
+        files = write_bundle(tmp_path / "bundle", consumer_lib=consumer_lib, provider_lib=provider_lib)
+        files["provider/src/inner.rs"] = "pub fn ping(x: u32) -> u32 { x }\n"
+        (tmp_path / "bundle/provider/src/inner.rs").write_text(files["provider/src/inner.rs"])
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 0, proc.stderr
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is True
+        assert report["diagnostics"] == []
+        contract = facts_json(tmp_path / "facts", "contract.json")
+        slots = {s["name"]: s for s in contract["slots"]}
+        assert slots["provider::inner::ping"]["type"]["shape"] == "function"
+        demand = facts_json(tmp_path / "facts", "demand.json")
+        assert "provider::inner::ping" in json.dumps(demand)
+
+    def test_non_inline_module_missing_file_stays_incomplete(self, tmp_path):
+        # beads wild-cdp.4: when the module file is absent from the bundle
+        # the gap must remain (gaps uncure silently): the inventory stays
+        # incomplete and the diagnostic names the unresolved module.
+        provider_lib = """pub mod ghost;
+
+pub fn add_one(x: u32) -> u32 { x + 1 }
+pub fn greet(x: u32) -> u32 { x + 2 }
+"""
+        files = write_bundle(tmp_path / "bundle", provider_lib=provider_lib)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 1, f"gap-bearing extraction must refuse: {proc.stdout}"
+        env = envelope(proc)
+        assert env["decision"] == "refuse"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is False
+        codes = {d["code"] for d in report["diagnostics"]}
+        assert "unsupported-construct" in codes
+        assert any("ghost" in d.get("reason", "") for d in report["diagnostics"]), (
+            "diagnostic must name the unresolved module"
+        )
+
+    def test_nested_and_mod_rs_module_files_resolve(self, tmp_path):
+        # beads wild-cdp.4: resolution must be recursive and cover both
+        # module-file conventions — src/name.rs (with nested
+        # src/name/deep.rs inside it) and src/name/mod.rs.
+        provider_lib = """pub mod outer;
+pub mod widget;
+
+pub fn add_one(x: u32) -> u32 { x + 1 }
+pub fn greet(x: u32) -> u32 { x + 2 }
+"""
+        files = write_bundle(tmp_path / "bundle", provider_lib=provider_lib)
+        extra = {
+            "provider/src/outer.rs": "pub mod deep;\n\npub fn level() -> u32 { 1 }\n",
+            "provider/src/outer/deep.rs": "pub fn deep_fn(x: u32) -> u32 { x }\n",
+            "provider/src/widget/mod.rs": "pub fn spin() -> u32 { 2 }\n",
+        }
+        files.update(extra)
+        for rel, text in extra.items():
+            (tmp_path / "bundle" / rel).parent.mkdir(parents=True, exist_ok=True)
+            (tmp_path / "bundle" / rel).write_text(text)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 0, proc.stderr
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is True
+        assert report["diagnostics"] == []
+        contract = facts_json(tmp_path / "facts", "contract.json")
+        slot_names = {s["name"] for s in contract["slots"]}
+        assert "provider::outer::level" in slot_names
+        assert "provider::outer::deep::deep_fn" in slot_names
+        assert "provider::widget::spin" in slot_names
+
+    def test_private_non_inline_module_has_no_public_surface(self, tmp_path):
+        # beads wild-cdp.4: a private non-inline module carries no public
+        # API surface, exactly like a private inline module — resolving or
+        # skipping it must emit no slot and no gap.
+        provider_lib = """mod secret;
+
+pub fn add_one(x: u32) -> u32 { x + 1 }
+pub fn greet(x: u32) -> u32 { x + 2 }
+"""
+        files = write_bundle(tmp_path / "bundle", provider_lib=provider_lib)
+        files["provider/src/secret.rs"] = "pub fn hidden(x: u32) -> u32 { x }\n"
+        (tmp_path / "bundle/provider/src/secret.rs").write_text(files["provider/src/secret.rs"])
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 0, proc.stderr
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is True
+        contract = facts_json(tmp_path / "facts", "contract.json")
+        assert "hidden" not in json.dumps(contract)
+
     MALFORMED_MUTATIONS = (
         "duplicate-key",
         "unknown-field",
