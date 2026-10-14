@@ -5,6 +5,7 @@ no `wild` command yet), so the gate exercises them as-is: run the script,
 require exit 0, and require parseable JSON output.
 """
 
+import importlib.util
 import json
 import subprocess
 import sys
@@ -53,6 +54,28 @@ def test_wild_cd_sim_runs_clean():
     proc = run_prototype("wild_cd_sim.py")
     assert proc.returncode == 0, proc.stderr[-2000:]
     assert proc.stdout.strip(), "deployment simulation produced no output"
+
+
+def load_wild_cd_sim():
+    """Import prototype/wild_cd_sim.py by explicit path (no sys.path pollution)."""
+    spec = importlib.util.spec_from_file_location(
+        "wild_cd_sim_under_test", REPO / "prototype" / "wild_cd_sim.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_wild_cd_sim_unikernel_scenarios_deterministic():
+    """wild-5gb: unikernel scenario arms (E-H) are seeded-deterministic — two
+    calls, identical dict output — and the parameterization is in place."""
+    sim = load_wild_cd_sim()
+    assert sim.PARAMS["boot_min"] == 0.2, "ASSUMED Firecracker-class boot missing"
+    assert sim.PARAMS["farm_slots"] == 4, "ASSUMED build-farm slots missing"
+    for fn in (sim.overlap_unikernel, sim.order_unikernel,
+               sim.pipeline_unikernel, sim.sensitivity_unikernel):
+        first, second = fn(), fn()
+        assert first == second, f"{fn.__name__} is not deterministic"
 
 
 def test_wild_cat_sim_runs_clean():
