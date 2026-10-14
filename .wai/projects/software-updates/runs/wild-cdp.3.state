@@ -1,0 +1,6 @@
+ticket: wild-cdp.3
+head: d28bb8b
+branch: main
+brief_path: .wai/projects/software-updates/briefs/wild-cdp-3-rung2-contract-bundle-design.md
+step_history:
+- claim: done (no file conflicts; only in_progress ticket)
