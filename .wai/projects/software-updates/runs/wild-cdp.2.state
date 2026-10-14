@@ -12,3 +12,4 @@ SPAWN pid=1750411
 - ship: 5dbae59 + run artifacts; bd closed
 - stop: complete — next run: wild-cdp.1
 - ship: done @ abcd9b37cf8801344c1d0f549876d4c85e3f8751 (run artifacts committed abcd9b3; pushed)
+- stop: complete @ c98cc9e0394682d5b2e00fc3a8d60aa9c4fea1a2
