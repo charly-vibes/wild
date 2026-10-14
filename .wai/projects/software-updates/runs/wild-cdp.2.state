@@ -1,0 +1,13 @@
+ticket: wild-cdp.2
+branch: main
+head: d5e7c4999f27a5762ec0268801172658435cc455
+brief_path: .wai/projects/software-updates/briefs/wild-cdp.2-adopt-audit.md
+step_history:
+- claim: done @ d5e7c4999f27a5762ec0268801172658435cc455
+- gates: done @ d5e7c4999f27a5762ec0268801172658435cc455 (baseline green)
+- brief: done @ ec9ddcae50eb5898b9aa17d49a0133b63dc97485
+SPAWN pid=1750411
+- spawn: subagent:wild-cdp.2 pid 1750411 transcript 01a13bcc; died ~30min in AFTER landing all deliverables (5dbae59)
+- verify: done @ 5dbae598cecb274b142b98a337892638ec777867 (fresh meters green, commit matches claims)
+- ship: 5dbae59 + run artifacts; bd closed
+- stop: complete — next run: wild-cdp.1

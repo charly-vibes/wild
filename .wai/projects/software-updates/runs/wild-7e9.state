@@ -1,0 +1,12 @@
+ticket: wild-7e9
+branch: main
+head: 9cba43c627a996d40c46796e8e3386e37ec9c7a4
+brief_path: .wai/projects/software-updates/briefs/wild-7e9-string-signature-subset.md
+steps:
+- claim: done @ a816941
+- gates: done @ a816941 (baseline green)
+- brief: done @ 837dd43
+- spawn: subagent died mid-final-gates; transcript 01a1366d; manual resume per Invariant 6
+- verify: lead-side (single-model degradation) -> REVIEW_REQUIRED with fresh meter runs; diff matched D1-D4
+- ship: done @ 9cba43c, pushed, bd closed
+- stop: complete
