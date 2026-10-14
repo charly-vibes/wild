@@ -1,0 +1,79 @@
+wild adopt audit — consecutive-release verdict replay
+crate: testaruda
+wild binary: /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild
+versions inventoried: 0.1.0, 0.2.4, 0.2.5, 0.2.6, 0.3.0, 0.3.1, 0.4.0, 0.5.0, 0.5.1, 0.5.2, 0.5.3, 0.5.4
+
+## Coverage gaps (demand cannot see these)
+- 0.1.0: complete_inventory=False diagnostics=['unsupported-construct'] unsupported-signature slots (not called): none
+- 0.2.4: complete_inventory=False diagnostics=['unsupported-construct'] unsupported-signature slots (not called): none
+- 0.2.5: complete_inventory=False diagnostics=['unsupported-construct'] unsupported-signature slots (not called): none
+- 0.2.6: complete_inventory=False diagnostics=['unsupported-construct'] unsupported-signature slots (not called): none
+- 0.3.0: complete_inventory=False diagnostics=['unsupported-construct'] unsupported-signature slots (not called): none
+- 0.3.1: complete_inventory=False diagnostics=['unsupported-construct'] unsupported-signature slots (not called): none
+- 0.4.0: complete_inventory=False diagnostics=['unsupported-construct'] unsupported-signature slots (not called): none
+- 0.5.0: complete_inventory=False diagnostics=['unsupported-construct'] unsupported-signature slots (not called): none
+- 0.5.1: complete_inventory=False diagnostics=['unsupported-construct'] unsupported-signature slots (not called): none
+- 0.5.2: complete_inventory=False diagnostics=['unsupported-construct'] unsupported-signature slots (not called): none
+- 0.5.3: complete_inventory=False diagnostics=['unsupported-construct'] unsupported-signature slots (not called): none
+- 0.5.4: complete_inventory=False diagnostics=['unsupported-construct'] unsupported-signature slots (not called): none
+
+## Audit table
+prev -> next | bump | verdict | decision/assurance | exit | audit_row | reasons
+0.1.0 -> 0.2.4 | minor | unknown | refuse/Unknown | 1 | abstained | ['unsupported-construct']
+0.2.4 -> 0.2.5 | patch | unknown | refuse/Unknown | 1 | abstained | ['unsupported-construct']
+0.2.5 -> 0.2.6 | patch | unknown | refuse/Unknown | 1 | abstained | ['unsupported-construct']
+0.2.6 -> 0.3.0 | minor | unknown | refuse/Unknown | 1 | abstained | ['unsupported-construct']
+0.3.0 -> 0.3.1 | patch | unknown | refuse/Unknown | 1 | abstained | ['unsupported-construct']
+0.3.1 -> 0.4.0 | minor | unknown | refuse/Unknown | 1 | abstained | ['unsupported-construct']
+0.4.0 -> 0.5.0 | minor | unknown | refuse/Unknown | 1 | abstained | ['unsupported-construct']
+0.5.0 -> 0.5.1 | patch | unknown | refuse/Unknown | 1 | abstained | ['unsupported-construct']
+0.5.1 -> 0.5.2 | patch | unknown | refuse/Unknown | 1 | abstained | ['unsupported-construct']
+0.5.2 -> 0.5.3 | patch | unknown | refuse/Unknown | 1 | abstained | ['unsupported-construct']
+0.5.3 -> 0.5.4 | patch | unknown | refuse/Unknown | 1 | abstained | ['unsupported-construct']
+
+## Subprocess echo
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.1.0/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.1.0 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.1.0/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.1.0 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.2.4/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.2.4 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.2.4/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.2.4 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.2.5/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.2.5 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.2.5/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.2.5 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.2.6/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.2.6 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.2.6/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.2.6 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.3.0/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.3.0 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.3.0/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.3.0 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.3.1/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.3.1 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.3.1/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.3.1 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.4.0/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.4.0 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.4.0/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.4.0 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.5.0/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.5.0 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.5.0/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.5.0 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.5.1/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.5.1 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.5.1/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.5.1 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.5.2/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.5.2 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.5.2/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.5.2 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.5.3/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.5.3 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.5.3/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.5.3 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.5.4/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv1/0.5.4 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild extract --request /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.5.4/extraction.json --output /tmp/wild-adopt-audit-ql1yx7nr/inv2/0.5.4 -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild check --request /tmp/wild-adopt-audit-ql1yx7nr/checks/0.1.0-to-0.2.4/check.json --format json --report /tmp/wild-adopt-audit-ql1yx7nr/checks/0.1.0-to-0.2.4/report.json -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild check --request /tmp/wild-adopt-audit-ql1yx7nr/checks/0.2.4-to-0.2.5/check.json --format json --report /tmp/wild-adopt-audit-ql1yx7nr/checks/0.2.4-to-0.2.5/report.json -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild check --request /tmp/wild-adopt-audit-ql1yx7nr/checks/0.2.5-to-0.2.6/check.json --format json --report /tmp/wild-adopt-audit-ql1yx7nr/checks/0.2.5-to-0.2.6/report.json -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild check --request /tmp/wild-adopt-audit-ql1yx7nr/checks/0.2.6-to-0.3.0/check.json --format json --report /tmp/wild-adopt-audit-ql1yx7nr/checks/0.2.6-to-0.3.0/report.json -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild check --request /tmp/wild-adopt-audit-ql1yx7nr/checks/0.3.0-to-0.3.1/check.json --format json --report /tmp/wild-adopt-audit-ql1yx7nr/checks/0.3.0-to-0.3.1/report.json -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild check --request /tmp/wild-adopt-audit-ql1yx7nr/checks/0.3.1-to-0.4.0/check.json --format json --report /tmp/wild-adopt-audit-ql1yx7nr/checks/0.3.1-to-0.4.0/report.json -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild check --request /tmp/wild-adopt-audit-ql1yx7nr/checks/0.4.0-to-0.5.0/check.json --format json --report /tmp/wild-adopt-audit-ql1yx7nr/checks/0.4.0-to-0.5.0/report.json -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild check --request /tmp/wild-adopt-audit-ql1yx7nr/checks/0.5.0-to-0.5.1/check.json --format json --report /tmp/wild-adopt-audit-ql1yx7nr/checks/0.5.0-to-0.5.1/report.json -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild check --request /tmp/wild-adopt-audit-ql1yx7nr/checks/0.5.1-to-0.5.2/check.json --format json --report /tmp/wild-adopt-audit-ql1yx7nr/checks/0.5.1-to-0.5.2/report.json -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild check --request /tmp/wild-adopt-audit-ql1yx7nr/checks/0.5.2-to-0.5.3/check.json --format json --report /tmp/wild-adopt-audit-ql1yx7nr/checks/0.5.2-to-0.5.3/report.json -> exit 1
+$ /var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild check --request /tmp/wild-adopt-audit-ql1yx7nr/checks/0.5.3-to-0.5.4/check.json --format json --report /tmp/wild-adopt-audit-ql1yx7nr/checks/0.5.3-to-0.5.4/report.json -> exit 1
+
+## Summary
+pairs audited: 11
+consistent: 0
+disagreement: 0
+abstained: 11
+errored: 0
+unknown (abstention) rate: 100.0%
+determinism (repeated extraction byte identity): pass
+NOTE: >50% of pairs abstained — per the ticket's follow-up threshold, gap-rate measurement is the deliverable, not a failure
