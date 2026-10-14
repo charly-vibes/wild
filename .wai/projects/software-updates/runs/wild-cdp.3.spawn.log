@@ -1,1 +1,21 @@
 Warning: No project session found with id 'wild-cdp-3-design'; creating a new session with that id.
+Done. Summary of the run:
+
+## wild-cdp.3 — complete (design slice)
+
+**Deliverables**
+1. `openspec/changes/add-wild-contract-bundle-convention/` — proposal.md, design.md, tasks.md + spec deltas: `wild-registry` (2 ADDED requirements / 5 scenarios: bundle artifact class, refusal laws, base-contract caching) and `wild-adopt` (1 ADDED requirement / 3 scenarios: shadow verdict rendering, advisory only). Homes per D6.
+2. Design doc: `.wai/projects/software-updates/designs/2026-10-14-wild-cdp-3-rung-2-design.md`
+3. Report: `.wai/projects/software-updates/runs/wild-cdp.3.report.md`
+
+**Evidence cited (read in full, not optimistic)** — both audit runs measured 12/12 testaruda pairs abstained (100% Unknown, determinism pass both runs); post-wild-158 gap ordering: non-bounded receivers (wild-8j4) > std-awareness (wild-90d) > trait impls > non-scalar signatures. The deltas state honestly that Unknown is the *expected* real-world verdict and bundle presence ≠ compatibility. ddl integration points verified read-only in source (`upgrade_tool`/`upgrade_all_tools`, `cmd_upgrade`).
+
+**Meters (actual)** — `openspec validate --all --strict`: 11 passed (brief expected 11 ✓) · `spk lint openspec`: 0 issues, 10 files · `ah check` overlay: exactly the 8 expected pre-archive `no-toml` structural findings, no TOMLs fabricated · `JUST_TEMPDIR=/tmp just ci`: exit 0 · pre-commit hooks green on both commits.
+
+**Commits (not pushed)** — `238ca1a` (change + design doc), `213b73b` (orchestrator run artifacts).
+
+**Follow-ups filed (13)** — pilot **wild-xc4** (testaruda, P2), ddl consumer side **wild-xgd** (P2), and 11 fleet release-CI tickets P3 blocked-by wild-xc4: wild-5n8/0tk/39w/wdr/u54/d1p/l04/5aj/0yt/twd/zjv (owners named per repo; openspec + bd excluded — no structural extraction path).
+
+**Open questions surfaced (D7, defaults recommended, non-blocking)** — asset format (tar+gzip default), cache location (`contracts/<tool>/<version>/` + lock-entry digest default), rung-3 gating deferred until pilot measures real Unknown rates.
+
+No pushes, no bd closes, no ddl/testaruda code changes — orchestrator owns ship.

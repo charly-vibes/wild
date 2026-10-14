@@ -4,3 +4,8 @@ branch: main
 brief_path: .wai/projects/software-updates/briefs/wild-cdp-3-rung2-contract-bundle-design.md
 step_history:
 - claim: done (no file conflicts; only in_progress ticket)
+SPAWN pid=418323
+- spawn: subagent:wild-cdp-3-design transcript wild-cdp-3-design; complete (commits 238ca1a + 213b73b, report written)
+- verify: done @ 213b73b (strict 11/11, spk lint 0, deliverables + follow-up tickets confirmed on disk)
+- ship: done @ 213b73b (pushed d28bb8b..213b73b, pre-push ci-gates green 120.65s; bd wild-cdp.3 closed)
+- stop: complete — next run: wild-xc4 (pilot, needs release.yml in testaruda repo) or wild-xgd (ddl consumer side); both are other-repo slices

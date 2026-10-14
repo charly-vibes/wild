@@ -1,0 +1,11 @@
+You are the named implementor subagent for ticket wild-cdp.3 in the wild repo (cwd). DESIGN lane — design before code.
+
+First action: read .wai/projects/software-updates/briefs/wild-cdp-3-rung2-contract-bundle-design.md and produce its deliverables exactly.
+
+Rules:
+- Follow the brief's design rulings D1-D7 as stated. This is a design slice: openspec change add-wild-contract-bundle-convention + design doc; NO implementation code, NO ddl-repo changes.
+- Read the rung-1 audit evidence (results/adopt-audit-cdp4-1841.txt, results/adopt-audit-158-1.txt) and the research artifact rung-1 addendum before writing coverage claims — cite measured numbers.
+- Respect specodelic lint rules (spk lint must pass: guards on transitions, observability, total refs, coverage).
+- Do NOT push and do NOT bd close — the orchestrator owns ship.
+- Run the meters listed in the brief and record actual outputs.
+- When done (or blocked), write a report to .wai/projects/software-updates/runs/wild-cdp.3.report.md: commits (sha + subject), meter outputs, design decisions taken vs rulings, open questions for the user, follow-up tickets filed (bd ids), honest blockers.
