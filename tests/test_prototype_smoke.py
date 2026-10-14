@@ -83,3 +83,47 @@ def test_wild_cat_sim_runs_clean():
     proc = run_prototype("wild_cat_sim.py")
     assert proc.returncode == 0, proc.stderr[-2000:]
     assert proc.stdout.strip(), "category simulation produced no output"
+
+
+def load_wild_compose():
+    """Import prototype/wild_compose.py by explicit path (no sys.path pollution)."""
+    spec = importlib.util.spec_from_file_location(
+        "wild_compose_under_test", REPO / "prototype" / "wild_compose.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_wild_compose_certificate_deterministic_and_verified():
+    """wild-m8c: whole-graph composition certificate. The synthetic fleet DAG
+    is seeded-deterministic (build+certify twice, identical dicts), the clean
+    certificate verifies, and both tamper mutations are refused with the
+    distinct labeled refusals required by ruling D5."""
+    compose = load_wild_compose()
+    assert compose.PARAMS["layers"] == 4, "ASSUMED fleet depth missing"
+    assert compose.PARAMS["services_per_layer"] == [6, 12, 18, 24], \
+        "ASSUMED fleet shape (60 services) missing"
+    assert compose.PARAMS["fan_out"] == 3, "ASSUMED fan-out missing"
+
+    fleet1 = compose.build_fleet()
+    cert1, contracts1 = compose.certify(fleet1)
+    fleet2 = compose.build_fleet()
+    cert2, contracts2 = compose.certify(fleet2)
+    assert cert1 == cert2, "certify is not deterministic"
+    assert contracts1 == contracts2, "fleet build is not deterministic"
+    assert cert1["kind"] == "composition" and cert1["version"] == 1
+    assert cert1["verdict"] == "accept", cert1["verdict"]
+    assert cert1["merkle_root"], "missing merkle root"
+
+    assert compose.verify(cert1, contracts1) == "ok", "clean cert refused"
+
+    # D5: two distinct tamper labels, verifier must not trust cert verdicts.
+    tampered_digest = compose.tamper_component_digest(cert1)
+    tampered_verdict = compose.tamper_edge_verdict(cert1)
+    labels = {
+        compose.verify(tampered_digest, contracts1),
+        compose.verify(tampered_verdict, contracts1),
+    }
+    assert "tampered:components" in labels, labels
+    assert "tampered:edges" in labels, labels
