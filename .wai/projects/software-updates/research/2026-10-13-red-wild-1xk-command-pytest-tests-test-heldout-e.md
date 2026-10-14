@@ -1,0 +1,5 @@
+---
+tags: [pipeline-run:tdd-ro5-2026-10-13-wild-1xk-validate-wild-upgrade-decisions-on-a-held-out-corpus-against-existing-checks, pipeline-step:red]
+---
+
+RED wild-1xk: command='pytest tests/test_heldout_eval.py -q' result=16 failed / 0 passed. Expected failure confirmed: every test fails with "can't open file 'experiments/heldout_eval.py': No such file or directory" — the missing harness CLI, not setup breakage. Red-first shape: 16 command-level tests covering (1) freeze build/verify + tamper drift refusal, (2) deterministic family-integrity split + dev-select leakage guard, (3) sealed-oracle gating (missing seal, post-seal oracle modification digest mismatch, held-out case missing from sealed oracle, freeze drift blocks compare), (4) verdict classification table (correct-reject/false-block/missed-breakage/correct-accept, unknown never merged into definite classes), (5) exit mapping (0 all-correct, 1 definite failure, 2 refusal), (6) separate-metrics report with explicit denominators, zero-denominator null ratios with named reasons, no aggregate-accuracy substitute, verbatim disclaimer, execution cost + human maintenance time reported separately.

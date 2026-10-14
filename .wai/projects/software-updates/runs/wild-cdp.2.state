@@ -11,3 +11,4 @@ SPAWN pid=1750411
 - verify: done @ 5dbae598cecb274b142b98a337892638ec777867 (fresh meters green, commit matches claims)
 - ship: 5dbae59 + run artifacts; bd closed
 - stop: complete — next run: wild-cdp.1
+- ship: done @ abcd9b37cf8801344c1d0f549876d4c85e3f8751 (run artifacts committed abcd9b3; pushed)

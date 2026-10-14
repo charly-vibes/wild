@@ -1,0 +1,5 @@
+---
+tags: [pipeline-run:tdd-ro5-2026-10-13-wild-1xk-held-out-corpus-execution-seal-corpus-register-real-adapters-run-comparison-produce-report, pipeline-step:red]
+---
+
+RED wild-1xk-remaining: command='pytest tests/test_heldout_corpus.py -q' result=12 failed / 0 passed. Expected failure confirmed: every CLI-level test fails with "can't open file 'experiments/heldout_corpus.py': No such file or directory" and the three adapter-mapping tests fail on missing experiments/heldout_adapters/*.py — the missing corpus builder and real adapters, not setup breakage. 12 tests cover: corpus build derives 8-adjudicable/4-excluded pools + oracle outcomes + recorded exclusion reasons from the committed e5 cohort; case context with real base version from consumer locks; refusals (bad schema, unknown verdict, no adjudicable held-out); harness split family guard over derived cases; four real adapters registered as harness command templates; sealed seal+compare held_out end-to-end through landed heldout_eval.py with a stub checker; host_ranges caret verdicts on real held-out targets; ci replay-outcome mapping; ecosystem cargo-caret ruling; wild envelope mapping.
