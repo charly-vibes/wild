@@ -876,3 +876,187 @@ call_hidden!();
         report = facts_json(tmp_path / "facts", "report.json")
         assert report["complete_inventory"] is True
         assert report["diagnostics"] == []
+
+    # ------------------------------------------------------------------
+    # wild-158: widen the rust-cargo-local-1 demand profile — bounded
+    # method-call demand (design ruling D1), enum-variant inventory and
+    # demand (D2), and per-construct impl-block accounting (D3). Red-first
+    # per the brief: every behavior-widening assertion below must fail
+    # against the pre-widening extractor.
+    # ------------------------------------------------------------------
+
+    METER_LIB = """pub struct Meter { pub v: u32 }
+impl Meter {
+    pub fn new() -> Meter { Meter { v: 0 } }
+    pub fn tick(&mut self) { self.v += 1; }
+}
+pub fn drive() -> u32 { Meter::new().tick(); 7 }
+"""
+
+    def test_widen_same_crate_method_call_demand_resolves(self, tmp_path):
+        # D1 bounded resolution: the receiver is a call whose head resolves
+        # to an inventoried same-crate constructor with a known return type
+        # (`Meter::new() -> Meter`), so `.tick()` creates the demand
+        # `consumer::Meter::tick`, which resolves against the inventoried
+        # public impl-method slot. Counterexample-capable: renaming/removing
+        # the method breaks the demand (absence case pinned separately).
+        files = write_bundle(tmp_path / "bundle", consumer_lib=self.METER_LIB)
+        for i in range(2):
+            proc = run_extract(
+                request_record(tmp_path / "bundle", files), tmp_path / f"facts{i}"
+            )
+            assert proc.returncode == 0, (
+                f"bounded method demand must resolve, not refuse: "
+                f"rc={proc.returncode} {proc.stdout}"
+            )
+            report = facts_json(tmp_path / f"facts{i}", "report.json")
+            assert report["complete_inventory"] is True
+            assert report["diagnostics"] == []
+        # determinism gate unchanged: widened extraction stays byte-identical
+        contract = (tmp_path / "facts0" / "contract.json").read_bytes()
+        assert (tmp_path / "facts1" / "contract.json").read_bytes() == contract
+        demand = facts_json(tmp_path / "facts0", "demand.json")
+        demand_blob = json.dumps(demand)
+        assert "consumer::Meter::tick" in demand_blob
+        assert "consumer::Meter::new" in demand_blob
+        contract_doc = facts_json(tmp_path / "facts0", "contract.json")
+        slots = {s["name"] for s in contract_doc["slots"]}
+        assert "consumer::Meter::tick" in slots, "impl method must inventory type-qualified"
+        assert "consumer::Meter::new" in slots
+        assert "consumer::Meter" in slots, "receiver type itself stays inventoried"
+
+    def test_widen_method_absent_from_inventory_keeps_gap(self, tmp_path):
+        # D1: the receiver resolves but the method is absent from the
+        # inventory — the demand is recorded and fails resolution with the
+        # full `<crate>::<Type>::<method>` path named.
+        absent = self.METER_LIB.replace(".tick()", ".tock()")
+        files = write_bundle(tmp_path / "bundle", consumer_lib=absent)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 1, "absent method must refuse"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is False
+        reasons = [d.get("reason", "") for d in report["diagnostics"]]
+        assert any("consumer::Meter::tock" in r for r in reasons), (
+            f"gap must name the full method path: {reasons}"
+        )
+
+    def test_widen_unbounded_method_receiver_keeps_gap(self, tmp_path):
+        # D1/D7: multi-hop chains beyond one resolved hop stay outside the
+        # bounded shapes — the honest incomplete-demand gap names the
+        # receiver, and the one-hop demand inside the chain is still recorded
+        # (never silently dropped).
+        chained = self.METER_LIB.replace(
+            "Meter::new().tick(); 7", "Meter::new().tick().untick(); 7"
+        )
+        files = write_bundle(tmp_path / "bundle", consumer_lib=chained)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 1, "unbounded receiver must refuse"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is False
+        reasons = [d.get("reason", "") for d in report["diagnostics"]]
+        assert any("receiver" in r for r in reasons), (
+            f"gap must name the receiver: {reasons}"
+        )
+        # the one-hop demand inside the chain is still recorded
+        demand = facts_json(tmp_path / "facts", "demand.json")
+        assert "consumer::Meter::tick" in json.dumps(demand)
+
+    def test_widen_enum_variant_demand_resolves(self, tmp_path):
+        # D2: a public enum inventories its variants as named slots
+        # (`<Enum>::<Variant>`) instead of a single opaque enum item, and
+        # variant demand paths resolve as supported demand — dep-qualified
+        # (`provider::Mode::Slow`) and same-crate (`Flavor::Sour`).
+        provider_lib = "pub enum Mode { Fast, Slow(u32) }\n"
+        consumer_lib = (
+            CONSUMER_LIB
+            + "pub enum Flavor { Sour, Sweet }\n"
+            + "pub fn pick() -> u32 { let m = provider::Mode::Slow(1); 7 }\n"
+            + "pub fn taste() -> u32 { let f = Flavor::Sour; 7 }\n"
+        )
+        files = write_bundle(
+            tmp_path / "bundle", consumer_lib=consumer_lib, provider_lib=provider_lib
+        )
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 0, (
+            f"variant demand must resolve, not refuse: rc={proc.returncode} {proc.stdout}"
+        )
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is True
+        assert report["diagnostics"] == []
+        contract = facts_json(tmp_path / "facts", "contract.json")
+        slots = {s["name"] for s in contract["slots"]}
+        assert "provider::Mode::Fast" in slots
+        assert "provider::Mode::Slow" in slots
+        assert "consumer::Flavor::Sour" in slots
+        # variants replace the single opaque enum item (identity law: the
+        # qualified path, never line numbers)
+        assert "provider::Mode" not in slots
+        assert "consumer::Flavor" not in slots
+        demand = facts_json(tmp_path / "facts", "demand.json")
+        demand_blob = json.dumps(demand)
+        assert "provider::Mode::Slow" in demand_blob
+        assert "consumer::Flavor::Sour" in demand_blob
+
+    def test_widen_unknown_variant_path_keeps_gap(self, tmp_path):
+        # D2: unknown variant paths — dep-qualified or same-crate — keep the
+        # honest incomplete-demand gap naming the path (guard: the refusal
+        # shape exists pre-widening and must survive it).
+        provider_lib = "pub enum Mode { Fast, Slow(u32) }\n"
+        consumer_lib = (
+            CONSUMER_LIB
+            + "pub enum Flavor { Sour, Sweet }\n"
+            + "pub fn bogus() -> u32 { provider::Mode::Huge(1) }\n"
+            + "pub fn salty() -> u32 { let f = Flavor::Salty; 7 }\n"
+        )
+        files = write_bundle(
+            tmp_path / "bundle", consumer_lib=consumer_lib, provider_lib=provider_lib
+        )
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 1, "unknown variant must refuse"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is False
+        reasons = [d.get("reason", "") for d in report["diagnostics"]]
+        assert any("Mode::Huge" in r for r in reasons), f"{reasons}"
+        assert any("Flavor::Salty" in r for r in reasons), f"{reasons}"
+
+    def test_widen_impl_accounting_is_per_construct(self, tmp_path):
+        # D3: the blanket "method implementations are outside the supported
+        # profile" gap is replaced by honest per-construct accounting — pub
+        # inherent methods inventory as type-qualified opaque slots, plain
+        # private methods carry no public surface, restricted-visibility
+        # methods and trait impls keep named gaps, and dep-qualified calls to
+        # inventoried methods resolve as supported demand.
+        provider_lib = """pub struct Widget;
+impl Widget {
+    pub fn spin(&self) {}
+    fn helper(&self) {}
+    pub(crate) fn internal(&self) {}
+}
+impl Clone for Widget { fn clone(&self) -> Self { Widget } }
+impl Default for Widget { fn default() -> Self { Widget } }
+"""
+        consumer_lib = CONSUMER_LIB + "pub fn use_widget() { provider::Widget::spin(); }\n"
+        files = write_bundle(
+            tmp_path / "bundle", consumer_lib=consumer_lib, provider_lib=provider_lib
+        )
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 1, "trait impls keep the inventory incomplete"
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is False
+        reasons = [d.get("reason", "") for d in report["diagnostics"]]
+        # the blanket impl-block gap is gone
+        assert not any(
+            "method implementations are outside the supported profile" in r for r in reasons
+        ), f"blanket impl gap must be replaced: {reasons}"
+        # trait impls and the restricted-visibility method keep named gaps
+        assert any("Clone" in r for r in reasons), f"{reasons}"
+        assert any("Default" in r for r in reasons), f"{reasons}"
+        assert any("internal" in r for r in reasons), f"{reasons}"
+        contract = facts_json(tmp_path / "facts", "contract.json")
+        slots = {s["name"] for s in contract["slots"]}
+        assert "provider::Widget::spin" in slots, "pub impl method inventories type-qualified"
+        assert "provider::Widget::helper" not in slots, "private method: no public surface"
+        # the dep-qualified call to the inventoried method resolves cleanly
+        assert not any("Widget::spin" in r for r in reasons), (
+            f"demand to inventoried method must resolve: {reasons}"
+        )
