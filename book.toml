@@ -1,7 +1,6 @@
 [book]
 authors = ["sasha"]
 language = "en"
-multilingual = false
 src = "docs/src"
 title = "wild"
 
@@ -21,7 +20,4 @@ boost-title = 2
 boost-hierarchy = 2
 boost-paragraph = 1
 expand = true
-heading-split = 3
-
-[preprocessor.generate-release]
-command = "scripts/generate-release-notes.py"
+heading-split-level = 3
