@@ -219,10 +219,14 @@ struct MemberManifest {
     name: String,
     version: String,
     deps: Vec<String>,
-    source_path: String, // bundle-relative path of src/lib.rs
+    source_path: String, // bundle-relative crate-root source (autodiscovered)
 }
 
-fn parse_member_manifest(rel_manifest: &str, text: &str) -> Result<MemberManifest, String> {
+fn parse_member_manifest(
+    rel_manifest: &str,
+    text: &str,
+    loaded: &BTreeMap<String, Vec<u8>>,
+) -> Result<MemberManifest, String> {
     let doc: toml::Value =
         toml::from_str(text).map_err(|e| format!("malformed manifest `{rel_manifest}`: {e}"))?;
     let package = doc
@@ -255,7 +259,36 @@ fn parse_member_manifest(rel_manifest: &str, text: &str) -> Result<MemberManifes
         .parent()
         .map(|p| p.to_path_buf())
         .unwrap_or_default();
-    let source_path = join_rel(&manifest_dir, "src/lib.rs");
+    // beads wild-luf: resolve the crate-root source honoring Cargo
+    // autodiscovery — an explicit `[lib] path` wins; otherwise a committed
+    // src/lib.rs (library target) is preferred over a committed src/main.rs
+    // (binary-only member, e.g. testaruda's adapter crates). A member with
+    // neither stays an honest input-mismatch naming both candidates.
+    let source_path = match doc
+        .get("lib")
+        .and_then(|l| l.get("path"))
+        .and_then(|v| v.as_str())
+    {
+        Some(custom) => join_rel(&manifest_dir, custom),
+        None => {
+            let lib = join_rel(&manifest_dir, "src/lib.rs");
+            let bin = join_rel(&manifest_dir, "src/main.rs");
+            if loaded.contains_key(&lib) {
+                lib
+            } else if loaded.contains_key(&bin) {
+                bin
+            } else {
+                return Err(format!(
+                    "input-mismatch: crate `{}` in `{rel_manifest}` has no committed \
+                     crate-root source (`{lib}` or `{bin}`)",
+                    package
+                        .get("name")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("?"),
+                ));
+            }
+        }
+    };
     Ok(MemberManifest {
         name,
         version,
@@ -820,7 +853,7 @@ fn load_workspace(
             .get(rel)
             .ok_or_else(|| format!("input-mismatch: bundle file `{rel}` unreadable"))?;
         let text = std::str::from_utf8(text).map_err(|e| format!("malformed `{rel}`: {e}"))?;
-        manifests.push(parse_member_manifest(rel, text)?);
+        manifests.push(parse_member_manifest(rel, text, loaded)?);
     }
     Ok(manifests)
 }

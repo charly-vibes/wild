@@ -997,6 +997,119 @@ pub fn drive() -> u32 { Meter::new().tick(); 7 }
         assert "provider::Mode::Slow" in demand_blob
         assert "consumer::Flavor::Sour" in demand_blob
 
+    def test_bin_only_workspace_member_extracts(self, tmp_path):
+        # beads wild-luf: Cargo autodiscovery lets a workspace member be a
+        # binary crate (src/main.rs, no src/lib.rs) — testaruda's release
+        # checkout is exactly this shape (members adapter-typescript and
+        # adapter-clojure are bin-only), and the extractor hardcoded
+        # src/lib.rs for every member, refusing the exact release tree with
+        # `bundle file ... unreadable` for a file never committed. A bin-only
+        # member must extract: its identity joins the inventory, its source
+        # root resolves to src/main.rs, and the tree stays honestly walked.
+        bin_toml = """[package]
+name = "toolbin"
+version = "0.2.0"
+edition = "2021"
+"""
+        bin_main = """fn main() {
+    println!("tool");
+}
+
+pub fn helper(x: u32) -> u32 { x }
+"""
+        lock = LOCK + """
+[[package]]
+name = "toolbin"
+version = "0.2.0"
+"""
+        files = write_bundle(tmp_path / "bundle")
+        files["Cargo.toml"] = WORKSPACE_TOML.replace(
+            'members = ["consumer", "provider"]',
+            'members = ["consumer", "provider", "toolbin"]',
+        )
+        files["Cargo.lock"] = lock
+        files["toolbin/Cargo.toml"] = bin_toml
+        files["toolbin/src/main.rs"] = bin_main
+        for rel, text in (
+            ("Cargo.toml", files["Cargo.toml"]),
+            ("Cargo.lock", lock),
+            ("toolbin/Cargo.toml", bin_toml),
+            ("toolbin/src/main.rs", bin_main),
+        ):
+            dest = tmp_path / "bundle" / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(text)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 0, (
+            f"bin-only member must extract, not refuse: rc={proc.returncode} {proc.stdout}"
+        )
+        report = facts_json(tmp_path / "facts", "report.json")
+        assert report["complete_inventory"] is True
+        assert report["diagnostics"] == []
+        contract = facts_json(tmp_path / "facts", "contract.json")
+        blob = json.dumps(contract)
+        assert "toolbin" in blob, "bin member identity must join the inventory"
+
+    def test_member_with_lib_and_bin_prefers_lib(self, tmp_path):
+        # beads wild-luf: a member with both src/lib.rs and src/main.rs has a
+        # library target — the lib source is the consumable surface and must
+        # be the crate-root source the walk starts from.
+        bin_toml = """[package]
+name = "duo"
+version = "0.1.0"
+edition = "2021"
+"""
+        duo_lib = "pub fn from_lib(x: u32) -> u32 { x }\n"
+        duo_main = "pub fn from_main(x: u32) -> u32 { x }\nfn main() {}\n"
+        files = write_bundle(tmp_path / "bundle")
+        files["Cargo.toml"] = WORKSPACE_TOML.replace(
+            'members = ["consumer", "provider"]',
+            'members = ["consumer", "provider", "duo"]',
+        )
+        files["duo/Cargo.toml"] = bin_toml
+        files["duo/src/lib.rs"] = duo_lib
+        files["duo/src/main.rs"] = duo_main
+        for rel, text in (("Cargo.toml", files["Cargo.toml"]), ("duo/Cargo.toml", bin_toml),
+                          ("duo/src/lib.rs", duo_lib), ("duo/src/main.rs", duo_main)):
+            dest = tmp_path / "bundle" / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(text)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 0, proc.stdout
+        contract = facts_json(tmp_path / "facts", "contract.json")
+        slots = {s["name"] for s in contract["slots"]}
+        assert "duo::from_lib" in slots
+
+    def test_explicit_lib_path_override_is_honored(self, tmp_path):
+        # beads wild-luf: `[lib] path` in the member manifest relocates the
+        # crate-root source; autodiscovery defaults must not win over it.
+        duo_toml = """[package]
+name = "reloc"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/api.rs"
+"""
+        reloc_lib = "pub fn relocated(x: u32) -> u32 { x }\n"
+        files = write_bundle(tmp_path / "bundle")
+        files["Cargo.toml"] = WORKSPACE_TOML.replace(
+            'members = ["consumer", "provider"]',
+            'members = ["consumer", "provider", "reloc"]',
+        )
+        files["reloc/Cargo.toml"] = duo_toml
+        files["reloc/src/api.rs"] = reloc_lib
+        for rel, text in (("Cargo.toml", files["Cargo.toml"]), ("reloc/Cargo.toml", duo_toml),
+                          ("reloc/src/api.rs", reloc_lib)):
+            dest = tmp_path / "bundle" / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(text)
+        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+        assert proc.returncode == 0, proc.stdout
+        contract = facts_json(tmp_path / "facts", "contract.json")
+        slots = {s["name"] for s in contract["slots"]}
+        assert "reloc::relocated" in slots
+
     def test_widen_unknown_variant_path_keeps_gap(self, tmp_path):
         # D2: unknown variant paths — dep-qualified or same-crate — keep the
         # honest incomplete-demand gap naming the path (guard: the refusal

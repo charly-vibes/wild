@@ -137,6 +137,20 @@ invalidates the old request's raw digests; resubmission fails with
 `input-mismatch` and a fresh extraction is required. Changed build inputs
 never silently rebind.
 
+### Workspace-member source resolution (wild-luf)
+
+The `rust-cargo-local-1` profile resolves each workspace member's
+
+crate-root source honoring Cargo autodiscovery: an explicit `[lib] path`
+
+override wins, then a committed `src/lib.rs` (library target), then a
+
+committed `src/main.rs` (binary-only member). A member with neither stays
+
+an honest input-mismatch naming both candidates — never a refusal naming a
+
+file the bundle never contained.
+
 ### Extraction supported set (wild-158)
 
 The `rust-cargo-local-1` profile inventories public free functions over
