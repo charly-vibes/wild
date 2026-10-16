@@ -58,3 +58,38 @@ testaruda-gate:
         testaruda exec --base origin/main --head HEAD ;;
       *) echo "❌ testaruda gate failed (exit $code — test runner or hard error)" >&2; exit 1 ;;
     esac
+
+# Dev TDD loop (DDL test-runner standard — see the dulce-de-leche repo
+# ticket): testaruda exec against the WORKING DIFF (not base/head like the
+# gate above), so it answers "did my uncommitted change break anything".
+# Same tolerance contract (0/10/20 green) and wild-z56 self-heal.
+test:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    if [ ! -d .testaruda ]; then
+      testaruda init || { echo "❌ testaruda init failed" >&2; exit 1; }
+    fi
+    code=0
+    testaruda exec || code=$?
+    case "$code" in
+      0|10|20) exit 0 ;;
+      4)
+        echo "⚠️ runner exit 4 — pruning stale local calibration store and retrying once (wild-z56)" >&2
+        rm -rf .testaruda
+        testaruda init || { echo "❌ testaruda re-init failed" >&2; exit 1; }
+        testaruda exec ;;
+      *) exit "$code" ;;
+    esac
+
+# Full suite, no selection (plain cargo test — slowest, complete signal).
+test-full:
+    cargo test
+
+# Blast-radius preview: which tests a change WOULD affect — runs nothing.
+test-blast *files:
+    #!/usr/bin/env bash
+    if [ -z "{{files}}" ]; then
+      testaruda select --pre-edit --human
+    else
+      testaruda select --pre-edit --human --files "{{files}}"
+    fi

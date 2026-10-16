@@ -126,3 +126,15 @@ Use `@/openspec/AGENTS.md` to learn:
 Keep this managed block so 'openspec update' can refresh the instructions.
 
 <!-- OPENSPEC:END -->
+
+## Test runner (DDL standard — recorded in the dulce-de-leche repo)
+
+- **TDD loop**: agents run `just test` (testaruda exec loop, working diff)
+  instead of `cargo test` directly — it selects the affected test set,
+  runs only those tests, and ingests results for future selection.
+  Tolerance contract: exit 0/10/20 green; stale store self-heals
+  (wild-z56). `just test-blast` previews the affected set without running
+  anything.
+- **Full suite**: `just test-full` is the plain cargo test run. The push
+  gate is `just testaruda-gate` (base/head comparison, what lefthook/CI
+  run); selection is for fast feedback, never a gate substitute.
