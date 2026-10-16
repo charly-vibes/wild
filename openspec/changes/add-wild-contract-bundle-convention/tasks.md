@@ -2,8 +2,8 @@
 
 ## 1. Implementation — release-CI bundle attach (pilot: testaruda, bd follow-up with owner slot)
 
-- [ ] 1.1 In charly-vibes/testaruda's release workflow, add a bundle step: `wild extract` on the exact release checkout (same job/tree as the published artifact), write `manifest.toml` (tool, version, commit, profile, contract_sha256, extractor_version, extracted_at), pack tar+gzip, attach as `<tool>-<version>-contract-bundle.tar.gz`
-- [ ] 1.2 Verify the stamped digest: unpack the released bundle, recompute sha256(contract.json), compare to manifest; document the verification one-liner in the tool repo
+- [x] 1.1 In charly-vibes/testaruda's release workflow, add a bundle step: `wild extract` on the exact release checkout (same job/tree as the published artifact), write `manifest.toml` (tool, version, commit, profile, contract_sha256, extractor_version, extracted_at), pack tar+gzip, attach as `<tool>-<version>-contract-bundle.tar.gz` — landed testaruda 5a33d22: pinned wild-vibes 0.2.0 extractor install + scripts/make-contract-bundle.sh (attaches on extract exit 0/1, fails on exit 2)
+- [x] 1.2 Verify the stamped digest: unpack the released bundle, recompute sha256(contract.json), compare to manifest; document the verification one-liner in the tool repo — verified end-to-end locally against the real checkout (stamped commit matches HEAD); one-liner documented in testaruda README (Contract bundle section)
 
 ## 2. Implementation — ddl consumer side (bd follow-up, ddl repo owner)
 
