@@ -13,7 +13,7 @@
 
 ## 3. Pilot cross-check and fleet rollout
 
-- [ ] 3.1 Run `experiments/wild_adopt_audit.py --crate testaruda` against released bundles and cross-check shadow verdicts with the measured rung-1 verdicts (`results/adopt-audit-158-1.txt`); record as `results/shadow-pilot-<n>.txt`
+- [x] 3.1 Run `experiments/wild_adopt_audit.py --crate testaruda` against released bundles and cross-check shadow verdicts with the measured rung-1 verdicts (`results/adopt-audit-158-1.txt`); record as `results/shadow-pilot-<n>.txt` — results/shadow-pilot-1.txt: 14/14 pairs abstained (was 12/12 pre-0.5.7), determinism pass, 100% abstention — the expected honest outcome; released bundle testaruda-0.5.7-contract-bundle.tar.gz digest-verified from the live release asset (stamped commit d573796 == tag commit)
 - [ ] 3.2 Work the per-tool owner tickets (filed by wild-cdp.3) in owner order: bundle step per repo's `release.yml`
 - [ ] 3.3 Rung-3 gating remains out of scope until real gap rates are measured from the pilot data
 
