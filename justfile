@@ -42,6 +42,11 @@ testaruda-gate:
     #!/usr/bin/env bash
     set -uo pipefail
     git fetch origin main -q
+    # fresh runner: the store is not committed — initialize it before exec
+    # (exec hard-errors with "Store has not been initialized" otherwise)
+    if [ ! -d .testaruda ]; then
+      testaruda init || { echo "❌ testaruda init failed" >&2; exit 1; }
+    fi
     code=0
     testaruda exec --base origin/main --head HEAD || code=$?
     case "$code" in
