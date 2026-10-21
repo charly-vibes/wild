@@ -116,9 +116,12 @@ mechanism-internal types. **Ripple (corrected after schema grounding):** less
 severe than first claimed — `schemas/wild-v1.schema.json` *requires* explicit
 `open` on every v1 record and sum, so the closed default lives only in spec
 prose, the checker fallback (`src/v1.rs:597`), and authoring convention; no
-existing contract relies on the default, so there is no re-hashing. The clean
-form is a version-scoped IR v2 default (v2 omits → open; closure justified),
-per the `slot_shapes_closed` precedent for IR version changes. → Proposed in
+existing contract relies on the default, so there is no re-hashing. End state
+(2026-10-21): the proposal flips v1 in place — no version bump, no migration —
+because wild has no released tool, registry, or persisted contracts and every
+extracted contract declares `open` explicitly; the version-scoped IR v2 path
+is the documented rejected alternative and becomes the required path after 1.0
+adoption. → Proposed in
 openspec change `update-wild-openness-default`.
 
 **B. Tombstones are prohibition by design.** "A tombstoned name can never return
