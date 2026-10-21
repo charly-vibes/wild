@@ -44,6 +44,7 @@ check against.
 
 - [ ] 4.1 Update `docs/wild-manual.md` openness row (concepts table) and
       §5.2 verdict table rows that mention closed sums.
-- [ ] 4.2 Update `docs/hickey-in-context-lessons.md` tension A to
-      resolved-by-proposal status (point here).
+- [ ] 4.2 Update the wai research artifact
+      `.wai/projects/semantic-composition/research/2026-10-21-lessons-from-hickey-in-context-clojure-conj.md`
+      tension A to resolved-by-proposal status (point here).
 - [ ] 4.3 `just test` green; `openspec validate update-wild-openness-default --strict` green before apply; spk lint green after archive.

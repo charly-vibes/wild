@@ -1,7 +1,6 @@
 ---
 tags: [pipeline-run:epic-orchestrator-2026-10-14-wild-cdp-3-rung2-contract-bundle-design, pipeline-step:verify]
 ---
-
 # Lessons from Hickey, "In Context" (Clojure/Conj 2026)
 
 Source: `../tv/transcripts_richhickey/txt/rich-hickey-in-context-conj2026 [P5eO7BNyJao].en-orig.txt`.
@@ -113,13 +112,14 @@ pushes the opposite default for *information* (facts about the world) and is
 relaxed only for *mechanisms* (contrivances you invent, where you write all the
 rules). Candidate resolution: open-by-default for records describing
 external-world facts; closed remains available and must be justified for
-mechanism-internal types. **Ripple:** this is far more than an openspec change —
-the default is load-bearing in code, keyed by spec'd unit tests
-(`closed_output_growth_is_break`), and because a revision is identified by the
-hash of its canonical form, changing the default re-hashes every existing
-contract and breaks lineage ancestry at the hash level. It needs an IR schema
-version bump (per the `slot_shapes_closed` precedent) plus a hash-migration
-story for existing registries.
+mechanism-internal types. **Ripple (corrected after schema grounding):** less
+severe than first claimed — `schemas/wild-v1.schema.json` *requires* explicit
+`open` on every v1 record and sum, so the closed default lives only in spec
+prose, the checker fallback (`src/v1.rs:597`), and authoring convention; no
+existing contract relies on the default, so there is no re-hashing. The clean
+form is a version-scoped IR v2 default (v2 omits → open; closure justified),
+per the `slot_shapes_closed` precedent for IR version changes. → Proposed in
+openspec change `update-wild-openness-default`.
 
 **B. Tombstones are prohibition by design.** "A tombstoned name can never return
 with a different meaning" is exactly the prohibition Hickey warns against
@@ -143,4 +143,3 @@ what the talk adds is *conveyance* (certify the pass-through, without weakening
 scoped_substitution), *absence as policy* (fallible required inputs, observed
 at tier 3), and an openness default that matches information rather than
 mechanisms (an IR-version change, not a doc tweak).
-

@@ -18,7 +18,9 @@ or sum may still be closed (mechanisms are contrivances; the author writes all
 the rules), but closure must be a declared, reasoned decision rather than an
 unstated default.
 
-Grounding: `docs/hickey-in-context-lessons.md` lesson 7 and tension A;
+Grounding: the wai research artifact
+`.wai/projects/semantic-composition/research/2026-10-21-lessons-from-hickey-in-context-clojure-conj.md`
+(lesson 7 and tension A);
 `openspec/specs/wild-core/spec.md` `polarity_openness_declared`,
 `slot_shapes_closed`; `schemas/wild-v1.schema.json` (both record and sum
 already *require* explicit `open`, so v1 contracts are unaffected by a default

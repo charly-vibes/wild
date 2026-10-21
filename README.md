@@ -19,7 +19,6 @@ Part of the [charly-vibes](https://github.com/charly-vibes) toolshed.
 | Path | What it is |
 |---|---|
 | `docs/wild-manual.md` | How the tool works and how to use it (start here) |
-| `docs/hickey-in-context-lessons.md` | Design lessons from Hickey's "In Context" talk mapped to wild (analysis note) |
 | `docs/integration-failures.md` | 112 integration failure cases with verdicts against the design |
 | `docs/integration-failures-part2.md` | 50 more cases (113 to 162); rows 113 to 122 web-checked, the rest from memory |
 | `src/` | Rust implementation of the `wild extract` and `wild check` subcommands (beads wild-mh5.x) |
