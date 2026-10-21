@@ -139,14 +139,23 @@ The fixture suite SHALL cover original-range allowed/excluded crossed with indep
 - **WHEN** the treatment returns unknown but an independent oracle can adjudicate behavior
 - **THEN** the run retains both outcomes and does not relabel the abstention as detection or unsafe acceptance
 
-### Requirement: Explicit metric denominators and complete effort accounting
+### Requirement: Explicit metric denominators
 
-Summaries SHALL implement the candidate and task denominators defined in this change's design, report raw counts and exclusions, distinguish policy from compatibility outcomes, preserve unknown/error/unresolved cases, and return null for undefined ratios. Task completion SHALL count at most one independently valid delivered update per task/arm/trial; effort SHALL include failed and abandoned attempts and disclose unavailable measurements. Fixed-candidate comparisons SHALL remain distinct from arm-selected search attempts.
+Summaries SHALL implement the candidate and task denominators defined in this change's design, report raw counts and exclusions, distinguish policy from compatibility outcomes, preserve unknown/error/unresolved cases, and return null for undefined ratios.
 
 #### Scenario: Six-candidate confusion table
 - **GIVEN** two compatible accepts, one incompatible accept, one incompatible reject, one compatible unknown, and one incompatible error, all eligible and adjudicated
 - **WHEN** the summary runs
 - **THEN** unsafe acceptance, detection recall, and false-negative rate are each 1/3; false-block rate is 0/3; unknown and error rates are each 1/6
+
+#### Scenario: Ineligible and unresolved cases remain visible
+- **GIVEN** one policy-prohibited candidate and one accepted oracle-unresolved candidate
+- **WHEN** compatibility metrics are computed
+- **THEN** neither enters the eligible binary table, both remain in assigned counts and their own categories, and neither counts as independently validated completion
+
+### Requirement: Complete effort accounting
+
+Task completion SHALL count at most one independently valid delivered update per task/arm/trial; effort SHALL include failed and abandoned attempts and disclose unavailable measurements. Fixed-candidate comparisons SHALL remain distinct from arm-selected search attempts.
 
 #### Scenario: No delivered update
 - **GIVEN** three attempted tasks with recorded effort and no independently valid delivery
@@ -157,11 +166,6 @@ Summaries SHALL implement the candidate and task denominators defined in this ch
 - **GIVEN** one assigned task takes three attempts before one valid delivered update
 - **WHEN** the summary runs
 - **THEN** it counts one completed task and includes all three attempts in effort
-
-#### Scenario: Ineligible and unresolved cases remain visible
-- **GIVEN** one policy-prohibited candidate and one accepted oracle-unresolved candidate
-- **WHEN** compatibility metrics are computed
-- **THEN** neither enters the eligible binary table, both remain in assigned counts and their own categories, and neither counts as independently validated completion
 
 ### Requirement: Wild evaluate design contract
 
