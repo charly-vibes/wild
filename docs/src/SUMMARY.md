@@ -34,6 +34,7 @@
 - [wild-adopt](specs/wild-adopt.md)
 - [wild-deploy](specs/wild-deploy.md)
 - [wild-extract](specs/wild-extract.md)
+- [wild-evaluate](specs/wild-evaluate.md)
 
 ---
 
