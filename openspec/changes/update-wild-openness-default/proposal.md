@@ -28,9 +28,10 @@ change — no re-hashing, no lineage churn).
 
 ## What Changes
 
-- Introduce an IR schema version bump (v2) in which record and sum `open` is
-  *optional, defaulting to `true`* when omitted, and a `closed` declaration
-  must carry a non-empty `closed_reason` justification string.
+- Introduce an IR schema version bump — wire `schema_version: "2"` for
+  contract documents — in which record and sum `open` is *optional, defaulting
+  to `true`* when omitted, and a `closed` declaration must carry a non-empty
+  `closed_reason` justification string.
 - v1 contracts are version-tagged and stay exactly as they are: explicit
   `open`, closed-by-convention in authoring, unchanged hashes, unchanged
   verdicts. The v1 checker fallback (`is_open()` → `false`) remains the v1
@@ -50,6 +51,10 @@ change — no re-hashing, no lineage churn).
   this is an IR schema version change, not a mere contract-hash change).
 - Affected code: `src/v1.rs` (version-aware openness fallback), `src/formats.rs`
   (canonical form for the optional field), plus their tests.
+- Consumer-side migration: every wire-document validator refuses unknown
+  `schema_version` values (`src/main.rs`), so v2 documents fail old tooling
+  wholesale — fail-closed by construction; v2 requires tooling that accepts
+  `schema_version: "2"`.
 - Not affected: tombstones (tension B stays a chosen prohibition), demand
   extraction, composition/resolver rules, certificates, adopt/deploy levels.
 - Out of scope (filed as beads issues): the `conveys` conveyance clause and

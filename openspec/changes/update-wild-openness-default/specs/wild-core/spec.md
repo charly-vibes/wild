@@ -37,3 +37,9 @@ In IR schema version 2, a record or sum declared with `open: false` SHALL carry 
 - **GIVEN** a v2 record or sum with `open: false` and a non-empty `closed_reason`
 - **WHEN** a closed output sum grows, opens, or becomes unrestricted
 - **THEN** the existing polarity rules apply unchanged: the change is a break and must start a new lineage
+
+#### Scenario: Editing a closure justification is a break
+
+- **GIVEN** a published v2 revision with a record or sum declared `open: false` and a non-empty `closed_reason`
+- **WHEN** a candidate changes only that `closed_reason` text (or flips `open`)
+- **THEN** the candidate is not an accretion — the change is a break and must start a new lineage, because `closed_reason` is part of the canonical form and immutable within its lineage

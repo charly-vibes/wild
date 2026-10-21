@@ -18,7 +18,12 @@ Version-scoped defaults, explicit migration-free stability:
    `closed_reason`: a non-empty, human-authored string. This is the
    Hickey-consistent move — mechanisms may forbid, but the author must say why.
    The reason is part of the canonical form (immutable within a lineage, per
-   `name_meaning_immutable`).
+   `name_meaning_immutable`). Because it is part of the canonical form, the
+   accretion classification of an edit is fixed: any change to a record/sum's
+   `open` value or `closed_reason` text is a break (consistent with
+   "opening is a break" and with defaults immutability under
+   `defaults_are_slots`). A justification typo costs a new lineage — the
+   deliberate price of content-addressed identity, not an oversight.
 
 ## Why not the alternatives
 
@@ -41,9 +46,10 @@ Version-scoped defaults, explicit migration-free stability:
   open consumer" applies to effective openness in both versions; a v1 (explicit)
   and v2 (defaulted) contract interoperate through their effective values.
 - **Cross-version checks.** A v2 candidate against a v1 ancestor uses each
-  contract's own version's default. Mixed-version lineages are the migration
-  surface; the checker rejects cross-version ambiguity only where effective
-  openness cannot be resolved (never silently).
+  contract's own version's default (v1 explicit, v2 omission → open), so
+  effective openness is always resolvable; there is no ambiguity rejection
+  and no silently-assumed value. Mixed-version lineages are the migration
+  surface.
 - **Schema.** Draft 2020-12: `open` moves out of `required` for the v2
   definition, `closed_reason` added conditionally on `open == false`
   (`if`/`then` keywords).
