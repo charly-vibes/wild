@@ -16,4 +16,4 @@ pretender = "0.8.0"        # crates.io — latest released
 specodelic = "0.7.0"       # crates.io (bin: spk) — matches dev install
 testaruda = "0.5.2"        # GitHub release tarball (testaruda + python/rust adapters; adapters not on crates.io)
 lefthook = "1.13.6"        # GitHub release binary (evilmartians/lefthook) — gate-wiring tool, see tests/test_gate_wiring.py
-openspec = "0.19.0"        # npm: @fission-ai/openspec — suite-wide pin
+openspec = "1.15.0"        # npm: @fission-ai/openspec — suite-wide pin; corpus passes strict (wild-o85)
