@@ -211,36 +211,26 @@ pub(super) fn check_capture_disclosure(
 /// the leading identifier inside a brace; the rest of the placeholder
 /// (format spec) is skipped to the closing brace.
 fn format_capture_idents(content: &str) -> Vec<String> {
-    let chars: Vec<char> = content.chars().collect();
     let mut idents = Vec::new();
-    let mut i = 0;
-    while i < chars.len() {
-        if chars[i] == '{' {
-            if chars.get(i + 1) == Some(&'{') {
-                i += 2;
-                continue;
-            }
-            let mut j = i + 1;
-            let mut ident = String::new();
-            while j < chars.len() && (chars[j].is_ascii_alphabetic() || chars[j] == '_') {
-                ident.push(chars[j]);
-                j += 1;
-            }
-            // digit-only or empty captures (e.g. `{0}`, `{}`) reference
-            // arguments, not scope variables — nothing to check
-            if !ident.is_empty() && !idents.contains(&ident) {
-                idents.push(ident);
-            }
-            // skip to the closing brace of this placeholder
-            while j < chars.len() && chars[j] != '}' {
-                j += 1;
-            }
-            i = j + 1;
-        } else if chars[i] == '}' && chars.get(i + 1) == Some(&'}') {
-            i += 2;
-        } else {
-            i += 1;
+    let mut rest = content;
+    // each iteration consumes one `{`-led placeholder: escapes (`{{`) and
+    // digit-only/empty captures (`{0}`, `{}`) reference arguments, not scope
+    // variables, so nothing is recorded for them
+    while let Some((_, after_open)) = rest.split_once('{') {
+        if after_open.starts_with('{') {
+            rest = &after_open[1..];
+            continue;
         }
+        let body_end = after_open.find('}').unwrap_or(after_open.len());
+        let body = &after_open[..body_end];
+        let ident: String = body
+            .chars()
+            .take_while(|c| c.is_ascii_alphabetic() || *c == '_')
+            .collect();
+        if !ident.is_empty() && !idents.contains(&ident) {
+            idents.push(ident);
+        }
+        rest = after_open.get(body_end + 1..).unwrap_or("");
     }
     idents
 }
