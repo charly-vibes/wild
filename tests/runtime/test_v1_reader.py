@@ -166,37 +166,53 @@ def test_refused_semantic_contract_keeps_exit_one_with_diagnostics(
     assert "slot-name-duplicate" in codes(result)
 
 
-def test_output_slot_must_be_required(tmp_path: Path) -> None:
-    contract = base_contract()
-    contract["slots"][0]["required"] = False
-    result = run_v1(write(tmp_path, contract), out(tmp_path))
-    assert result.returncode == 1
-    assert "output-required" in codes(result)
+def _apply_mutations(contract: dict, ops) -> None:
+    """Apply (path…, value) pairs to a nested dict in place."""
+    for path, value in ops:
+        target = contract
+        for key in path[:-1]:
+            target = target[key]
+        target[path[-1]] = value
 
 
-def test_inverted_integer_interval_is_refused(tmp_path: Path) -> None:
-    contract = base_contract()
-    contract["slots"][0]["type"]["min"] = 10
-    contract["slots"][0]["type"]["max"] = 0
-    result = run_v1(write(tmp_path, contract), out(tmp_path))
-    assert result.returncode == 1
-    assert "integer-interval" in codes(result)
-
-
-def test_default_must_inhabit_declared_type(tmp_path: Path) -> None:
-    contract = base_contract()
-    contract["slots"][0]["default"] = {"present": True, "value": "zero"}
-    result = run_v1(write(tmp_path, contract), out(tmp_path))
-    assert result.returncode == 1
-    assert "default-type-mismatch" in codes(result)
-
-
-def test_default_outside_integer_interval_is_refused(tmp_path: Path) -> None:
-    contract = base_contract()
-    contract["slots"][0]["default"] = {"present": True, "value": 99}
-    result = run_v1(write(tmp_path, contract), out(tmp_path))
-    assert result.returncode == 1
-    assert "default-type-mismatch" in codes(result)
+def test_contract_defects_are_refused(tmp_path: Path) -> None:
+    # each scenario mutates the base contract in one way the reader must
+    # refuse; the diagnostic code pins which rule caught it. Mutation ops
+    # are (path…, value) pairs applied in order — the inverted interval
+    # needs both endpoints flipped, the rest are single-field mutations.
+    scenarios = [
+        (
+            "output_slot_must_be_required",
+            ((("slots", 0, "required"), False),),
+            "output-required",
+        ),
+        (
+            "inverted_integer_interval_is_refused",
+            ((("slots", 0, "type", "min"), 10), (("slots", 0, "type", "max"), 0)),
+            "integer-interval",
+        ),
+        (
+            "default_must_inhabit_declared_type",
+            ((("slots", 0, "default"), {"present": True, "value": "zero"}),),
+            "default-type-mismatch",
+        ),
+        (
+            "default_outside_integer_interval_is_refused",
+            ((("slots", 0, "default"), {"present": True, "value": 99}),),
+            "default-type-mismatch",
+        ),
+        (
+            "unknown_facet_is_refused",
+            ((("slots", 0, "facet"), "vibes"),),
+            "facet-unknown",
+        ),
+    ]
+    for case, ops, expected_code in scenarios:
+        contract = base_contract()
+        _apply_mutations(contract, ops)
+        result = run_v1(write(tmp_path, contract), out(tmp_path))
+        assert result.returncode == 1, f"{case}: {result.stdout}"
+        assert expected_code in codes(result), case
 
 
 def test_duplicate_law_id_is_refused(tmp_path: Path) -> None:
@@ -221,14 +237,6 @@ def test_unsorted_slot_array_is_refused(tmp_path: Path) -> None:
     result = run_v1(write(tmp_path, contract), out(tmp_path))
     assert result.returncode == 1
     assert "set-order" in codes(result)
-
-
-def test_unknown_facet_is_refused(tmp_path: Path) -> None:
-    contract = base_contract()
-    contract["slots"][0]["facet"] = "vibes"
-    result = run_v1(write(tmp_path, contract), out(tmp_path))
-    assert result.returncode == 1
-    assert "facet-unknown" in codes(result)
 
 
 def test_tombstone_must_be_an_input_slot(tmp_path: Path) -> None:

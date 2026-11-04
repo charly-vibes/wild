@@ -56,10 +56,10 @@ def test_wild_cd_sim_runs_clean():
     assert proc.stdout.strip(), "deployment simulation produced no output"
 
 
-def load_wild_cd_sim():
-    """Import prototype/wild_cd_sim.py by explicit path (no sys.path pollution)."""
+def load_prototype(stem: str, subdir: str = "prototype"):
+    """Import <subdir>/<stem>.py by explicit path (no sys.path pollution)."""
     spec = importlib.util.spec_from_file_location(
-        "wild_cd_sim_under_test", REPO / "prototype" / "wild_cd_sim.py"
+        f"{stem}_under_test", REPO / subdir / f"{stem}.py"
     )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -69,7 +69,7 @@ def load_wild_cd_sim():
 def test_wild_cd_sim_unikernel_scenarios_deterministic():
     """wild-5gb: unikernel scenario arms (E-H) are seeded-deterministic — two
     calls, identical dict output — and the parameterization is in place."""
-    sim = load_wild_cd_sim()
+    sim = load_prototype("wild_cd_sim")
     assert sim.PARAMS["boot_min"] == 0.2, "ASSUMED Firecracker-class boot missing"
     assert sim.PARAMS["farm_slots"] == 4, "ASSUMED build-farm slots missing"
     for fn in (sim.overlap_unikernel, sim.order_unikernel,
@@ -86,13 +86,7 @@ def test_wild_cat_sim_runs_clean():
 
 
 def load_wild_compose():
-    """Import prototype/wild_compose.py by explicit path (no sys.path pollution)."""
-    spec = importlib.util.spec_from_file_location(
-        "wild_compose_under_test", REPO / "prototype" / "wild_compose.py"
-    )
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    return load_prototype("wild_compose")
 
 
 def test_wild_compose_certificate_deterministic_and_verified():
@@ -129,14 +123,8 @@ def test_wild_compose_certificate_deterministic_and_verified():
     assert "tampered:edges" in labels, labels
 
 
-def load_functor_pilot():
-    """Import experiments/functor_pilot.py by explicit path (no sys.path pollution)."""
-    spec = importlib.util.spec_from_file_location(
-        "functor_pilot_under_test", REPO / "experiments" / "functor_pilot.py"
-    )
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+def load_wild_compose():
+    return load_prototype("wild_compose")
 
 
 def test_functor_pilot_extracts_fixture():
@@ -144,7 +132,7 @@ def test_functor_pilot_extracts_fixture():
     module type with two value specs + one type decl is attributed, the functor
     taking it carries correct parameter/result module types, and the
     `include module type of` gap is counted, not dropped. Two calls identical."""
-    pilot = load_functor_pilot()
+    pilot = load_prototype("functor_pilot", subdir="experiments")
     fixture = """
 module type SIG = sig
   val one : int

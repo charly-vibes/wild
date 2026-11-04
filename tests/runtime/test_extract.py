@@ -617,69 +617,79 @@ call_hidden!();
         assert "provider::add_one" in demand_blob
         assert "provider::greet" in demand_blob
 
-    def test_expression_position_whitelisted_macro_descends_arguments(self, tmp_path):
-        # (c) an expression-position whitelisted macro whose arguments
-        # reference a provider function records that demand like a direct
-        # call instead of refusing the whole invocation
-        fmt_lib = (
-            'pub fn with_format() -> u32 { let msg = format!("{}", provider::add_one(1)); 7 }\n'
-        )
-        files = write_bundle(tmp_path / "bundle", consumer_lib=fmt_lib)
-        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
-        assert proc.returncode == 0, f"expression descent must support: {proc.stdout}"
-        report = facts_json(tmp_path / "facts", "report.json")
-        assert report["complete_inventory"] is True
-        assert report["diagnostics"] == []
-        demand = facts_json(tmp_path / "facts", "demand.json")
-        assert "provider::add_one" in json.dumps(demand)
+    def test_whitelisted_macro_descent_records_provider_demand(self, tmp_path):
+        # (b)-(e) provider calls reached through supported std macro syntax —
+        # expression-position whitelisted heads, format_args! positional and
+        # named-argument values, plain-local captures — are recorded like
+        # direct calls: the demand resolves and nothing is disclosed
+        scenarios = [
+            (
+                "expression-position whitelisted macro",
+                'pub fn with_format() -> u32 { let msg = format!("{}", provider::add_one(1)); 7 }\n',
+            ),
+            (
+                "format_args positional arguments",
+                "fn take_args(a: std::fmt::Arguments) -> u32 { 7 }\n"
+                + CONSUMER_LIB
+                + 'pub fn routed() -> u32 { take_args(format_args!("v={} plus {}", provider::add_one(1), 2)); 7 }\n',
+            ),
+            (
+                "format_args named argument values",
+                "fn take_args(a: std::fmt::Arguments) -> u32 { 7 }\n"
+                + CONSUMER_LIB
+                + 'pub fn routed() -> u32 { take_args(format_args!("{x} then {x}", x = provider::add_one(1))); 7 }\n',
+            ),
+            (
+                "plain local capture",
+                CONSUMER_LIB
+                + 'pub fn local_capture() -> u32 { let x = provider::add_one(1); println!("{x}"); x }\n',
+            ),
+        ]
+        for case, lib in scenarios:
+            files = write_bundle(tmp_path / "bundle", consumer_lib=lib)
+            proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+            assert proc.returncode == 0, f"{case}: descent must support: {proc.stdout}"
+            report = facts_json(tmp_path / "facts", "report.json")
+            assert report["complete_inventory"] is True, case
+            assert report["diagnostics"] == [], case
+            demand = facts_json(tmp_path / "facts", "demand.json")
+            assert "provider::add_one" in json.dumps(demand), case
 
-    def test_nested_macro_inside_whitelisted_args_retains_gap(self, tmp_path):
-        # (d) refusal composes: a nested macro inside a whitelisted macro's
-        # arguments keeps the incomplete-demand disclosure
-        nested_lib = CONSUMER_LIB + 'pub fn nested() -> u32 { println!("{}", foo!()); 7 }\n'
-        files = write_bundle(tmp_path / "bundle", consumer_lib=nested_lib)
-        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
-        assert proc.returncode == 1, "nested unsupported macro must refuse"
-        report = facts_json(tmp_path / "facts", "report.json")
-        assert report["complete_inventory"] is False
-        codes = {d["code"] for d in report["diagnostics"]}
-        assert "incomplete-demand" in codes
-
-    def test_statement_position_non_whitelisted_macro_retains_gap(self, tmp_path):
-        # (e) a statement-position macro outside the whitelist must keep the
-        # refusal, not be silently skipped as the incumbent does today
-        vec_lib = CONSUMER_LIB + "pub fn with_vec() -> u32 { vec![1, 2]; 7 }\n"
-        files = write_bundle(tmp_path / "bundle", consumer_lib=vec_lib)
-        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
-        assert proc.returncode == 1, "non-whitelisted statement macro must refuse"
-        report = facts_json(tmp_path / "facts", "report.json")
-        assert report["complete_inventory"] is False
-        codes = {d["code"] for d in report["diagnostics"]}
-        assert "incomplete-demand" in codes
-
-    def test_expression_position_non_whitelisted_macro_retains_gap(self, tmp_path):
-        # (f) an expression-position macro outside the whitelist keeps the
-        # refusal (regression guard for today's visit_expr_macro behavior)
-        vec_lib = CONSUMER_LIB + "pub fn with_vec() -> u32 { let v = vec![1, 2]; 7 }\n"
-        files = write_bundle(tmp_path / "bundle", consumer_lib=vec_lib)
-        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
-        assert proc.returncode == 1, "non-whitelisted expression macro must refuse"
-        report = facts_json(tmp_path / "facts", "report.json")
-        assert report["complete_inventory"] is False
-        codes = {d["code"] for d in report["diagnostics"]}
-        assert "incomplete-demand" in codes
-
-    def test_unparseable_whitelisted_head_retains_gap(self, tmp_path):
-        # (g) a whitelisted head whose tokens do not parse as a
-        # comma-separated expression list keeps the refusal — never guess
-        bad_lib = CONSUMER_LIB + "pub fn unparseable() -> u32 { println!(a; b); 7 }\n"
-        files = write_bundle(tmp_path / "bundle", consumer_lib=bad_lib)
-        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
-        assert proc.returncode == 1, "unparseable whitelisted head must refuse"
-        report = facts_json(tmp_path / "facts", "report.json")
-        assert report["complete_inventory"] is False
-        codes = {d["code"] for d in report["diagnostics"]}
-        assert "incomplete-demand" in codes
+    def test_non_whitelisted_macro_positions_retain_the_gap(self, tmp_path):
+        # (d)-(g) refusal composes everywhere the profile does not support a
+        # macro: nested inside whitelisted args, statement position,
+        # expression position, and unparseable whitelisted heads all keep the
+        # incomplete-demand disclosure — never silently skipped
+        scenarios = [
+            (
+                "nested inside whitelisted args",
+                CONSUMER_LIB + 'pub fn nested() -> u32 { println!("{}", foo!()); 7 }\n',
+                "nested unsupported macro must refuse",
+            ),
+            (
+                "statement position",
+                CONSUMER_LIB + "pub fn with_vec() -> u32 { vec![1, 2]; 7 }\n",
+                "non-whitelisted statement macro must refuse",
+            ),
+            (
+                "expression position",
+                CONSUMER_LIB + "pub fn with_vec() -> u32 { let v = vec![1, 2]; 7 }\n",
+                "non-whitelisted expression macro must refuse",
+            ),
+            (
+                "unparseable whitelisted head",
+                CONSUMER_LIB + "pub fn unparseable() -> u32 { println!(a; b); 7 }\n",
+                "unparseable whitelisted head must refuse",
+            ),
+        ]
+        for case, lib, why in scenarios:
+            files = write_bundle(tmp_path / "bundle", consumer_lib=lib)
+            proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+            assert proc.returncode == 1, f"{case}: {why}: {proc.stdout}"
+            report = facts_json(tmp_path / "facts", "report.json")
+            assert report["complete_inventory"] is False, case
+            codes = {d["code"] for d in report["diagnostics"]}
+            assert "incomplete-demand" in codes, case
 
     def test_relocation_and_formatting_preserve_semantic_identity_with_macro(self, tmp_path):
         # the determinism split must survive macro descent: the demand walk
@@ -754,41 +764,8 @@ call_hidden!();
         demand = facts_json(tmp_path / "facts0", "demand.json")
         assert "provider::add_one" in json.dumps(demand)
 
-    def test_format_args_arguments_record_demands_like_direct_calls(self, tmp_path):
-        # (b) a provider call inside format_args! positional arguments is the
-        # ONLY reference to that provider fn; the demand is recorded like a
-        # direct call
-        lib = (
-            "fn take_args(a: std::fmt::Arguments) -> u32 { 7 }\n"
-            + CONSUMER_LIB
-            + "pub fn routed() -> u32 { take_args(format_args!(\"v={} plus {}\", provider::add_one(1), 2)); 7 }\n"
-        )
-        files = write_bundle(tmp_path / "bundle", consumer_lib=lib)
-        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
-        assert proc.returncode == 0, f"argument demands must resolve: {proc.stdout}"
-        report = facts_json(tmp_path / "facts", "report.json")
-        assert report["complete_inventory"] is True
-        assert report["diagnostics"] == []
-        demand = facts_json(tmp_path / "facts", "demand.json")
-        assert "provider::add_one" in json.dumps(demand)
-
-    def test_format_args_named_argument_values_record_demands(self, tmp_path):
-        # (c) a provider call inside a named-argument value (`x = expr` parses
-        # as Expr::Assign, probe-corrected) is descended and recorded like a
-        # direct call — refusing it would invent incompleteness
-        lib = (
-            "fn take_args(a: std::fmt::Arguments) -> u32 { 7 }\n"
-            + CONSUMER_LIB
-            + "pub fn routed() -> u32 { take_args(format_args!(\"{x} then {x}\", x = provider::add_one(1))); 7 }\n"
-        )
-        files = write_bundle(tmp_path / "bundle", consumer_lib=lib)
-        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
-        assert proc.returncode == 0, f"named-argument demands must resolve: {proc.stdout}"
-        report = facts_json(tmp_path / "facts", "report.json")
-        assert report["complete_inventory"] is True
-        assert report["diagnostics"] == []
-        demand = facts_json(tmp_path / "facts", "demand.json")
-        assert "provider::add_one" in json.dumps(demand)
+    # (b)/(c) the positional and named-argument format_args! variants are
+    # covered by test_whitelisted_macro_descent_records_provider_demand
 
     def test_named_argument_shadowing_provider_name_emits_no_capture_gap(self, tmp_path):
         # (c2) `{MAX}` here references the named argument `MAX = 1`, not a
@@ -807,61 +784,43 @@ call_hidden!();
         assert report["complete_inventory"] is True
         assert report["diagnostics"] == []
 
-    def test_format_capture_of_provider_value_item_is_disclosed(self, tmp_path):
-        # (d) direct capture: the format string captures MAX, which names a
-        # provider value item — walker-invisible today (silent acceptance of
-        # a provider reference); the capture must be disclosed
-        lib = (
-            "fn take_args(a: std::fmt::Arguments) -> u32 { 7 }\n"
-            "use provider::MAX;\n"
-            + CONSUMER_LIB
-            + "pub fn captured() -> u32 { println!(\"max={MAX}\"); 7 }\n"
-        )
-        files = write_bundle(
-            tmp_path / "bundle", consumer_lib=lib, provider_lib=self.PROVIDER_WITH_CONST
-        )
-        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
-        assert proc.returncode == 1, "provider-item capture must be disclosed"
-        report = facts_json(tmp_path / "facts", "report.json")
-        assert report["complete_inventory"] is False
-        codes = {d["code"] for d in report["diagnostics"]}
-        assert "incomplete-demand" in codes
+    def test_provider_value_item_capture_is_disclosed(self, tmp_path):
+        # (d) capturing a provider value item — directly or through a
+        # consumer-side alias — must be disclosed, not silently accepted: the
+        # walker cannot see the reference, so the demand profile refuses
+        scenarios = [
+            (
+                "direct capture",
+                "use provider::MAX;\n",
+                'pub fn captured() -> u32 { println!("max={MAX}"); 7 }\n',
+                "provider-item capture must be disclosed",
+            ),
+            (
+                "alias capture",
+                "use provider::MAX as LIMIT;\n",
+                'pub fn captured() -> u32 { take_args(format_args!("{LIMIT}")); 7 }\n',
+                "aliased provider-item capture must be disclosed",
+            ),
+        ]
+        for case, use_line, captured_line, why in scenarios:
+            lib = (
+                "fn take_args(a: std::fmt::Arguments) -> u32 { 7 }\n"
+                + use_line
+                + CONSUMER_LIB
+                + captured_line
+            )
+            files = write_bundle(
+                tmp_path / "bundle", consumer_lib=lib, provider_lib=self.PROVIDER_WITH_CONST
+            )
+            proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
+            assert proc.returncode == 1, f"{case}: {why}"
+            report = facts_json(tmp_path / "facts", "report.json")
+            assert report["complete_inventory"] is False, case
+            codes = {d["code"] for d in report["diagnostics"]}
+            assert "incomplete-demand" in codes, case
 
-    def test_format_capture_via_alias_is_disclosed(self, tmp_path):
-        # (d) alias variant: the capture names the consumer-side alias of a
-        # provider value item; matching only crate-local provider names would
-        # leave the hole open through the alias path the profile supports
-        lib = (
-            "fn take_args(a: std::fmt::Arguments) -> u32 { 7 }\n"
-            "use provider::MAX as LIMIT;\n"
-            + CONSUMER_LIB
-            + "pub fn captured() -> u32 { take_args(format_args!(\"{LIMIT}\")); 7 }\n"
-        )
-        files = write_bundle(
-            tmp_path / "bundle", consumer_lib=lib, provider_lib=self.PROVIDER_WITH_CONST
-        )
-        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
-        assert proc.returncode == 1, "aliased provider-item capture must be disclosed"
-        report = facts_json(tmp_path / "facts", "report.json")
-        assert report["complete_inventory"] is False
-        codes = {d["code"] for d in report["diagnostics"]}
-        assert "incomplete-demand" in codes
-
-    def test_format_capture_of_plain_local_stays_demand_inert(self, tmp_path):
-        # (e) a capture of a plain local is not provider demand; the provider
-        # call in the initializer still resolves and nothing is disclosed
-        lib = (
-            CONSUMER_LIB
-            + "pub fn local_capture() -> u32 { let x = provider::add_one(1); println!(\"{x}\"); x }\n"
-        )
-        files = write_bundle(tmp_path / "bundle", consumer_lib=lib)
-        proc = run_extract(request_record(tmp_path / "bundle", files), tmp_path / "facts")
-        assert proc.returncode == 0, f"plain-local capture must stay inert: {proc.stdout}"
-        report = facts_json(tmp_path / "facts", "report.json")
-        assert report["complete_inventory"] is True
-        assert report["diagnostics"] == []
-        demand = facts_json(tmp_path / "facts", "demand.json")
-        assert "provider::add_one" in json.dumps(demand)
+    # (e) the plain-local variant is covered by
+    # test_whitelisted_macro_descent_records_provider_demand
 
     def test_escaped_braces_emit_no_capture_and_no_gap(self, tmp_path):
         # (f) escaped braces render literal text, not captures; the scan must

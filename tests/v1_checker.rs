@@ -17,19 +17,22 @@ fn scalar_str() -> Value {
 }
 
 fn opaque(fp: &str) -> Value {
-    formats::obj(vec![("shape", formats::s("opaque")), ("fingerprint", formats::s(fp))])
+    let fingerprint = formats::s(fp);
+    formats::obj(vec![("shape", formats::s("opaque")), ("fingerprint", fingerprint)])
 }
 
 fn example_contract() -> Value {
-    formats::obj(vec![
-        ("schema_version", formats::s("1")),
-        ("kind", formats::s("contract")),
-        ("slots", formats::arr(Vec::new())),
-        ("tombstones", formats::arr(Vec::new())),
-        ("laws", formats::arr(Vec::new())),
-        ("relations", formats::arr(Vec::new())),
-        ("sunsets", formats::arr(Vec::new())),
-    ])
+    formats::obj(
+        [("schema_version", "1"), ("kind", "contract")]
+            .into_iter()
+            .map(|(k, v)| (k, formats::s(v)))
+            .chain(
+                ["slots", "tombstones", "laws", "relations", "sunsets"]
+                    .into_iter()
+                    .map(|k| (k, formats::arr(Vec::new()))),
+            )
+            .collect(),
+    )
 }
 
 fn set_key(contract: &mut Value, key: &str, value: Value) {
@@ -56,6 +59,7 @@ fn contract_with_slot(slot: Value) -> Value {
 }
 
 fn integer_slot(name: &str, polarity: &str, required: bool, ty: Value) -> Value {
+    let absent = formats::obj(vec![("present", Value::Bool(false))]);
     formats::obj(vec![
         ("name", formats::s(name)),
         ("meaning", formats::s("example.meaning")),
@@ -63,10 +67,7 @@ fn integer_slot(name: &str, polarity: &str, required: bool, ty: Value) -> Value 
         ("facet", formats::s("api")),
         ("type", ty),
         ("required", Value::Bool(required)),
-        (
-            "default",
-            formats::obj(vec![("present", Value::Bool(false))]),
-        ),
+        ("default", absent),
     ])
 }
 

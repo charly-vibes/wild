@@ -482,139 +482,43 @@ def test_timeout_yields_inconclusive_never_sampled_pass(wild_binary, tmp_path):
     assert report["law_methods"][0]["status"] == "inconclusive"
 
 
-def test_crash_yields_inconclusive(wild_binary, tmp_path):
-    base_root, base, cand_root, cand = law_pair(
-        tmp_path, "crash", suite_text=SUITE_CRASH
-    )
-    ref = write_obligations(
-        tmp_path,
-        obligations_doc(
-            [
-                {
-                    "id": "crashing-law",
-                    "scope": "consumer",
-                    "origin": "human",
-                    "state": "accepted",
-                    "authority": dict(AUTHORITY),
-                    "predicate": {"kind": "law", "suite_digest": sha(SUITE_CRASH)},
-                }
-            ]
-        ),
-    )
-    report, proc = run_law_check(
-        law_request(base_root, base, cand_root, cand, ref), tmp_path, "crash-run"
-    )
-    assert proc.returncode == 1
-    assert report["assurance"] == "Unknown"
-    assert obligation_verdicts(report)["crashing-law"] == "law-executed-inconclusive"
-
-
-def test_ambient_access_attempt_yields_inconclusive(wild_binary, tmp_path):
-    base_root, base, cand_root, cand = law_pair(
-        tmp_path, "ambient", suite_text=SUITE_AMBIENT
-    )
-    ref = write_obligations(
-        tmp_path,
-        obligations_doc(
-            [
-                {
-                    "id": "ambient-law",
-                    "scope": "consumer",
-                    "origin": "human",
-                    "state": "accepted",
-                    "authority": dict(AUTHORITY),
-                    "predicate": {"kind": "law", "suite_digest": sha(SUITE_AMBIENT)},
-                }
-            ]
-        ),
-    )
-    report, proc = run_law_check(
-        law_request(base_root, base, cand_root, cand, ref), tmp_path, "ambient-run"
-    )
-    assert proc.returncode == 1
-    assert report["assurance"] == "Unknown"
-    assert obligation_verdicts(report)["ambient-law"] == "law-executed-inconclusive"
-
-
-def test_echo_mismatch_yields_runner_authored_inconclusive(wild_binary, tmp_path):
-    base_root, base, cand_root, cand = law_pair(
-        tmp_path, "echo", suite_text=SUITE_ECHO_MISMATCH
-    )
-    ref = write_obligations(
-        tmp_path,
-        obligations_doc(
-            [
-                {
-                    "id": "echo-law",
-                    "scope": "consumer",
-                    "origin": "human",
-                    "state": "accepted",
-                    "authority": dict(AUTHORITY),
-                    "predicate": {"kind": "law", "suite_digest": sha(SUITE_ECHO_MISMATCH)},
-                }
-            ]
-        ),
-    )
-    report, proc = run_law_check(
-        law_request(base_root, base, cand_root, cand, ref), tmp_path, "echo-run"
-    )
-    assert proc.returncode == 1
-    assert report["assurance"] == "Unknown"
-    assert obligation_verdicts(report)["echo-law"] == "law-executed-inconclusive"
-
-
-def test_stale_replayed_result_is_echo_rejected(wild_binary, tmp_path):
-    base_root, base, cand_root, cand = law_pair(
-        tmp_path, "stale", suite_text=SUITE_STALE_REPLAY
-    )
-    ref = write_obligations(
-        tmp_path,
-        obligations_doc(
-            [
-                {
-                    "id": "stale-law",
-                    "scope": "consumer",
-                    "origin": "human",
-                    "state": "accepted",
-                    "authority": dict(AUTHORITY),
-                    "predicate": {"kind": "law", "suite_digest": sha(SUITE_STALE_REPLAY)},
-                }
-            ]
-        ),
-    )
-    report, proc = run_law_check(
-        law_request(base_root, base, cand_root, cand, ref), tmp_path, "stale-run"
-    )
-    assert proc.returncode == 1
-    assert report["assurance"] == "Unknown"
-    assert obligation_verdicts(report)["stale-law"] == "law-executed-inconclusive"
-
-
-def test_nondeterministic_law_yields_inconclusive(wild_binary, tmp_path):
-    base_root, base, cand_root, cand = law_pair(
-        tmp_path, "nondet", suite_text=SUITE_NONDETERMINISTIC
-    )
-    ref = write_obligations(
-        tmp_path,
-        obligations_doc(
-            [
-                {
-                    "id": "nondet-law",
-                    "scope": "consumer",
-                    "origin": "human",
-                    "state": "accepted",
-                    "authority": dict(AUTHORITY),
-                    "predicate": {"kind": "law", "suite_digest": sha(SUITE_NONDETERMINISTIC)},
-                }
-            ]
-        ),
-    )
-    report, proc = run_law_check(
-        law_request(base_root, base, cand_root, cand, ref), tmp_path, "nondet-run"
-    )
-    assert proc.returncode == 1
-    assert report["assurance"] == "Unknown"
-    assert obligation_verdicts(report)["nondet-law"] == "law-executed-inconclusive"
+def test_failed_execution_scenarios_yield_runner_authored_inconclusive(
+    wild_binary, tmp_path
+):
+    """Every captured failure mode (crash, sandbox denial, echo mismatch,
+    stale replay, nondeterminism) must surface as law-executed-inconclusive
+    on its obligation — never as a fabricated pass."""
+    scenarios = [
+        ("crash", SUITE_CRASH, "crashing-law"),
+        ("ambient", SUITE_AMBIENT, "ambient-law"),
+        ("echo", SUITE_ECHO_MISMATCH, "echo-law"),
+        ("stale", SUITE_STALE_REPLAY, "stale-law"),
+        ("nondet", SUITE_NONDETERMINISTIC, "nondet-law"),
+    ]
+    for case, suite_text, law_id in scenarios:
+        base_root, base, cand_root, cand = law_pair(tmp_path, case, suite_text=suite_text)
+        ref = write_obligations(
+            tmp_path,
+            obligations_doc(
+                [
+                    {
+                        "id": law_id,
+                        "scope": "consumer",
+                        "origin": "human",
+                        "state": "accepted",
+                        "authority": dict(AUTHORITY),
+                        "predicate": {"kind": "law", "suite_digest": sha(suite_text)},
+                    }
+                ]
+            ),
+        )
+        report, proc = run_law_check(
+            law_request(base_root, base, cand_root, cand, ref), tmp_path, f"{case}-run"
+        )
+        assert proc.returncode == 1, f"{case}: expected refusal exit"
+        assert report["assurance"] == "Unknown", f"{case}: assurance must stay Unknown"
+        verdict = obligation_verdicts(report)[law_id]
+        assert verdict == "law-executed-inconclusive", f"{case}: got {verdict}"
 
 
 def test_unsupported_law_is_isolated_and_other_obligations_still_evaluate(

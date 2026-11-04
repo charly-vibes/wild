@@ -122,11 +122,24 @@ def test_C06_cross_boundary_relation():
         assert cases["endpoint_hidden"][arm]["verdict"] == "not_applicable"
 
 
-def test_C07_same_contract_new_bytes():
-    cases = run_experiment()["cases"]["C07_same_contract_new_bytes"]
-    assert cases["unchanged_reuse"] == ["accepted", ""]
-    assert cases["changed_artifact_stale"] == ["refused", "stale_evidence"]
-    assert cases["changed_artifact_fresh_run"] == ["accepted", ""]
+def test_C_boundary_cases_pin_verdict_reason_pairs():
+    # C07/C10/C11 all report [verdict, reason] pairs; one experiment run
+    # pins all three boundary matrices
+    cases = run_experiment()["cases"]
+    c07 = cases["C07_same_contract_new_bytes"]
+    assert c07["unchanged_reuse"] == ["accepted", ""]
+    assert c07["changed_artifact_stale"] == ["refused", "stale_evidence"]
+    assert c07["changed_artifact_fresh_run"] == ["accepted", ""]
+    c10 = cases["C10_incomplete_bundle"]
+    assert c10["intact_bundle"] == ["accepted", ""]
+    assert c10["missing_impl_blob"] == ["refused",
+                                         "missing_artifact_blob:store"]
+    assert c10["missing_oracle_fixture"] == ["refused",
+                                              "missing_oracle_fixture"]
+    c11 = cases["C11_stale_authority"]
+    assert c11["structure_verdict_preserved"] == "accepted"
+    assert c11["current_authority"] == ["accepted", ""]
+    assert c11["old_acceptance_reuse"] == ["refused", "authority_revoked"]
 
 
 def test_C09a_renaming_equivalence():
@@ -186,21 +199,6 @@ def test_C09e_grouping_associativity():
     assert (cases["grouping_left"]["closure_digest"] ==
             cases["grouping_right"]["closure_digest"])
 
-
-def test_C10_incomplete_bundle():
-    cases = run_experiment()["cases"]["C10_incomplete_bundle"]
-    assert cases["intact_bundle"] == ["accepted", ""]
-    assert cases["missing_impl_blob"] == ["refused",
-                                          "missing_artifact_blob:store"]
-    assert cases["missing_oracle_fixture"] == ["refused",
-                                               "missing_oracle_fixture"]
-
-
-def test_C11_stale_authority():
-    cases = run_experiment()["cases"]["C11_stale_authority"]
-    assert cases["structure_verdict_preserved"] == "accepted"
-    assert cases["current_authority"] == ["accepted", ""]
-    assert cases["old_acceptance_reuse"] == ["refused", "authority_revoked"]
 
 
 def test_C16_evidence_domain_mismatch():

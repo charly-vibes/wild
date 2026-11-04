@@ -69,15 +69,9 @@ def contract(slots: list[dict]) -> dict:
 
 
 def slot(name: str, ty: dict, meaning: str = "public function", polarity: str = "out") -> dict:
-    return {
-        "name": name,
-        "meaning": meaning,
-        "polarity": polarity,
-        "facet": "api",
-        "type": ty,
-        "required": True,
-        "default": {"present": False},
-    }
+    record = {"facet": "api", "type": ty, "required": True, "default": {"present": False}}
+    record.update(name=name, meaning=meaning, polarity=polarity)
+    return record
 
 
 # The base provider contract the obligations are authored against: add_one
@@ -85,6 +79,15 @@ def slot(name: str, ty: dict, meaning: str = "public function", polarity: str = 
 BASE_OBLIGATION_CONTRACT = contract(
     [slot("provider::add_one", fn_type([U32], U32), "public function")]
 )
+
+
+def default_predicate() -> dict:
+    """The structural predicate binding the base provider contract."""
+    return {
+        "kind": "structural",
+        "digest": sha(canonical(BASE_OBLIGATION_CONTRACT)),
+        "contract": BASE_OBLIGATION_CONTRACT,
+    }
 
 
 def obligation(id: str, predicate: dict | None = None) -> dict:
@@ -112,27 +115,18 @@ def proposed_obligation(id: str, predicate: dict | None = None) -> dict:
 def agent_obligation(id: str, predicate: dict | None = None) -> dict:
     """An accepted agent-origin obligation on the default consumer scope."""
     if predicate is None:
-        predicate = {
-            "kind": "structural",
-            "digest": sha(canonical(BASE_OBLIGATION_CONTRACT)),
-            "contract": BASE_OBLIGATION_CONTRACT,
-        }
+        predicate = default_predicate()
     return _obligation(id, "agent", "accepted", predicate)
 
 
 def _obligation(id: str, origin: str, state: str, predicate: dict) -> dict:
-    return {
-        "id": id,
-        "scope": "consumer",
-        "origin": origin,
-        "state": state,
-        "authority": dict(AUTHORITY),
-        "predicate": predicate,
-    }
+    record = dict(id=id, scope="consumer", origin=origin, state=state)
+    record.update(authority=dict(AUTHORITY), predicate=predicate)
+    return record
 
 
 def obligations_doc(records: list[dict]) -> dict:
-    return {"version": "local-1", "kind": "obligations", "obligations": records}
+    return dict(version="local-1", kind="obligations", obligations=records)
 
 
 def write_obligations(root: Path, doc: dict, name: str = "obligations.json") -> dict:

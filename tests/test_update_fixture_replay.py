@@ -211,32 +211,30 @@ def test_cell_excluded_incompatible_major_two_phases():
     assert broken["independent_verdict"] == "incompatible"
 
 
-def test_migration_case_requires_the_supplied_migration():
+def test_authorized_phase_pins_necessary_migration_and_exact_target():
+    # the authorized replay must apply the supplied migration (and only
+    # because it is necessary) and select the target the evidence names
     rec = replay("migration-supplied", "authorized")
     assert rec["observed_outcome"] == "resolved-and-consumer-tests-passed"
     assert rec["evidence"]["migration_applied"] is True
     assert rec["evidence"]["without_migration"] == "resolved-then-consumer-tests-failed", (
         "the migration must be necessary: the unpatched consumer fails"
     )
+    stale = replay("wrong-target-selection", "no-update")
+    assert stale["observed_outcome"] == "resolved-but-selected-target-mismatch"
+    assert stale["evidence"]["requested"] == "1.2.5"
+    assert stale["evidence"]["selected"] == "1.2.3", "stale lock must select the old version"
 
 
-def test_wrong_target_selection_is_detected():
-    rec = replay("wrong-target-selection", "no-update")
-    assert rec["observed_outcome"] == "resolved-but-selected-target-mismatch"
-    assert rec["evidence"]["requested"] == "1.2.5"
-    assert rec["evidence"]["selected"] == "1.2.3", "stale lock must select the old version"
-
-
-def test_singleton_conflict_refuses_resolution():
-    rec = replay("singleton-conflict", "authorized")
-    assert rec["observed_outcome"] == "resolution-conflict"
-    assert "deputil" in rec["evidence"]["combined_output"]
-
-
-def test_baseline_failure_is_retained_as_baseline():
-    rec = replay("baseline-failure", "baseline")
-    assert rec["observed_outcome"] == "baseline-tests-failed"
-    assert rec["evidence"]["lock_dept_version"] == "1.2.3"
+def test_singleton_conflict_and_baseline_failure_pin_edge_outcomes():
+    # both single-phase edge cases refuse to fabricate an acceptance: a
+    # deputil conflict stays a conflict, a failing baseline stays failed
+    conflict = replay("singleton-conflict", "authorized")
+    assert conflict["observed_outcome"] == "resolution-conflict"
+    assert "deputil" in conflict["evidence"]["combined_output"]
+    baseline = replay("baseline-failure", "baseline")
+    assert baseline["observed_outcome"] == "baseline-tests-failed"
+    assert baseline["evidence"]["lock_dept_version"] == "1.2.3"
 
 
 def test_dynamic_case_retains_unresolved_label():
