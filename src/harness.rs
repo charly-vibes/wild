@@ -264,12 +264,16 @@ pub fn run_law(
     Ok(outcome)
 }
 
-fn validated_outcome(parsed: &ParsedResult) -> LawOutcome {
-    let base = |
-        verdict: &'static str,
-        witness: Option<String>,
-        reason: Option<String>,
-    | LawOutcome {
+/// Shape-validated evidence becomes an executed LawOutcome: the method and
+/// status are echoed as reported, the canonical bytes are digest-bound, and
+/// both runs are credited (twice-repeated requirement).
+fn executed_outcome(
+    parsed: &ParsedResult,
+    verdict: &'static str,
+    witness: Option<String>,
+    reason: Option<String>,
+) -> LawOutcome {
+    LawOutcome {
         verdict,
         method: parsed.method.clone(),
         status: Some(parsed.status.clone()),
@@ -280,11 +284,16 @@ fn validated_outcome(parsed: &ParsedResult) -> LawOutcome {
         artifact_digest: None,
         harness_digest: None,
         runs: 2,
-    };
+    }
+}
+
+fn validated_outcome(parsed: &ParsedResult) -> LawOutcome {
     match parsed.status.as_str() {
-        "pass" => base("law-pass", parsed.witness.clone(), None),
-        "counterexample" => base("law-counterexample", parsed.witness.clone(), None),
-        _ => base("law-executed-inconclusive", None, parsed.reason.clone()),
+        "pass" => executed_outcome(parsed, "law-pass", parsed.witness.clone(), None),
+        "counterexample" => {
+            executed_outcome(parsed, "law-counterexample", parsed.witness.clone(), None)
+        }
+        _ => executed_outcome(parsed, "law-executed-inconclusive", None, parsed.reason.clone()),
     }
 }
 
@@ -503,14 +512,12 @@ fn validate_result(text: &str, expected: &ExpectedEcho) -> Result<RunResult, Str
             return reason(format!("unknown law_result field `{key}`"));
         }
     }
-    if let Err(e) = value.str_field("version") {
-        return reason(format!("missing law_result field: {e}"));
-    }
-    if value.str_field("version").unwrap() != "1" {
-        return reason(format!(
-            "unsupported law_result version `{}`; expected `1`",
-            value.str_field("version").unwrap()
-        ));
+    let version = match value.str_field("version") {
+        Ok(v) => v,
+        Err(e) => return reason(format!("missing law_result field: {e}")),
+    };
+    if version != "1" {
+        return reason(format!("unsupported law_result version `{version}`; expected `1`"));
     }
     if value.str_field("kind").unwrap_or_default() != "law_result" {
         return reason("law_result kind mismatch".to_string());

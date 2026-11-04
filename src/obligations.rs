@@ -92,13 +92,12 @@ impl Transition {
 pub(crate) fn validate_obligations_ref(request: &Value) -> Result<(), String> {
     match request.get("obligations") {
         None | Some(Value::Null) => Ok(()),
-        Some(Value::Obj(entries)) => {
+        Some(obligations @ Value::Obj(entries)) => {
             for (key, _) in entries {
                 if !OBLIGATIONS_REF_FIELDS.contains(&key.as_str()) {
                     return Err(format!("unknown obligations field `{key}`"));
                 }
             }
-            let obligations = request.get("obligations").expect("checked above");
             let digest = obligations.str_field("digest")?;
             if !formats::is_digest(digest) {
                 return Err(format!("invalid obligations digest `{digest}`"));
