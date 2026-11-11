@@ -368,8 +368,6 @@ def cmd_report(args: argparse.Namespace) -> int:
         )
     oracle = _load_json(oracle_path)
     outcomes = _oracle_outcomes(oracle)
-    break_count = sum(1 for cid in pool_cases if outcomes.get(cid) == "break")
-    ok_count = sum(1 for cid in pool_cases if outcomes.get(cid) == "ok")
 
     lines = [
         "# Held-out evaluation report",
