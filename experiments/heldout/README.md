@@ -118,11 +118,91 @@ The separate columns are the point: aggregate accuracy would hide that the
 ecosystem caret rule misses the one real breakage while CI false-blocks an
 intent change and the declared range blocks two compatible updates.
 
+## wild-zfw corpus scaling (2026-11-11): 60 cases, 2 ecosystems
+
+4. **Pre-registration order is auditable in git.** The corpus (60 cases:
+   56 held_out, 4 development; 8 cargo + 52 python), the oracle
+   (60 outcomes), the split, the freeze (11 tools) and the seal were
+   committed together (9d63311) BEFORE `compare` ran the first wild verdict
+   on any new cell. No post-hoc swaps; the 4 e5 unresolved cases and 10
+   python drift-excluded cells keep recorded reasons in `excluded.json`.
+5. **Python arm provenance is split-disclosed per cell**
+   (`python_matrix.json` is the committed source): 28 section-2 cells carry
+   their RECORDED outcomes as oracle (24 ok / 4 break; the 4 break cells are
+   named in RESULTS.md §2), imported verbatim — not re-measured; 24 fresh
+   cells carry outcomes measured this run by real pip installs of the exact
+   versions plus the committed smoke scripts (23 ok / 1 break:
+   flask-3.1.1 × werkzeug-3.0.0, the partitioned kwarg). Fresh cells were
+   never seen by any tuning pass; the §2 cells ARE tuning-exposed for the
+   py_wild engine (v1→v2 refinement saw them) — the corpus keeps them
+   held_out with this ruling as the disclosure, per the brief.
+6. **Fresh reproduction disagrees with the §2 record on 5/28 cells — all
+   interpreter drift, not provider incompatibility.** Python 3.15 removed
+   `pkgutil.get_loader` (breaks flask 2.2.5's own import — all 4 of its
+   fresh §2 cells) and `ast.Str` (breaks werkzeug ≤2.3.0 imports —
+   2.3.3/3.0.3 × 2.2.3 plus one agreement-on-outcome cell). The 5
+   outcome-mismatches are recorded per cell in python_matrix.json
+   (reproduction blocks); the oracle stays the §2 record. The 10 fresh
+   matrix cells poisoned by the same drift are excluded with reasons —
+   they have no provider-compatibility outcome in this environment. The
+   requests arm reproduced 12/12.
+7. **Checkers are ecosystem-scoped.** checkers.json entries carry
+   `ecosystems`; compare skips non-applicable checker×case pairs (216
+   skipped, recorded in compare.json, excluded from every denominator).
+   The report's per-checker break/ok denominators are now computed over
+   the cases that checker actually ran on (identical to pool-wide for a
+   single-ecosystem corpus).
+8. **Aggregate accuracy is now recorded — alongside, never instead of,
+   the separate metrics.** The report gains per-checker aggregate-accuracy
+   sections and a corpus-aggregate section, each with explicit denominators
+   (decided runs; unknown excluded from numerator and denominator and
+   counted separately).
+9. **compare exit policy changed (disclosed).** Definite failures are
+   findings of the comparison, not run failures: compare exits 0 when
+   grading completes and 2 on integrity refusals (freeze drift, missing
+   seal, post-seal oracle drift, missing outcomes). wild-1xk's exit-1-on-
+   failures behavior drew attention to exactly the findings the report
+   already carries; wild-zfw's completion gate requires the run itself to
+   exit 0.
+10. **Environment requirements for the python arm** (disclosed, not
+    hidden): update_eval.py's replay needs `jsonschema` (PEP 668 blocks a
+    user install on this host — installed via `pip install --target
+    /tmp/wild-zfw-scratch/pylibs jsonschema` and PYTHONPATH); python
+    trees are ephemeral scratch (/tmp/wild-zfw-scratch/pytrees),
+    reinstallable from python_matrix.json's protocol block (pinned
+    support deps: jinja2 3.1.6, click 8.1.8, itsdangerous 2.2.0,
+    blinker 1.9.0, markupsafe 2.1.5, certifi 2026.10.23,
+    charset_normalizer 3.5.2, idna 3.10). A fresh clone re-freezes before
+    comparing (freeze digests include the wild binary).
+
+Held-out results over 56 cases (6 oracle-break, 50 oracle-ok; separate
+denominators first, aggregate second):
+
+| checker | eco | missed-breakage | false-block | coverage | unknown | aggregate-accuracy |
+|---|---|---|---|---|---|---|
+| host_ranges | cargo | 0/1 | 2/3 | 4/4 | 0 | 2/4 |
+| ci | cargo | 0/1 | 1/3 (intent-change) | 4/4 | 0 | 3/4 |
+| ecosystem | cargo | 1/1 (platform 1.8.0) | 1/3 (2.1.0) | 4/4 | 0 | 2/4 |
+| wild | cargo | 0/1 | 0/3 | 3/4 | 1/4 | 3/4 |
+| py_declared | python | 1/5 (flask-2.2.5 × wk-3.1.3, the §2 `__version__` catch) | 10/47 | 52/52 | 0 | 41/52 |
+| py_wild | python | 4/5 (the `partitioned=` cells — demand-invisible, §2's documented blind spot) | 0/47 | 52/52 | 0 | 48/52 |
+
+py_wild's one correct-reject is its true §2 catch; the corpus aggregate
+(99 correct / 119 decided runs, 1 unknown) is recorded in report.md — the
+separate columns remain the safety analysis. The §2 tradeoff reproduces on
+the scaled corpus: declared ranges (both ecosystems) false-block compatible
+updates; caret/ecosystem rules miss real breakages; CI false-blocks a
+behavior change; the contract tools miss demand-invisible breaks.
+
 ## Reproduction
 
 ```sh
 python3 experiments/heldout_corpus.py build \
   --cohort experiments/update_fixtures/e5/cases.json --out experiments/heldout
+# ^ merges python_matrix.json by default (wild-zfw); pass `--python-matrix ''`
+#   for the legacy cargo-only corpus. compare additionally needs the python
+#   trees (python_matrix.json protocol) and jsonschema on PYTHONPATH (see
+#   ruling 10).
 python3 experiments/heldout_eval.py split --cases experiments/heldout/cases.json \
   --out experiments/heldout/split
 python3 experiments/heldout_eval.py seal --oracle experiments/heldout/oracle.json \

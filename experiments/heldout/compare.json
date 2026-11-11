@@ -1,13 +1,13 @@
 {
-  "freeze_sha256": "dcb41eab625981d38d51f9ab83493f722c1cae75f5d4724b5ba768d2f04f37e4",
+  "freeze_sha256": "9e60702ecac2eb037df6792874ce3ec741c897e3ba13388e2604046e6f607aa0",
   "kind": "heldout-compare",
-  "oracle_sha256": "9fccce21fe5c65c23286e2696c2fe74ab2e4ccb16e2b24d022e1b98706118f11",
+  "oracle_sha256": "6d1fb285eaeb882de560e80faf34f2b621a01e1ccd516a6f79752aa78d8f6d99",
   "pool": "held_out",
   "runs": [
     {
       "case_id": "intent-change",
       "checker": "host_ranges",
-      "elapsed_seconds": 0.047079,
+      "elapsed_seconds": 0.026507,
       "note": "",
       "outcome_class": "correct-accept",
       "verdict": "accept"
@@ -15,7 +15,7 @@
     {
       "case_id": "migration-supplied",
       "checker": "host_ranges",
-      "elapsed_seconds": 0.043234,
+      "elapsed_seconds": 0.026449,
       "note": "",
       "outcome_class": "false-block",
       "verdict": "reject"
@@ -23,7 +23,7 @@
     {
       "case_id": "platform-ineligibility",
       "checker": "host_ranges",
-      "elapsed_seconds": 0.043787,
+      "elapsed_seconds": 0.026125,
       "note": "",
       "outcome_class": "correct-reject",
       "verdict": "reject"
@@ -31,7 +31,7 @@
     {
       "case_id": "transitive-addition",
       "checker": "host_ranges",
-      "elapsed_seconds": 0.048085,
+      "elapsed_seconds": 0.026244,
       "note": "",
       "outcome_class": "false-block",
       "verdict": "reject"
@@ -39,7 +39,7 @@
     {
       "case_id": "intent-change",
       "checker": "ci",
-      "elapsed_seconds": 0.424384,
+      "elapsed_seconds": 0.355866,
       "note": "",
       "outcome_class": "false-block",
       "verdict": "reject"
@@ -47,7 +47,7 @@
     {
       "case_id": "migration-supplied",
       "checker": "ci",
-      "elapsed_seconds": 0.571105,
+      "elapsed_seconds": 0.462807,
       "note": "",
       "outcome_class": "correct-accept",
       "verdict": "accept"
@@ -55,7 +55,7 @@
     {
       "case_id": "platform-ineligibility",
       "checker": "ci",
-      "elapsed_seconds": 0.366552,
+      "elapsed_seconds": 0.3075,
       "note": "",
       "outcome_class": "correct-reject",
       "verdict": "reject"
@@ -63,7 +63,7 @@
     {
       "case_id": "transitive-addition",
       "checker": "ci",
-      "elapsed_seconds": 0.488547,
+      "elapsed_seconds": 0.399606,
       "note": "",
       "outcome_class": "correct-accept",
       "verdict": "accept"
@@ -71,7 +71,7 @@
     {
       "case_id": "intent-change",
       "checker": "ecosystem",
-      "elapsed_seconds": 0.041937,
+      "elapsed_seconds": 0.026717,
       "note": "",
       "outcome_class": "correct-accept",
       "verdict": "accept"
@@ -79,7 +79,7 @@
     {
       "case_id": "migration-supplied",
       "checker": "ecosystem",
-      "elapsed_seconds": 0.041587,
+      "elapsed_seconds": 0.026314,
       "note": "",
       "outcome_class": "false-block",
       "verdict": "reject"
@@ -87,7 +87,7 @@
     {
       "case_id": "platform-ineligibility",
       "checker": "ecosystem",
-      "elapsed_seconds": 0.043519,
+      "elapsed_seconds": 0.027588,
       "note": "",
       "outcome_class": "missed-breakage",
       "verdict": "accept"
@@ -95,7 +95,7 @@
     {
       "case_id": "transitive-addition",
       "checker": "ecosystem",
-      "elapsed_seconds": 0.043707,
+      "elapsed_seconds": 0.025662,
       "note": "",
       "outcome_class": "correct-accept",
       "verdict": "accept"
@@ -103,7 +103,7 @@
     {
       "case_id": "intent-change",
       "checker": "wild",
-      "elapsed_seconds": 0.127456,
+      "elapsed_seconds": 0.099806,
       "note": "",
       "outcome_class": "correct-accept",
       "verdict": "accept"
@@ -111,7 +111,7 @@
     {
       "case_id": "migration-supplied",
       "checker": "wild",
-      "elapsed_seconds": 0.122937,
+      "elapsed_seconds": 0.097316,
       "note": "",
       "outcome_class": "correct-accept",
       "verdict": "accept"
@@ -119,7 +119,7 @@
     {
       "case_id": "platform-ineligibility",
       "checker": "wild",
-      "elapsed_seconds": 0.121766,
+      "elapsed_seconds": 0.097641,
       "note": "",
       "outcome_class": "unknown",
       "verdict": "unknown"
@@ -127,10 +127,1924 @@
     {
       "case_id": "transitive-addition",
       "checker": "wild",
-      "elapsed_seconds": 0.130363,
+      "elapsed_seconds": 0.111795,
       "note": "",
       "outcome_class": "correct-accept",
       "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-2.2.3",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.052046,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-2.3.8",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051685,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-3.0.6",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.050793,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-3.1.3",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.050565,
+      "note": "",
+      "outcome_class": "missed-breakage",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-2.2.3",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051282,
+      "note": "",
+      "outcome_class": "false-block",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-2.3.8",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.05302,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.0.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051037,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.0.6",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051321,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.053157,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.1",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.050081,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.2",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.050557,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.3",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.052036,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-2.2.3",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051501,
+      "note": "",
+      "outcome_class": "false-block",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-2.3.8",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.052911,
+      "note": "",
+      "outcome_class": "false-block",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.0.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.050663,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.0.6",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051427,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051645,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.1",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051543,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.2",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051223,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.3",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051532,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-2.2.3",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.050807,
+      "note": "",
+      "outcome_class": "correct-reject",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-2.3.8",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.050724,
+      "note": "",
+      "outcome_class": "correct-reject",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.0.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.052042,
+      "note": "",
+      "outcome_class": "correct-reject",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.0.6",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.052676,
+      "note": "",
+      "outcome_class": "correct-reject",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051021,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.1",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.054381,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.2",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051532,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.3",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.0541,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-1.26.18",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.054941,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.0.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051908,
+      "note": "",
+      "outcome_class": "false-block",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.0.7",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.052311,
+      "note": "",
+      "outcome_class": "false-block",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.1.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.052012,
+      "note": "",
+      "outcome_class": "false-block",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.2.3",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.05181,
+      "note": "",
+      "outcome_class": "false-block",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.3.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.052151,
+      "note": "",
+      "outcome_class": "false-block",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.4.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.053095,
+      "note": "",
+      "outcome_class": "false-block",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.5.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051647,
+      "note": "",
+      "outcome_class": "false-block",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-1.26.18",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051989,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.0.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051807,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.0.7",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.050805,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.1.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.06617,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.2.3",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.052621,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.3.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.050921,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.4.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051832,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.5.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051682,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-1.26.18",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.052015,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.0.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051128,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.0.7",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.05179,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.1.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051058,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.2.3",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.050772,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.3.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.050729,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.4.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051028,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.5.0",
+      "checker": "py_declared",
+      "elapsed_seconds": 0.051078,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-2.2.3",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.333048,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-2.3.8",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.635785,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-3.0.6",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.612264,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-3.1.3",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.621476,
+      "note": "",
+      "outcome_class": "correct-reject",
+      "verdict": "reject"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-2.2.3",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.619506,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-2.3.8",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.349033,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.0.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.612189,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.0.6",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.61429,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.638117,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.1",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.628351,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.2",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.626407,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.3",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.645538,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-2.2.3",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.624034,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-2.3.8",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.630119,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.0.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.602756,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.0.6",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.328219,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.609915,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.1",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.610318,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.2",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.608635,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.3",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.612524,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-2.2.3",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.624325,
+      "note": "",
+      "outcome_class": "missed-breakage",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-2.3.8",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.646588,
+      "note": "",
+      "outcome_class": "missed-breakage",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.0.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.608564,
+      "note": "",
+      "outcome_class": "missed-breakage",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.0.6",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.613352,
+      "note": "",
+      "outcome_class": "missed-breakage",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.632838,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.1",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.624422,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.2",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.626157,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.3",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.341024,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-1.26.18",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.160891,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.0.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.282554,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.0.7",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.289774,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.1.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.26631,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.2.3",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.298083,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.3.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.300959,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.4.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.299056,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.5.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.307999,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-1.26.18",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.159355,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.0.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.28268,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.0.7",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.28743,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.1.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.259729,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.2.3",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.303988,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.3.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.305369,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.4.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.309993,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.5.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.302696,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-1.26.18",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.303488,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.0.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.310084,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.0.7",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.30782,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.1.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.285873,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.2.3",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.186184,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.3.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.324551,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.4.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.326028,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.5.0",
+      "checker": "py_wild",
+      "elapsed_seconds": 0.329817,
+      "note": "",
+      "outcome_class": "correct-accept",
+      "verdict": "accept"
+    }
+  ],
+  "skipped": [
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-2.2.3",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-2.3.8",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-3.0.6",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-3.1.3",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-2.2.3",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-2.3.8",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.0.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.0.6",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.1",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.2",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.3",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-2.2.3",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-2.3.8",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.0.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.0.6",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.1",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.2",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.3",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-2.2.3",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-2.3.8",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.0.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.0.6",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.1",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.2",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.3",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-1.26.18",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.0.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.0.7",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.1.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.2.3",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.3.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.4.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.5.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-1.26.18",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.0.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.0.7",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.1.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.2.3",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.3.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.4.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.5.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-1.26.18",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.0.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.0.7",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.1.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.2.3",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.3.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.4.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.5.0",
+      "checker": "host_ranges",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-2.2.3",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-2.3.8",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-3.0.6",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-3.1.3",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-2.2.3",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-2.3.8",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.0.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.0.6",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.1",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.2",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.3",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-2.2.3",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-2.3.8",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.0.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.0.6",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.1",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.2",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.3",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-2.2.3",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-2.3.8",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.0.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.0.6",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.1",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.2",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.3",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-1.26.18",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.0.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.0.7",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.1.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.2.3",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.3.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.4.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.5.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-1.26.18",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.0.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.0.7",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.1.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.2.3",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.3.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.4.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.5.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-1.26.18",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.0.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.0.7",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.1.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.2.3",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.3.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.4.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.5.0",
+      "checker": "ci",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-2.2.3",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-2.3.8",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-3.0.6",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-3.1.3",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-2.2.3",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-2.3.8",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.0.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.0.6",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.1",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.2",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.3",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-2.2.3",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-2.3.8",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.0.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.0.6",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.1",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.2",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.3",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-2.2.3",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-2.3.8",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.0.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.0.6",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.1",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.2",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.3",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-1.26.18",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.0.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.0.7",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.1.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.2.3",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.3.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.4.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.5.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-1.26.18",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.0.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.0.7",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.1.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.2.3",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.3.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.4.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.5.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-1.26.18",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.0.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.0.7",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.1.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.2.3",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.3.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.4.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.5.0",
+      "checker": "ecosystem",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-2.2.3",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-2.3.8",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-3.0.6",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.2.5--werkzeug-3.1.3",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-2.2.3",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-2.3.8",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.0.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.0.6",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.1",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.2",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-2.3.3--werkzeug-3.1.3",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-2.2.3",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-2.3.8",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.0.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.0.6",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.1",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.2",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.0.3--werkzeug-3.1.3",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-2.2.3",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-2.3.8",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.0.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.0.6",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.1",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.2",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-flask-3.1.1--werkzeug-3.1.3",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-1.26.18",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.0.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.0.7",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.1.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.2.3",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.3.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.4.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.28.2--urllib3-2.5.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-1.26.18",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.0.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.0.7",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.1.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.2.3",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.3.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.4.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.31.0--urllib3-2.5.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-1.26.18",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.0.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.0.7",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.1.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.2.3",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.3.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.4.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "py-requests-2.32.3--urllib3-2.5.0",
+      "checker": "wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "intent-change",
+      "checker": "py_declared",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "migration-supplied",
+      "checker": "py_declared",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "platform-ineligibility",
+      "checker": "py_declared",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "transitive-addition",
+      "checker": "py_declared",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "intent-change",
+      "checker": "py_wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "migration-supplied",
+      "checker": "py_wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "platform-ineligibility",
+      "checker": "py_wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
+    },
+    {
+      "case_id": "transitive-addition",
+      "checker": "py_wild",
+      "reason": "ecosystem mismatch (checker not applicable; excluded from runs and from this checker's denominators)"
     }
   ],
   "version": 1
