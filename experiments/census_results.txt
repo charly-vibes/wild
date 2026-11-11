@@ -1,23 +1,670 @@
 # wild-58c census — serde full crates.io release history (false-break census)
-# PRE-REGISTRATION SKELETON — grading NOT yet performed.
-# This file exists to make the RED state and the pre-registration auditable:
-# the census script (experiments/census.py) carries the crate choice (serde),
-# the full sorted version list (308 plain X.Y.Z releases, created_at
-# ascending, pre-releases excluded, yanked included), and the slot-count /
-# classification methodology. This skeleton is committed BEFORE any
-# transition is graded; the graded per-release and per-transition tables
-# replace this file in the census commit.
-#
-# Pre-registration summary:
-#   crate: serde (serde-rs/serde), crates.io slug `serde`
-#   versions: 308 (see PRE_REGISTERED_VERSIONS in experiments/census.py)
-#   transitions: 307 consecutive pairs in release order
-#   slot counter: PRIMARY tree-sitter experiments path
-#     (prototype/wild_proto.extract_rust); SECONDARY wild extract binary
-#     columns (decision/inventored slots/opaque slots)
-#   opaque share = opaque slots / inventoried slots, per release
-#   false break = contract break AND cargo caret compatible AND no
-#     documented break evidence in the TO version's release notes
-#   evidence source: repos/serde-rs/serde releases bodies (fetched to
-#     scratch before grading; scratch: /tmp/wild-58c-scratch)
-# GRADING: not yet performed (pre-registration commit)
+# date: 2026-11-11T16:46:01.881923Z | scratch: /tmp/wild-58c-scratch
+# toolchain: cargo 1.98.1 (797e8a9bc 2026-08-05) | rustc 1.98.1 (48a229cea 2026-09-01)
+# wild extract binary: commit 0a5cc07e63a9dc5e3675c7bcdae781dd74ff606e | sha256 f2233f26c7979dcd5c99e476c864bc85528b9fd4ec786127326951d472a90135
+# extractors: PRIMARY slot counter + verdict engine = experiments tree-sitter path
+#   (prototype/wild_proto.extract_rust; the wild binary refuses complete inventory
+#   on macro_rules!/glob-reexport crates — see per-version decision column);
+#   SECONDARY columns = wild extract binary envelope (decision/slots/opaque).
+# evidence source (release notes for TO version): cache:/tmp/wild-58c-scratch/github_releases.json (322 bodies)
+# opaque share (per release) = wild-binary opaque slots / inventoried slots;
+#   '-' where the binary inventoried 0 slots. Every rate below names its
+#   numerator and denominator explicitly.
+
+== headline ==
+crate: serde | versions replayed: 308 (pre-registered list, created_at ascending) | transitions: 307
+public surface (PRIMARY, tree-sitter): min 0 / max 598 slots per release; sum over all releases = 120630 slots (numerator) over 308 releases (denominator); >=300-slot gate satisfied by max=598 (min=0 is serde 0.0.0, whose tarball ships a 0-byte empty src/lib.rs — verified, not an error)
+false-break rate: numerator 21 (contract=break AND cargo=compatible AND no documented/digestible break evidence: 9 none-found + 12 notes-no-marker) / denominator 24 (transitions with contract=break AND cargo=compatible) = 87.5%
+false-break rate secondary: same numerator 21 over ALL graded transitions 307 (denominator) = 6.8%
+opaque share aggregate: numerator 19972 opaque slots / denominator 19972 inventoried slots (wild binary, all releases) = 100.0%
+wild-binary complete-inventory refusals: 307 / 308 versions with a manifest (denominator) = 99.7%
+contract breaks total: 35 / 307 graded transitions (denominator) = 11.4%
+context, Cargo-conservative disputes: 0 / 307 graded transitions (denominator) where Cargo says incompatible but the contract says accretion
+unresolved versions (honest): 0 / 308 (denominator): none
+
+== per-release table ==
+version|yanked|status|ts_slots|wild_decision|wild_slots|wild_opaque|opaque_share(num/den)
+0.0.0|-|ok|0|accept|0|0|-
+0.2.0|-|ok|351|refuse|96|96|96/96
+0.2.1|-|ok|351|refuse|96|96|96/96
+0.3.0|-|ok|517|refuse|128|128|128/128
+0.3.1|-|ok|523|refuse|163|163|163/163
+0.3.2|-|ok|532|refuse|170|170|170/170
+0.3.3|-|ok|534|refuse|173|173|173/173
+0.4.0|-|ok|553|refuse|182|182|182/182
+0.4.1|-|ok|553|refuse|182|182|182/182
+0.4.2|-|ok|553|refuse|182|182|182/182
+0.4.3|-|ok|598|refuse|175|175|175/175
+0.5.0|-|ok|362|refuse|54|54|54/54
+0.5.1|-|ok|398|refuse|84|84|84/84
+0.5.2|-|ok|393|refuse|81|81|81/81
+0.5.3|-|ok|393|refuse|81|81|81/81
+0.6.0|-|ok|387|refuse|81|81|81/81
+0.6.1|-|ok|387|refuse|81|81|81/81
+0.6.6|-|ok|397|refuse|83|83|83/83
+0.6.7|-|ok|397|refuse|83|83|83/83
+0.6.10|-|ok|397|refuse|83|83|83/83
+0.6.11|-|ok|397|refuse|83|83|83/83
+0.6.12|-|ok|399|refuse|83|83|83/83
+0.6.13|-|ok|399|refuse|83|83|83/83
+0.6.14|-|ok|399|refuse|83|83|83/83
+0.6.15|-|ok|399|refuse|83|83|83/83
+0.7.0|-|ok|428|refuse|92|92|92/92
+0.7.4|-|ok|428|refuse|92|92|92/92
+0.7.5|-|ok|430|refuse|92|92|92/92
+0.7.6|Y|ok|419|refuse|79|79|79/79
+0.7.7|-|ok|419|refuse|79|79|79/79
+0.7.8|-|ok|419|refuse|79|79|79/79
+0.7.9|-|ok|419|refuse|79|79|79/79
+0.7.10|-|ok|419|refuse|79|79|79/79
+0.7.11|-|ok|419|refuse|79|79|79/79
+0.7.12|-|ok|419|refuse|79|79|79/79
+0.7.13|-|ok|419|refuse|79|79|79/79
+0.7.14|-|ok|420|refuse|110|110|110/110
+0.7.15|-|ok|420|refuse|110|110|110/110
+0.8.0|-|ok|437|refuse|104|104|104/104
+0.8.1|-|ok|439|refuse|106|106|106/106
+0.8.2|-|ok|439|refuse|106|106|106/106
+0.8.3|-|ok|439|refuse|106|106|106/106
+0.8.4|-|ok|444|refuse|108|108|108/108
+0.8.5|-|ok|444|refuse|108|108|108/108
+0.8.6|-|ok|444|refuse|108|108|108/108
+0.8.7|-|ok|452|refuse|110|110|110/110
+0.8.8|-|ok|452|refuse|110|110|110/110
+0.8.9|-|ok|452|refuse|110|110|110/110
+0.8.10|-|ok|452|refuse|110|110|110/110
+0.8.11|-|ok|452|refuse|110|110|110/110
+0.8.12|-|ok|452|refuse|110|110|110/110
+0.8.13|-|ok|452|refuse|109|109|109/109
+0.8.14|-|ok|452|refuse|109|109|109/109
+0.8.15|-|ok|452|refuse|109|109|109/109
+0.8.16|-|ok|452|refuse|109|109|109/109
+0.8.17|-|ok|452|refuse|109|109|109/109
+0.8.18|-|ok|452|refuse|109|109|109/109
+0.8.19|-|ok|452|refuse|109|109|109/109
+0.8.20|-|ok|452|refuse|109|109|109/109
+0.8.21|-|ok|452|refuse|109|109|109/109
+0.8.22|-|ok|452|refuse|109|109|109/109
+0.8.23|-|ok|452|refuse|109|109|109/109
+0.9.0|-|ok|403|refuse|53|53|53/53
+0.9.1|-|ok|403|refuse|53|53|53/53
+0.9.2|-|ok|404|refuse|53|53|53/53
+0.9.3|-|ok|404|refuse|53|53|53/53
+0.9.4|-|ok|404|refuse|53|53|53/53
+0.9.5|-|ok|404|refuse|53|53|53/53
+0.9.6|-|ok|411|refuse|70|70|70/70
+0.9.7|-|ok|414|refuse|68|68|68/68
+0.9.8|-|ok|414|refuse|68|68|68/68
+0.9.9|-|ok|414|refuse|68|68|68/68
+0.9.10|-|ok|414|refuse|68|68|68/68
+0.9.11|-|ok|417|refuse|68|68|68/68
+0.9.12|-|ok|425|refuse|73|73|73/73
+0.9.13|-|ok|425|refuse|73|73|73/73
+0.9.14|-|ok|429|refuse|73|73|73/73
+1.0.0|-|ok|371|refuse|54|54|54/54
+0.9.15|-|ok|429|refuse|73|73|73/73
+1.0.1|-|ok|371|refuse|54|54|54/54
+1.0.2|-|ok|371|refuse|54|54|54/54
+1.0.3|-|ok|371|refuse|54|54|54/54
+1.0.4|-|ok|371|refuse|54|54|54/54
+1.0.5|-|ok|371|refuse|54|54|54/54
+1.0.6|-|ok|371|refuse|54|54|54/54
+1.0.7|-|ok|378|refuse|58|58|58/58
+1.0.8|-|ok|378|refuse|58|58|58/58
+1.0.9|-|ok|378|refuse|58|58|58/58
+1.0.10|-|ok|378|refuse|58|58|58/58
+1.0.11|-|ok|378|refuse|58|58|58/58
+1.0.12|-|ok|378|refuse|58|58|58/58
+1.0.13|-|ok|380|refuse|58|58|58/58
+1.0.14|-|ok|380|refuse|58|58|58/58
+1.0.15|-|ok|380|refuse|58|58|58/58
+1.0.16|-|ok|384|refuse|58|58|58/58
+1.0.17|-|ok|384|refuse|58|58|58/58
+1.0.18|-|ok|384|refuse|58|58|58/58
+1.0.19|-|ok|384|refuse|57|57|57/57
+1.0.20|-|ok|384|refuse|57|57|57/57
+1.0.21|-|ok|384|refuse|57|57|57/57
+1.0.22|-|ok|384|refuse|57|57|57/57
+1.0.23|-|ok|384|refuse|57|57|57/57
+1.0.24|-|ok|384|refuse|57|57|57/57
+1.0.25|-|ok|390|refuse|59|59|59/59
+1.0.26|-|ok|390|refuse|59|59|59/59
+1.0.27|-|ok|390|refuse|59|59|59/59
+1.0.28|-|ok|390|refuse|59|59|59/59
+1.0.29|-|ok|390|refuse|59|59|59/59
+1.0.30|-|ok|390|refuse|59|59|59/59
+1.0.31|Y|ok|390|refuse|59|59|59/59
+1.0.32|-|ok|390|refuse|59|59|59/59
+1.0.33|-|ok|390|refuse|59|59|59/59
+1.0.34|-|ok|407|refuse|69|69|69/69
+1.0.35|-|ok|407|refuse|69|69|69/69
+1.0.36|-|ok|407|refuse|69|69|69/69
+1.0.37|-|ok|407|refuse|69|69|69/69
+1.0.38|-|ok|407|refuse|69|69|69/69
+1.0.39|-|ok|407|refuse|69|69|69/69
+1.0.40|-|ok|407|refuse|69|69|69/69
+1.0.41|-|ok|407|refuse|69|69|69/69
+1.0.42|-|ok|407|refuse|69|69|69/69
+1.0.43|-|ok|407|refuse|69|69|69/69
+1.0.44|-|ok|407|refuse|69|69|69/69
+1.0.45|-|ok|407|refuse|69|69|69/69
+1.0.46|-|ok|411|refuse|70|70|70/70
+1.0.47|-|ok|411|refuse|70|70|70/70
+1.0.48|-|ok|411|refuse|70|70|70/70
+1.0.49|-|ok|411|refuse|70|70|70/70
+1.0.50|-|ok|411|refuse|70|70|70/70
+1.0.51|-|ok|411|refuse|70|70|70/70
+1.0.52|-|ok|411|refuse|70|70|70/70
+1.0.53|-|ok|409|refuse|70|70|70/70
+1.0.54|-|ok|410|refuse|70|70|70/70
+1.0.55|-|ok|410|refuse|70|70|70/70
+1.0.56|-|ok|410|refuse|70|70|70/70
+1.0.57|-|ok|410|refuse|70|70|70/70
+1.0.58|-|ok|410|refuse|70|70|70/70
+1.0.59|-|ok|410|refuse|70|70|70/70
+1.0.60|-|ok|411|refuse|70|70|70/70
+1.0.61|-|ok|411|refuse|70|70|70/70
+1.0.62|-|ok|413|refuse|70|70|70/70
+1.0.63|-|ok|413|refuse|70|70|70/70
+1.0.64|-|ok|413|refuse|70|70|70/70
+1.0.65|-|ok|415|refuse|72|72|72/72
+1.0.66|-|ok|417|refuse|73|73|73/73
+1.0.67|-|ok|417|refuse|73|73|73/73
+1.0.68|-|ok|417|refuse|73|73|73/73
+1.0.69|-|ok|417|refuse|73|73|73/73
+1.0.70|-|ok|417|refuse|73|73|73/73
+1.0.71|-|ok|417|refuse|73|73|73/73
+1.0.72|-|ok|417|refuse|73|73|73/73
+1.0.73|-|ok|417|refuse|73|73|73/73
+1.0.74|-|ok|417|refuse|73|73|73/73
+1.0.75|-|ok|417|refuse|73|73|73/73
+1.0.76|-|ok|417|refuse|73|73|73/73
+1.0.77|-|ok|417|refuse|73|73|73/73
+1.0.78|-|ok|417|refuse|73|73|73/73
+1.0.79|-|ok|417|refuse|73|73|73/73
+1.0.80|-|ok|417|refuse|73|73|73/73
+1.0.81|-|ok|417|refuse|73|73|73/73
+1.0.82|-|ok|417|refuse|73|73|73/73
+1.0.83|-|ok|417|refuse|73|73|73/73
+1.0.84|-|ok|417|refuse|73|73|73/73
+1.0.85|-|ok|417|refuse|73|73|73/73
+1.0.86|-|ok|417|refuse|73|73|73/73
+1.0.87|-|ok|417|refuse|73|73|73/73
+1.0.88|-|ok|417|refuse|73|73|73/73
+1.0.89|-|ok|417|refuse|73|73|73/73
+1.0.90|-|ok|417|refuse|73|73|73/73
+1.0.91|-|ok|418|refuse|76|76|76/76
+1.0.92|-|ok|418|refuse|76|76|76/76
+1.0.93|-|ok|418|refuse|76|76|76/76
+1.0.94|-|ok|418|refuse|76|76|76/76
+1.0.95|Y|ok|418|refuse|76|76|76/76
+1.0.96|-|ok|418|refuse|76|76|76/76
+1.0.97|-|ok|418|refuse|76|76|76/76
+1.0.98|-|ok|418|refuse|76|76|76/76
+1.0.99|-|ok|418|refuse|76|76|76/76
+1.0.100|-|ok|418|refuse|76|76|76/76
+1.0.101|-|ok|418|refuse|76|76|76/76
+1.0.102|-|ok|418|refuse|76|76|76/76
+1.0.103|-|ok|418|refuse|76|76|76/76
+1.0.104|-|ok|418|refuse|76|76|76/76
+1.0.105|-|ok|418|refuse|77|77|77/77
+1.0.106|-|ok|418|refuse|77|77|77/77
+1.0.107|-|ok|418|refuse|77|77|77/77
+1.0.108|-|ok|418|refuse|77|77|77/77
+1.0.109|-|ok|418|refuse|77|77|77/77
+1.0.110|-|ok|418|refuse|77|77|77/77
+1.0.111|-|ok|418|refuse|77|77|77/77
+1.0.112|-|ok|418|refuse|77|77|77/77
+1.0.113|-|ok|418|refuse|77|77|77/77
+1.0.114|-|ok|417|refuse|77|77|77/77
+1.0.115|-|ok|417|refuse|77|77|77/77
+1.0.116|-|ok|417|refuse|77|77|77/77
+1.0.117|-|ok|417|refuse|77|77|77/77
+1.0.118|-|ok|417|refuse|77|77|77/77
+1.0.119|-|ok|361|refuse|30|30|30/30
+1.0.120|-|ok|361|refuse|30|30|30/30
+1.0.121|-|ok|364|refuse|32|32|32/32
+1.0.122|-|ok|374|refuse|33|33|33/33
+1.0.123|-|ok|374|refuse|33|33|33/33
+1.0.124|-|ok|374|refuse|33|33|33/33
+1.0.125|-|ok|374|refuse|33|33|33/33
+1.0.126|-|ok|374|refuse|33|33|33/33
+1.0.127|-|ok|374|refuse|33|33|33/33
+1.0.128|-|ok|374|refuse|33|33|33/33
+1.0.129|-|ok|374|refuse|33|33|33/33
+1.0.130|-|ok|374|refuse|33|33|33/33
+1.0.131|-|ok|374|refuse|33|33|33/33
+1.0.132|-|ok|374|refuse|33|33|33/33
+1.0.133|-|ok|376|refuse|33|33|33/33
+1.0.134|-|ok|376|refuse|33|33|33/33
+1.0.135|-|ok|376|refuse|33|33|33/33
+1.0.136|-|ok|376|refuse|33|33|33/33
+1.0.137|-|ok|376|refuse|33|33|33/33
+1.0.138|-|ok|376|refuse|33|33|33/33
+1.0.139|-|ok|381|refuse|43|43|43/43
+1.0.140|-|ok|381|refuse|43|43|43/43
+1.0.141|-|ok|381|refuse|43|43|43/43
+1.0.142|-|ok|381|refuse|43|43|43/43
+1.0.143|-|ok|381|refuse|43|43|43/43
+1.0.144|-|ok|381|refuse|43|43|43/43
+1.0.145|-|ok|381|refuse|43|43|43/43
+1.0.146|-|ok|381|refuse|43|43|43/43
+1.0.147|-|ok|384|refuse|45|45|45/45
+1.0.148|-|ok|384|refuse|45|45|45/45
+1.0.149|-|ok|384|refuse|45|45|45/45
+1.0.150|-|ok|384|refuse|45|45|45/45
+1.0.151|-|ok|384|refuse|45|45|45/45
+1.0.152|-|ok|384|refuse|45|45|45/45
+1.0.153|-|ok|384|refuse|45|45|45/45
+1.0.154|-|ok|384|refuse|45|45|45/45
+1.0.155|-|ok|384|refuse|45|45|45/45
+1.0.156|-|ok|384|refuse|45|45|45/45
+1.0.157|-|ok|384|refuse|45|45|45/45
+1.0.158|-|ok|384|refuse|45|45|45/45
+1.0.159|-|ok|384|refuse|45|45|45/45
+1.0.160|-|ok|384|refuse|45|45|45/45
+1.0.161|-|ok|384|refuse|45|45|45/45
+1.0.162|-|ok|384|refuse|45|45|45/45
+1.0.163|-|ok|384|refuse|45|45|45/45
+1.0.164|-|ok|384|refuse|45|45|45/45
+1.0.165|-|ok|384|refuse|45|45|45/45
+1.0.166|-|ok|384|refuse|45|45|45/45
+1.0.167|-|ok|384|refuse|45|45|45/45
+1.0.168|-|ok|384|refuse|45|45|45/45
+1.0.169|-|ok|384|refuse|45|45|45/45
+1.0.170|-|ok|384|refuse|45|45|45/45
+1.0.171|-|ok|384|refuse|45|45|45/45
+1.0.172|-|ok|384|refuse|45|45|45/45
+1.0.173|-|ok|384|refuse|45|45|45/45
+1.0.174|-|ok|384|refuse|45|45|45/45
+1.0.175|-|ok|384|refuse|45|45|45/45
+1.0.176|-|ok|384|refuse|45|45|45/45
+1.0.177|-|ok|384|refuse|45|45|45/45
+1.0.178|-|ok|384|refuse|45|45|45/45
+1.0.179|-|ok|384|refuse|45|45|45/45
+1.0.180|-|ok|384|refuse|48|48|48/48
+1.0.181|-|ok|384|refuse|48|48|48/48
+1.0.182|-|ok|384|refuse|48|48|48/48
+1.0.183|-|ok|384|refuse|48|48|48/48
+1.0.184|-|ok|384|refuse|48|48|48/48
+1.0.185|-|ok|384|refuse|48|48|48/48
+1.0.186|-|ok|384|refuse|48|48|48/48
+1.0.187|-|ok|394|refuse|48|48|48/48
+1.0.188|-|ok|394|refuse|48|48|48/48
+1.0.189|-|ok|394|refuse|48|48|48/48
+1.0.190|-|ok|394|refuse|48|48|48/48
+1.0.191|-|ok|394|refuse|48|48|48/48
+1.0.192|-|ok|394|refuse|48|48|48/48
+1.0.193|-|ok|394|refuse|48|48|48/48
+1.0.194|-|ok|394|refuse|48|48|48/48
+1.0.195|-|ok|394|refuse|48|48|48/48
+1.0.196|-|ok|395|refuse|48|48|48/48
+1.0.197|-|ok|395|refuse|48|48|48/48
+1.0.198|-|ok|395|refuse|48|48|48/48
+1.0.199|-|ok|395|refuse|48|48|48/48
+1.0.200|-|ok|395|refuse|48|48|48/48
+1.0.201|-|ok|395|refuse|48|48|48/48
+1.0.202|-|ok|395|refuse|48|48|48/48
+1.0.203|-|ok|395|refuse|48|48|48/48
+1.0.204|-|ok|395|refuse|48|48|48/48
+1.0.205|-|ok|395|refuse|48|48|48/48
+1.0.206|-|ok|395|refuse|48|48|48/48
+1.0.207|-|ok|395|refuse|48|48|48/48
+1.0.208|-|ok|395|refuse|48|48|48/48
+1.0.209|-|ok|395|refuse|48|48|48/48
+1.0.210|-|ok|395|refuse|48|48|48/48
+1.0.211|-|ok|395|refuse|48|48|48/48
+1.0.212|-|ok|395|refuse|48|48|48/48
+1.0.213|-|ok|395|refuse|48|48|48/48
+1.0.214|-|ok|409|refuse|48|48|48/48
+1.0.215|-|ok|409|refuse|48|48|48/48
+1.0.216|-|ok|409|refuse|48|48|48/48
+1.0.217|-|ok|409|refuse|48|48|48/48
+1.0.218|-|ok|409|refuse|48|48|48/48
+1.0.219|-|ok|409|refuse|48|48|48/48
+1.0.220|-|ok|2|refuse|0|0|-
+1.0.221|-|ok|3|refuse|0|0|-
+1.0.222|-|ok|3|refuse|0|0|-
+1.0.223|-|ok|3|refuse|0|0|-
+1.0.224|-|ok|3|refuse|0|0|-
+1.0.225|-|ok|2|refuse|0|0|-
+1.0.226|-|ok|2|refuse|0|0|-
+1.0.227|-|ok|2|refuse|0|0|-
+1.0.228|-|ok|2|refuse|0|0|-
+1.0.229|-|ok|2|refuse|0|0|-
+
+== per-transition table (consecutive, release order) ==
+from->to|contract_verdict|+added|-removed|changed|cargo_caret|evidence|first_break_reason
+0.0.0->0.2.0|break|+351|-0|0|incompatible|none-found|Deserialize::deserialize: new required input
+0.2.0->0.2.1|accretion|+0|-0|0|compatible|none-found|
+0.2.1->0.3.0|break|+266|-100|13|incompatible|none-found|Deserializer::visit_enum: output type rsfn: fn<V>(&mut self,V)->Result<V::Value, Self::Error> where V: Visitor,->rsfn: fn<V>(&mut self,&str,V)->Result<V::Value, Self::Error> where V: EnumVisitor,
+0.3.0->0.3.1|break|+19|-13|5|compatible|none-found|Error::missing_field_error: input type narrowed
+0.3.1->0.3.2|break|+9|-0|2|compatible|none-found|json::Deserializer: output type struct<Iter>->struct<Iter: Iterator<Item=io::Result<u8>>>
+0.3.2->0.3.3|break|+4|-2|3|compatible|none-found|json::Serializer::new: output type rsfn: fn(W)->Serializer<W>->rsfn: fn(W)->Self
+0.3.3->0.4.0|break|+20|-1|1|incompatible|none-found|bytes::ByteBuf#impl::From<T>: provide removed
+0.4.0->0.4.1|break|+0|-0|2|compatible|none-found|json::Value::lookup: output type rsfn: fn<'a>(&'a self,&'a str)->Option<&'a Value>->rsfn: fn<'a>(&'a self,&str)->Option<&'a Value>
+0.4.1->0.4.2|accretion|+0|-0|0|compatible|none-found|
+0.4.2->0.4.3|break|+65|-20|0|compatible|none-found|de::impls::BTreeMap#impl::Deserialize: provide removed
+0.4.3->0.5.0|break|+46|-282|4|incompatible|none-found|Deserializer::visit_enum: output type rsfn: fn<V>(&mut self,&str,V)->Result<V::Value, Self::Error> where V: EnumVisitor,->rsfn: fn<V>(&mut self,&'static str,&'static [&'static str],V)->Result<V::Value, Self::Error> where V: EnumVisitor,
+0.5.0->0.5.1|break|+36|-0|2|compatible|none-found|Error: output type trait->trait: Sized
+0.5.1->0.5.2|break|+0|-5|0|compatible|none-found|de::impls::VecMap#impl::Deserialize: provide removed
+0.5.2->0.5.3|break|+0|-0|2|compatible|none-found|Deserialize: output type trait->trait: Sized
+0.5.3->0.6.0|break|+0|-6|0|incompatible|notes-marker|de::EnumMapVisitor: provide removed
+0.6.0->0.6.1|accretion|+0|-0|0|compatible|notes-no-marker|
+0.6.1->0.6.6|accretion|+10|-0|0|compatible|notes-no-marker|
+0.6.6->0.6.7|accretion|+0|-0|0|compatible|notes-no-marker|
+0.6.7->0.6.10|accretion|+0|-0|0|compatible|notes-no-marker|
+0.6.10->0.6.11|accretion|+0|-0|0|compatible|notes-no-marker|
+0.6.11->0.6.12|accretion|+2|-0|0|compatible|notes-no-marker|
+0.6.12->0.6.13|accretion|+0|-0|0|compatible|notes-no-marker|
+0.6.13->0.6.14|accretion|+0|-0|0|compatible|notes-no-marker|
+0.6.14->0.6.15|accretion|+0|-0|0|compatible|notes-no-marker|
+0.6.15->0.7.0|break|+194|-165|16|incompatible|notes-marker|Deserializer::deserialize: new required input
+0.7.0->0.7.4|accretion|+0|-0|0|compatible|notes-marker|
+0.7.4->0.7.5|accretion|+2|-0|0|compatible|notes-marker|
+0.7.5->0.7.6|break|+5|-16|7|compatible|notes-no-marker|Error::custom: input type narrowed
+0.7.6->0.7.7|accretion|+0|-0|0|compatible|notes-marker|
+0.7.7->0.7.8|accretion|+0|-0|0|compatible|notes-marker|
+0.7.8->0.7.9|accretion|+0|-0|0|compatible|notes-marker|
+0.7.9->0.7.10|accretion|+0|-0|0|compatible|notes-no-marker|
+0.7.10->0.7.11|accretion|+0|-0|0|compatible|notes-no-marker|
+0.7.11->0.7.12|accretion|+0|-0|0|compatible|notes-no-marker|
+0.7.12->0.7.13|accretion|+0|-0|0|compatible|notes-no-marker|
+0.7.13->0.7.14|accretion|+1|-0|0|compatible|notes-no-marker|
+0.7.14->0.7.15|accretion|+0|-0|0|compatible|notes-no-marker|
+0.7.15->0.8.0|break|+36|-19|119|incompatible|notes-marker|Deserializer::deserialize_bool: polarity changed
+0.8.0->0.8.1|accretion|+2|-0|0|compatible|notes-no-marker|
+0.8.1->0.8.2|accretion|+0|-0|0|compatible|notes-no-marker|
+0.8.2->0.8.3|accretion|+0|-0|0|compatible|notes-no-marker|
+0.8.3->0.8.4|accretion|+5|-0|0|compatible|notes-no-marker|
+0.8.4->0.8.5|accretion|+0|-0|0|compatible|notes-no-marker|
+0.8.5->0.8.6|accretion|+0|-0|0|compatible|notes-marker|
+0.8.6->0.8.7|accretion|+8|-0|0|compatible|notes-no-marker|
+0.8.7->0.8.8|accretion|+0|-0|0|compatible|notes-no-marker|
+0.8.8->0.8.9|accretion|+0|-0|0|compatible|notes-no-marker|
+0.8.9->0.8.10|accretion|+0|-0|0|compatible|notes-marker|
+0.8.10->0.8.11|accretion|+0|-0|0|compatible|notes-no-marker|
+0.8.11->0.8.12|accretion|+0|-0|0|compatible|notes-no-marker|
+0.8.12->0.8.13|break|+2|-2|0|compatible|notes-marker|de::impls::ArrayVisitor0#impl::Visitor: provide removed
+0.8.13->0.8.14|accretion|+0|-0|0|compatible|notes-no-marker|
+0.8.14->0.8.15|accretion|+0|-0|0|compatible|notes-no-marker|
+0.8.15->0.8.16|accretion|+0|-0|0|compatible|notes-no-marker|
+0.8.16->0.8.17|accretion|+0|-0|0|compatible|notes-no-marker|
+0.8.17->0.8.18|accretion|+0|-0|0|compatible|notes-no-marker|
+0.8.18->0.8.19|accretion|+0|-0|0|compatible|notes-no-marker|
+0.8.19->0.8.20|accretion|+0|-0|0|compatible|notes-no-marker|
+0.8.20->0.8.21|accretion|+0|-0|0|compatible|notes-no-marker|
+0.8.21->0.8.22|accretion|+0|-0|0|compatible|notes-marker|
+0.8.22->0.8.23|accretion|+0|-0|0|compatible|notes-no-marker|
+0.8.23->0.9.0|break|+108|-157|165|incompatible|notes-marker|Deserialize::deserialize: input type narrowed
+0.9.0->0.9.1|accretion|+0|-0|0|compatible|notes-no-marker|
+0.9.1->0.9.2|accretion|+1|-0|0|compatible|notes-no-marker|
+0.9.2->0.9.3|accretion|+0|-0|0|compatible|notes-no-marker|
+0.9.3->0.9.4|accretion|+0|-0|0|compatible|notes-no-marker|
+0.9.4->0.9.5|accretion|+0|-0|0|compatible|notes-marker|
+0.9.5->0.9.6|accretion|+7|-0|0|compatible|notes-marker|
+0.9.6->0.9.7|break|+5|-2|2|compatible|notes-no-marker|Serializer: output type trait->trait: Sized
+0.9.7->0.9.8|break|+0|-0|29|compatible|notes-no-marker|Serializer::collect_map: output type rsfn: fn<K, V, I>(self,I)->Result<Self::Ok, Self::Error> where K: Serialize, V: Serialize, I: IntoIterator<Item = (K, V)>,->rsfn: fn<K, V, I>(self,I)->Result<Self::Ok, Self::Error> where K: Serialize, V: Serialize, I: IntoIterator<Item = (K, V)>
+0.9.8->0.9.9|accretion|+0|-0|0|compatible|notes-no-marker|
+0.9.9->0.9.10|break|+0|-0|1|compatible|notes-marker|ser::private::serialize_tagged_newtype: output type rsfn: fn<S, T>(S,&'static str,&'static str,&'static str,&'static str,T)->Result<S::Ok, S::Error> where S: Serializer, T: Serialize->rsfn: fn<S, T>(S,&'static str,&'static str,&'static str,&'static str,&T)->Result<S::Ok, S::Error> where S: Serializer, T: Serialize
+0.9.10->0.9.11|accretion|+3|-0|0|compatible|notes-no-marker|
+0.9.11->0.9.12|break|+8|-0|2|compatible|notes-no-marker|Serializer::collect_str: output type rsfn: fn<T: ?Sized>(self,&T)->Result<Self::Ok, Self::Error> where T: Display,->rsfn: fn<T: ?Sized>(self,&T)->Result<Self::Ok, Self::Error> where T: Display
+0.9.12->0.9.13|accretion|+0|-0|0|compatible|notes-no-marker|
+0.9.13->0.9.14|accretion|+4|-0|0|compatible|notes-no-marker|
+0.9.14->1.0.0|break|+108|-166|114|incompatible|notes-marker|Deserialize: output type trait: Sized->trait<'de>: Sized
+1.0.0->0.9.15|break|+166|-108|114|incompatible|notes-marker|Deserialize: output type trait<'de>: Sized->trait: Sized
+0.9.15->1.0.1|break|+108|-166|114|incompatible|notes-marker|Deserialize: output type trait: Sized->trait<'de>: Sized
+1.0.1->1.0.2|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.2->1.0.3|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.3->1.0.4|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.4->1.0.5|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.5->1.0.6|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.6->1.0.7|accretion|+7|-0|0|compatible|notes-no-marker|
+1.0.7->1.0.8|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.8->1.0.9|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.9->1.0.10|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.10->1.0.11|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.11->1.0.12|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.12->1.0.13|accretion|+2|-0|0|compatible|notes-no-marker|
+1.0.13->1.0.14|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.14->1.0.15|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.15->1.0.16|accretion|+4|-0|0|compatible|notes-no-marker|
+1.0.16->1.0.17|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.17->1.0.18|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.18->1.0.19|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.19->1.0.20|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.20->1.0.21|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.21->1.0.22|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.22->1.0.23|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.23->1.0.24|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.24->1.0.25|accretion|+6|-0|0|compatible|notes-no-marker|
+1.0.25->1.0.26|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.26->1.0.27|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.27->1.0.28|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.28->1.0.29|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.29->1.0.30|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.30->1.0.31|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.31->1.0.32|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.32->1.0.33|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.33->1.0.34|accretion|+17|-0|0|compatible|notes-marker|
+1.0.34->1.0.35|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.35->1.0.36|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.36->1.0.37|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.37->1.0.38|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.38->1.0.39|break|+0|-0|2|compatible|notes-no-marker|de::value::MapDeserializer::end: output type rsfn: fn(mut self)->Result<(), E>->rsfn: fn(self)->Result<(), E>
+1.0.39->1.0.40|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.40->1.0.41|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.41->1.0.42|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.42->1.0.43|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.43->1.0.44|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.44->1.0.45|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.45->1.0.46|accretion|+4|-0|0|compatible|notes-no-marker|
+1.0.46->1.0.47|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.47->1.0.48|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.48->1.0.49|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.49->1.0.50|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.50->1.0.51|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.51->1.0.52|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.52->1.0.53|break|+0|-2|0|compatible|notes-no-marker|Deserializer::private_deserialize_internally_tagged_enum: provide removed
+1.0.53->1.0.54|accretion|+1|-0|0|compatible|notes-no-marker|
+1.0.54->1.0.55|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.55->1.0.56|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.56->1.0.57|accretion|+0|-0|0|compatible|notes-marker|
+1.0.57->1.0.58|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.58->1.0.59|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.59->1.0.60|accretion|+1|-0|0|compatible|notes-no-marker|
+1.0.60->1.0.61|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.61->1.0.62|accretion|+2|-0|0|compatible|notes-no-marker|
+1.0.62->1.0.63|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.63->1.0.64|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.64->1.0.65|accretion|+2|-0|0|compatible|notes-no-marker|
+1.0.65->1.0.66|accretion|+2|-0|0|compatible|notes-no-marker|
+1.0.66->1.0.67|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.67->1.0.68|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.68->1.0.69|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.69->1.0.70|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.70->1.0.71|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.71->1.0.72|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.72->1.0.73|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.73->1.0.74|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.74->1.0.75|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.75->1.0.76|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.76->1.0.77|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.77->1.0.78|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.78->1.0.79|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.79->1.0.80|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.80->1.0.81|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.81->1.0.82|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.82->1.0.83|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.83->1.0.84|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.84->1.0.85|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.85->1.0.86|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.86->1.0.87|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.87->1.0.88|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.88->1.0.89|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.89->1.0.90|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.90->1.0.91|accretion|+1|-0|0|compatible|notes-no-marker|
+1.0.91->1.0.92|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.92->1.0.93|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.93->1.0.94|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.94->1.0.95|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.95->1.0.96|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.96->1.0.97|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.97->1.0.98|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.98->1.0.99|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.99->1.0.100|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.100->1.0.101|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.101->1.0.102|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.102->1.0.103|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.103->1.0.104|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.104->1.0.105|break|+0|-0|2|compatible|notes-no-marker|private::de::borrow_cow_bytes: output type rsfn: fn<'de: 'a, 'a, D>(D)->Result<Cow<'a, [u8]>, D::Error> where D: Deserializer<'de>,->rsfn: fn<'de: 'a, 'a, D, R>(D)->Result<R, D::Error> where D: Deserializer<'de>, R: From<Cow<'a, [u8]>>,
+1.0.105->1.0.106|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.106->1.0.107|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.107->1.0.108|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.108->1.0.109|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.109->1.0.110|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.110->1.0.111|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.111->1.0.112|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.112->1.0.113|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.113->1.0.114|break|+0|-1|0|compatible|notes-no-marker|ser::I#impl::LenHint: provide removed
+1.0.114->1.0.115|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.115->1.0.116|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.116->1.0.117|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.117->1.0.118|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.118->1.0.119|break|+1|-57|0|compatible|none-found|export: provide removed
+1.0.119->1.0.120|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.120->1.0.121|break|+4|-1|1|compatible|notes-no-marker|de::value::BorrowedBytesDeserializer#impl::de::Deserializer<'de>: provide removed
+1.0.121->1.0.122|accretion|+10|-0|0|compatible|notes-no-marker|
+1.0.122->1.0.123|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.123->1.0.124|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.124->1.0.125|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.125->1.0.126|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.126->1.0.127|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.127->1.0.128|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.128->1.0.129|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.129->1.0.130|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.130->1.0.131|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.131->1.0.132|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.132->1.0.133|accretion|+2|-0|0|compatible|notes-no-marker|
+1.0.133->1.0.134|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.134->1.0.135|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.135->1.0.136|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.136->1.0.137|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.137->1.0.138|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.138->1.0.139|accretion|+5|-0|0|compatible|notes-no-marker|
+1.0.139->1.0.140|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.140->1.0.141|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.141->1.0.142|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.142->1.0.143|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.143->1.0.144|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.144->1.0.145|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.145->1.0.146|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.146->1.0.147|accretion|+3|-0|0|compatible|notes-no-marker|
+1.0.147->1.0.148|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.148->1.0.149|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.149->1.0.150|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.150->1.0.151|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.151->1.0.152|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.152->1.0.153|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.153->1.0.154|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.154->1.0.155|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.155->1.0.156|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.156->1.0.157|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.157->1.0.158|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.158->1.0.159|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.159->1.0.160|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.160->1.0.161|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.161->1.0.162|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.162->1.0.163|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.163->1.0.164|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.164->1.0.165|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.165->1.0.166|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.166->1.0.167|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.167->1.0.168|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.168->1.0.169|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.169->1.0.170|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.170->1.0.171|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.171->1.0.172|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.172->1.0.173|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.173->1.0.174|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.174->1.0.175|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.175->1.0.176|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.176->1.0.177|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.177->1.0.178|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.178->1.0.179|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.179->1.0.180|break|+0|-0|2|compatible|notes-no-marker|Deserializer::__deserialize_content: output type rsfn: fn<V>(self,::actually_private::T,V)->Result<::private::de::Content<'de>, Self::Error> where V: Visitor<'de, Value = ::private::de::Content<'de>>,->rsfn: fn<V>(self,crate::actually_private::T,V)->Result<crate::__private::de::Content<'de>, Self::Error> where V: Visitor<'de, Value = crate::__private::de::Content<'de>>,
+1.0.180->1.0.181|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.181->1.0.182|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.182->1.0.183|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.183->1.0.184|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.184->1.0.185|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.185->1.0.186|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.186->1.0.187|accretion|+10|-0|0|compatible|notes-marker|
+1.0.187->1.0.188|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.188->1.0.189|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.189->1.0.190|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.190->1.0.191|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.191->1.0.192|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.192->1.0.193|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.193->1.0.194|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.194->1.0.195|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.195->1.0.196|accretion|+1|-0|0|compatible|notes-no-marker|
+1.0.196->1.0.197|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.197->1.0.198|break|+0|-0|17|compatible|notes-no-marker|Serializer::collect_str: input type narrowed
+1.0.198->1.0.199|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.199->1.0.200|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.200->1.0.201|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.201->1.0.202|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.202->1.0.203|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.203->1.0.204|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.204->1.0.205|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.205->1.0.206|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.206->1.0.207|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.207->1.0.208|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.208->1.0.209|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.209->1.0.210|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.210->1.0.211|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.211->1.0.212|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.212->1.0.213|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.213->1.0.214|accretion|+14|-0|0|compatible|notes-no-marker|
+1.0.214->1.0.215|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.215->1.0.216|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.216->1.0.217|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.217->1.0.218|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.218->1.0.219|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.219->1.0.220|break|+1|-408|0|compatible|notes-no-marker|Deserialize: provide removed
+1.0.220->1.0.221|accretion|+1|-0|0|compatible|notes-marker|
+1.0.221->1.0.222|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.222->1.0.223|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.223->1.0.224|accretion|+0|-0|0|compatible|notes-marker|
+1.0.224->1.0.225|break|+0|-1|0|compatible|notes-marker|__private: provide removed
+1.0.225->1.0.226|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.226->1.0.227|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.227->1.0.228|accretion|+0|-0|0|compatible|notes-no-marker|
+1.0.228->1.0.229|accretion|+0|-0|0|compatible|notes-no-marker|
+
+== false-break detail (numerator rows) ==
+from->to|contract reason|evidence class|release-note excerpt
+0.3.0->0.3.1|Error::missing_field_error: input type narrowed|none-found|
+0.3.1->0.3.2|json::Deserializer: output type struct<Iter>->struct<Iter: Iterator<Item=io::Result<u8>>>|none-found|
+0.3.2->0.3.3|json::Serializer::new: output type rsfn: fn(W)->Serializer<W>->rsfn: fn(W)->Self|none-found|
+0.4.0->0.4.1|json::Value::lookup: output type rsfn: fn<'a>(&'a self,&'a str)->Option<&'a Value>->rsfn: fn<'a>(&'a self,&str)->Option<&'a Value>|none-found|
+0.4.2->0.4.3|de::impls::BTreeMap#impl::Deserialize: provide removed|none-found|
+0.5.0->0.5.1|Error: output type trait->trait: Sized|none-found|
+0.5.1->0.5.2|de::impls::VecMap#impl::Deserialize: provide removed|none-found|
+0.5.2->0.5.3|Deserialize: output type trait->trait: Sized|none-found|
+0.7.5->0.7.6|Error::custom: input type narrowed|notes-no-marker|- Enables use in no_std environments, controlled by the following feature flags (#316)   - `alloc` (implies `nightly`)   - `collections` (implies `alloc` and `n
+0.9.6->0.9.7|Serializer: output type trait->trait: Sized|notes-no-marker|- Add [`Serializer::collect_seq`](https://docs.serde.rs/serde/trait.Serializer.html#method.collect_seq) and [`Serializer::collect_map`](https://docs.serde.rs/se
+0.9.7->0.9.8|Serializer::collect_map: output type rsfn: fn<K, V, I>(self,I)->Result<Self::Ok, Self::Error> where K: Serialize, V: Serialize, I: IntoIterator<Item = (K, V)>,->rsfn: fn<K, V, I>(self,I)->Result<Self::Ok, Self::Error> where K: Serialize, V: Serialize, I: IntoIterator<Item = (K, V)>|notes-no-marker|- Add `with = "..."` attribute that serves as a combination of serialize_with and deserialize_with (#763)      ``` diff    #[derive(Serialize, Deserialize)]    
+0.9.11->0.9.12|Serializer::collect_str: output type rsfn: fn<T: ?Sized>(self,&T)->Result<Self::Ok, Self::Error> where T: Display,->rsfn: fn<T: ?Sized>(self,&T)->Result<Self::Ok, Self::Error> where T: Display|notes-no-marker|- Add `#[serde(into = "T")]` to serialize using the implementation of `Into<T>` and `#[serde(from = "T")]` to deserialize using the implementation of `From<T>` 
+1.0.38->1.0.39|de::value::MapDeserializer::end: output type rsfn: fn(mut self)->Result<(), E>->rsfn: fn(self)->Result<(), E>|notes-no-marker|- Implement deserializer hints in handling of untagged and adjacently tagged enums to improve compile time and executable size (#286)
+1.0.52->1.0.53|Deserializer::private_deserialize_internally_tagged_enum: provide removed|notes-no-marker|- Support deserializing flattened untagged enum (#1253)
+1.0.104->1.0.105|private::de::borrow_cow_bytes: output type rsfn: fn<'de: 'a, 'a, D>(D)->Result<Cow<'a, [u8]>, D::Error> where D: Deserializer<'de>,->rsfn: fn<'de: 'a, 'a, D, R>(D)->Result<R, D::Error> where D: Deserializer<'de>, R: From<Cow<'a, [u8]>>,|notes-no-marker|- Allow #\[serde(borrow)\] to work on non-standard `Cow` types (#1754, thanks @maciejhirsz)
+1.0.113->1.0.114|ser::I#impl::LenHint: provide removed|notes-no-marker|- Improve `packed` repr matching to support deriving Serialize for structs having `repr(C, packed)` (#1813, thanks @TannerRogalsky)
+1.0.118->1.0.119|export: provide removed|none-found|
+1.0.120->1.0.121|de::value::BorrowedBytesDeserializer#impl::de::Deserializer<'de>: provide removed|notes-no-marker|- Support borrowed data during deserialization of a field identifier (#1917, thanks @Mingun) - Fix panic when deserializing `Duration` with nanoseconds that ca
+1.0.179->1.0.180|Deserializer::__deserialize_content: output type rsfn: fn<V>(self,::actually_private::T,V)->Result<::private::de::Content<'de>, Self::Error> where V: Visitor<'de, Value = ::private::de::Content<'de>>,->rsfn: fn<V>(self,crate::actually_private::T,V)->Result<crate::__private::de::Content<'de>, Self::Error> where V: Visitor<'de, Value = crate::__private::de::Content<'de>>,|notes-no-marker|- Update to 2018 edition
+1.0.197->1.0.198|Serializer::collect_str: input type narrowed|notes-no-marker|- Support serializing and deserializing `Saturating<T>` (#2709, thanks @jbethune)
+1.0.219->1.0.220|Deserialize: provide removed|notes-no-marker|- Add a way for data formats to depend on serde traits without waiting for serde_derive compilation: <https://docs.rs/serde_core> (#2608, thanks @osiewicz)
+
+== Cargo-conservative detail (accretion where Cargo says incompatible) ==

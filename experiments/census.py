@@ -235,18 +235,21 @@ def wild_extract(crate_dir, ver):
     row = {"decision": "bin-error", "wild_slots": 0, "wild_opaque": 0}
     if envelope:
         row["decision"] = envelope.get("decision", "?")
-        slots = envelope.get("slots", [])
-        row["wild_slots"] = len(slots)
-        row["wild_opaque"] = sum(1 for s in slots
-                                 if s.get("type", {}).get("shape") == "opaque")
+        row["wild_slots"] = len(envelope.get("slots", []))
     contract_p = os.path.join(out_path, "contract.json")
     if os.path.exists(contract_p):
         c = json.load(open(contract_p))
         slots = c.get("slots", [])
         row["wild_slots"] = len(slots)
-        row["wild_opaque"] = sum(1 for s in slots
-                                 if s.get("type", {}).get("shape") == "opaque")
+        row["wild_opaque"] = sum(1 for s in slots if shape_of(s) == "opaque")
     return row
+
+
+def shape_of(s):
+    if not isinstance(s, dict):
+        return None
+    t = s.get("type", {})
+    return t.get("shape") if isinstance(t, dict) else t
 
 
 def cargo_compatible(a, b):
@@ -384,11 +387,11 @@ def main():
         t["evidence"] = evidence_for(tags, b, ev_src)[0]
         graded.append(t)
 
-    write_results(rows, graded, ev_src, len(tags))
+    write_results(rows, graded, ev_src, len(tags), tags)
     return 0
 
 
-def write_results(rows, graded, ev_src, n_tags):
+def write_results(rows, graded, ev_src, n_tags, tags):
     ok_rows = [r for r in rows if r["status"] == "ok"]
     # headline denominators (all explicit)
     d_versions = len(rows)
@@ -406,7 +409,8 @@ def write_results(rows, graded, ev_src, n_tags):
     d_opaque_num = sum(r["wild_opaque"] or 0 for r in rows)
     d_opaque_den = sum(r["wild_slots"] or 0 for r in rows)
     d_refused = sum(1 for r in rows if r["decision"] == "refuse")
-    d_wild_ok = sum(1 for r in rows if r["decision"] in ("complete", "refuse"))
+    d_wild_ok = sum(1 for r in rows
+                    if r["decision"] in ("complete", "refuse", "accept"))
     max_ts = max((r["ts_slots"] or 0) for r in rows)
     min_ts = min((r["ts_slots"] or 0) for r in ok_rows) if ok_rows else 0
     total_ts = sum(r["ts_slots"] or 0 for r in rows)
@@ -438,7 +442,8 @@ def write_results(rows, graded, ev_src, n_tags):
     L.append(f"public surface (PRIMARY, tree-sitter): min {min_ts} / max {max_ts} slots "
              f"per release; sum over all releases = {total_ts} slots "
              f"(numerator) over {d_versions} releases (denominator); "
-             f">=300-slot gate satisfied by max={max_ts}")
+             f">=300-slot gate satisfied by max={max_ts} (min=0 is serde 0.0.0, "
+             f"whose tarball ships a 0-byte empty src/lib.rs — verified, not an error)")
     L.append(f"false-break rate: numerator {len(false_break)} (contract=break AND "
              f"cargo=compatible AND no documented/digestible break evidence: "
              f"{len(fb_unverified)} none-found + {len(false_break) - len(fb_unverified)} "
@@ -483,7 +488,7 @@ def write_results(rows, graded, ev_src, n_tags):
     L.append("== false-break detail (numerator rows) ==")
     L.append("from->to|contract reason|evidence class|release-note excerpt")
     for t in false_break:
-        body = (tags.get("v" + t["b"]) or "").replace("\n", " ")[:160]
+        body = (tags.get("v" + t["b"]) or "").replace("\n", " ").replace("|", "/")[:160]
         L.append(f"{t['a']}->{t['b']}|{t['reason']}|{t['evidence']}|{body}")
     L.append("")
     L.append("== Cargo-conservative detail (accretion where Cargo says incompatible) ==")
