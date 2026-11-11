@@ -1,6 +1,7 @@
 # Purpose: Red-first tests for the wild-1xk held-out corpus execution slice.
 #   Covers corpus derivation from the committed e5 cohort under seal discipline,
-#   real adapter registration (host declared ranges, CI, ecosystem, Wild), and
+#   real adapter registration (host declared ranges, CI, ecosystem, Wild, and
+#   the wild-zfw python pair), and
 #   the end-to-end held-out comparison through the landed harness.
 # Responsibilities: Prove the corpus build excludes oracle-unresolvable cases
 #   with recorded reasons, maps the e5 independent verdicts to break/ok
@@ -25,7 +26,22 @@ CLI = REPO / "experiments" / "heldout_corpus.py"
 COHORT = REPO / "experiments" / "update_fixtures" / "e5" / "cases.json"
 HELDOUT_EVAL = REPO / "experiments" / "heldout_eval.py"
 
-ADAPTERS = ("host_ranges", "ci", "ecosystem", "wild")
+# The sealed corpus is the committed pre-registration truth (wild-zfw, 9d63311):
+# the build must reproduce it — never the reverse. The e5 constants below stay
+# explicit because e5-specific tests pin named cases.
+SEALED_DIR = REPO / "experiments" / "heldout"
+SEALED_CASES = json.loads((SEALED_DIR / "cases.json").read_text())["cases"]
+SEALED_POOLS = {c["id"]: c["pool"] for c in SEALED_CASES}
+SEALED_OUTCOMES = {
+    o["case_id"]: o["outcome"]
+    for o in json.loads((SEALED_DIR / "oracle.json").read_text())["outcomes"]
+}
+SEALED_EXCLUDED = {
+    e["id"] for e in json.loads((SEALED_DIR / "excluded.json").read_text())["excluded"]
+}
+HELD_OUT_COUNT = sum(1 for p in SEALED_POOLS.values() if p == "held_out")
+
+ADAPTERS = ("host_ranges", "ci", "ecosystem", "wild", "py_declared", "py_wild")
 
 # Committed e5 cohort ground truth (independent verdicts fixed by real Cargo
 # replay before any miner tuning; see cases.json note).
@@ -109,35 +125,31 @@ def test_corpus_build_derives_pools_and_oracle_from_committed_cohort(tmp_path):
     cases = json.loads((out / "cases.json").read_text())["cases"]
     pool_by_case = {c["id"]: c["pool"] for c in cases}
 
-    # Only adjudicable cases enter the comparison corpus; pool mapping follows
-    # the committed e5 split.
-    assert set(pool_by_case) == set(ADJUDICABLE_HELD_OUT) | {
-        c for c in DEVELOPMENT_CASES}
-    for case_id, pool in pool_by_case.items():
-        if case_id in ADJUDICABLE_HELD_OUT:
-            assert pool == "held_out"
-        else:
-            assert pool == "development"
+    # Only adjudicable cases enter the comparison corpus; pool mapping must
+    # reproduce the committed sealed split (wild-zfw pre-registration).
+    assert pool_by_case == SEALED_POOLS
 
-    # Every case carries family integrity inputs and unavailable human time.
+    # Every case carries its sealed family identity and unavailable human time.
+    sealed_family = {c["id"]: c["family"] for c in SEALED_CASES}
     for case in cases:
-        assert case["family"] == case["id"]
+        assert case["family"] == sealed_family[case["id"]]
         assert case["human_minutes"] == {"value": None, "basis": "unavailable"}
 
-    # Oracle outcomes cover exactly the corpus cases with the mapped verdict.
+    # Oracle outcomes must reproduce the sealed oracle exactly.
     oracle = json.loads((out / "oracle.json").read_text())
     outcomes = {o["case_id"]: o["outcome"] for o in oracle["outcomes"]}
-    assert outcomes == {**ADJUDICABLE_HELD_OUT,
-                        "cell-excluded-compatible-major": "ok",
-                        "cell-allowed-incompatible-patch": "break",
-                        "cell-allowed-compatible-update": "ok",
-                        "cell-excluded-incompatible-major": "break"}
+    assert outcomes == SEALED_OUTCOMES
 
-    # Unresolved cases are excluded with a recorded reason, never silently.
+    # Unresolved cases are excluded with a recorded reason, never silently;
+    # the full exclusion set must reproduce the committed one (e5 unresolved
+    # + wild-zfw drift-poisoned cells).
     excluded = json.loads((out / "excluded.json").read_text())
-    assert {e["id"] for e in excluded["excluded"]} == UNRESOLVED_CASES
+    excluded_ids = {e["id"] for e in excluded["excluded"]}
+    assert excluded_ids == SEALED_EXCLUDED
+    assert UNRESOLVED_CASES <= excluded_ids
     for entry in excluded["excluded"]:
-        assert "unresolved" in entry["reason"]
+        if entry["id"] in UNRESOLVED_CASES:
+            assert "unresolved" in entry["reason"]
 
 
 def test_corpus_build_records_case_context_with_real_base_version(tmp_path):
@@ -195,6 +207,10 @@ def test_corpus_build_refuses_cohort_without_adjudicable_held_out(tmp_path):
             case["independent_verdict"] = "unresolved"
     bad = tmp_path / "cohort.json"
     _write_json(bad, cohort)
+    # The build also merges the committed python matrix by default; point it
+    # at an empty matrix so the cohort mutation is what empties held_out.
+    empty_matrix = tmp_path / "empty-matrix.json"
+    _write_json(empty_matrix, {"kind": "heldout-python-matrix", "cells": []})
     # Consumer paths resolve relative to the cohort file's parent: stage
     # minimal trees so lock parsing cannot mask the intended refusal.
     lock = "[[package]]\nname = \"dept\"\nversion = \"1.2.3\"\n"
@@ -203,7 +219,9 @@ def test_corpus_build_refuses_cohort_without_adjudicable_held_out(tmp_path):
     scoped = (tmp_path / "cases" / "cell-excluded-compatible-major" / "consumer")
     scoped.mkdir(parents=True)
     (scoped / "Cargo.lock").write_text(lock)
-    result = _run(["build", "--cohort", str(bad), "--out", str(tmp_path / "o")])
+    result = _run(["build", "--cohort", str(bad),
+                   "--python-matrix", str(empty_matrix),
+                   "--out", str(tmp_path / "o")])
     assert result.returncode == 2
     assert "held_out" in result.stderr
 
@@ -215,10 +233,10 @@ def test_corpus_cases_pass_harness_split_family_guard(tmp_path):
     assert result.returncode == 0, result.stderr
     split = json.loads((tmp_path / "split" / "split.json").read_text())
     assert sum(1 for p in split["pool_by_case"].values()
-               if p == "held_out") == 4
+               if p == "held_out") == HELD_OUT_COUNT
 
 
-def test_corpus_build_registers_four_real_adapters(tmp_path):
+def test_corpus_build_registers_committed_adapters(tmp_path):
     out = _build_corpus(tmp_path)
     checkers = json.loads((out / "checkers.json").read_text())["checkers"]
     names = {c["name"] for c in checkers}
@@ -266,16 +284,17 @@ def test_seal_and_compare_held_out_end_to_end_with_stub_checker(tmp_path):
         "--pool", "held_out",
         "--out", str(tmp_path / "compare.json"),
     ])
-    # The always-accept stub misses the one definite-break held-out case.
+    # The always-accept stub misses every definite-break held-out case (6 of
+    # 56 post-wild-zfw) and accepts every ok case.
     assert compare_rc.returncode == 1
     compare = json.loads((tmp_path / "compare.json").read_text())
     runs = {(r["case_id"], r["outcome_class"]) for r in compare["runs"]}
-    assert runs == {
-        ("transitive-addition", "correct-accept"),
-        ("migration-supplied", "correct-accept"),
-        ("intent-change", "correct-accept"),
-        ("platform-ineligibility", "missed-breakage"),
+    expected_runs = {
+        (case_id, "correct-accept" if outcome == "ok" else "missed-breakage")
+        for case_id, outcome in SEALED_OUTCOMES.items()
+        if SEALED_POOLS[case_id] == "held_out"
     }
+    assert runs == expected_runs
 
 
 def test_host_ranges_adapter_matches_caret_semantics_on_held_out(tmp_path):
