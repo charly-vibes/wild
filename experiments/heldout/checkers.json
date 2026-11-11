@@ -7,6 +7,9 @@
         "--context",
         "experiments/heldout/case_context.json"
       ],
+      "ecosystems": [
+        "cargo"
+      ],
       "name": "host_ranges"
     },
     {
@@ -15,6 +18,9 @@
         "experiments/heldout_adapters/ci.py",
         "--fixtures",
         "experiments/update_fixtures/e5"
+      ],
+      "ecosystems": [
+        "cargo"
       ],
       "name": "ci"
     },
@@ -25,6 +31,9 @@
         "--context",
         "experiments/heldout/case_context.json"
       ],
+      "ecosystems": [
+        "cargo"
+      ],
       "name": "ecosystem"
     },
     {
@@ -34,7 +43,36 @@
         "--context",
         "experiments/heldout/case_context.json"
       ],
+      "ecosystems": [
+        "cargo"
+      ],
       "name": "wild"
+    },
+    {
+      "cmd": [
+        "python3",
+        "experiments/heldout_adapters/py_declared.py",
+        "--context",
+        "experiments/heldout/case_context.json"
+      ],
+      "ecosystems": [
+        "python"
+      ],
+      "name": "py_declared"
+    },
+    {
+      "cmd": [
+        "python3",
+        "experiments/heldout_adapters/py_wild.py",
+        "--context",
+        "experiments/heldout/case_context.json",
+        "--python-root",
+        "/tmp/wild-zfw-scratch/pytrees"
+      ],
+      "ecosystems": [
+        "python"
+      ],
+      "name": "py_wild"
     }
   ],
   "kind": "heldout-checkers",

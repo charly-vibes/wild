@@ -3,11 +3,11 @@
   "tools": [
     {
       "path": "/var/home/sasha/para/areas/dev/gh/charly/wild/experiments/heldout_eval.py",
-      "sha256": "90d6c5aa807a5b115bb3277f59882c1a246e2a45340746907302669c965b72d0"
+      "sha256": "cec1572ea1178cf17c8953cad884b18a72a8a9f8a8276f692ecb4bb8a0da35c2"
     },
     {
       "path": "/var/home/sasha/para/areas/dev/gh/charly/wild/experiments/heldout_corpus.py",
-      "sha256": "3e5e8f5d2c573f917931c4dfb9d650b96c779434e5e3304d2ca2d0afddd920bd"
+      "sha256": "49cbbf4ba034cdeab9237ab5399d6fe72a63f0e7ddd9cad703a8caf8e2a77277"
     },
     {
       "path": "/var/home/sasha/para/areas/dev/gh/charly/wild/experiments/heldout_adapters/host_ranges.py",
@@ -26,12 +26,24 @@
       "sha256": "969b46f13b380305d83ad3c3fe06ab8c553cc9592400c78d6638e544062179d0"
     },
     {
+      "path": "/var/home/sasha/para/areas/dev/gh/charly/wild/experiments/heldout_adapters/_cargo_semver.py",
+      "sha256": "7785b91cff6596ddf1b106405740a7dd9df229e639d03f8b8a309df52e2e883d"
+    },
+    {
+      "path": "/var/home/sasha/para/areas/dev/gh/charly/wild/experiments/heldout_adapters/py_declared.py",
+      "sha256": "4d6a7847eb4a14fae7180dce0132054531286a5983ce2397cc9ed8034212ebd0"
+    },
+    {
+      "path": "/var/home/sasha/para/areas/dev/gh/charly/wild/experiments/heldout_adapters/py_wild.py",
+      "sha256": "28b7a0bef0254337704db10f86b47d3038aff262d1b3f541ad77d3092a0ac226"
+    },
+    {
       "path": "/var/home/sasha/para/areas/dev/gh/charly/wild/experiments/update_eval.py",
       "sha256": "94d68358403be3bee409b9905a2f6c4f36d765d7deb13d8cda8da6a71363eb73"
     },
     {
       "path": "/var/home/sasha/para/areas/dev/gh/charly/wild/target/debug/wild",
-      "sha256": "3a37cad8449eadfd71603ce90a10988b0e3a876ee0444df6a4150615e215942f"
+      "sha256": "6803b0d055e8077e677acaa04ac1d2ac7f647d84e94c55fc96e3b0e5445bcd42"
     }
   ],
   "version": 1

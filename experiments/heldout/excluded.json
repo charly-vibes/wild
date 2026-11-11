@@ -11,6 +11,56 @@
       "reason": "oracle-unresolvable: e5 independent_verdict is unresolved (resolution-level refusal, not an upgrade-compatibility outcome)"
     },
     {
+      "family": "py-family-flask-2.2.5",
+      "id": "py-flask-2.2.5--werkzeug-2.2.2",
+      "reason": "oracle-unresolvable in this environment: python 3.15 stdlib drift fails import before provider code is exercised (AttributeError: module 'pkgutil' has no attribute 'get_loader'); no provider-compatibility outcome obtainable, not graded"
+    },
+    {
+      "family": "py-family-flask-2.2.5",
+      "id": "py-flask-2.2.5--werkzeug-2.3.0",
+      "reason": "oracle-unresolvable in this environment: python 3.15 stdlib drift fails import before provider code is exercised (AttributeError: module 'pkgutil' has no attribute 'get_loader'); no provider-compatibility outcome obtainable, not graded"
+    },
+    {
+      "family": "py-family-flask-2.2.5",
+      "id": "py-flask-2.2.5--werkzeug-3.0.0",
+      "reason": "oracle-unresolvable in this environment: python 3.15 stdlib drift fails import before provider code is exercised (AttributeError: module 'pkgutil' has no attribute 'get_loader'); no provider-compatibility outcome obtainable, not graded"
+    },
+    {
+      "family": "py-family-flask-2.2.5",
+      "id": "py-flask-2.2.5--werkzeug-3.1.0",
+      "reason": "oracle-unresolvable in this environment: python 3.15 stdlib drift fails import before provider code is exercised (AttributeError: module 'pkgutil' has no attribute 'get_loader'); no provider-compatibility outcome obtainable, not graded"
+    },
+    {
+      "family": "py-family-flask-2.3.3",
+      "id": "py-flask-2.3.3--werkzeug-2.2.2",
+      "reason": "oracle-unresolvable in this environment: python 3.15 stdlib drift fails import before provider code is exercised (AttributeError: module 'ast' has no attribute 'Str'); no provider-compatibility outcome obtainable, not graded"
+    },
+    {
+      "family": "py-family-flask-2.3.3",
+      "id": "py-flask-2.3.3--werkzeug-2.3.0",
+      "reason": "oracle-unresolvable in this environment: python 3.15 stdlib drift fails import before provider code is exercised (AttributeError: module 'ast' has no attribute 'Str'); no provider-compatibility outcome obtainable, not graded"
+    },
+    {
+      "family": "py-family-flask-3.0.3",
+      "id": "py-flask-3.0.3--werkzeug-2.2.2",
+      "reason": "oracle-unresolvable in this environment: python 3.15 stdlib drift fails import before provider code is exercised (AttributeError: module 'ast' has no attribute 'Str'); no provider-compatibility outcome obtainable, not graded"
+    },
+    {
+      "family": "py-family-flask-3.0.3",
+      "id": "py-flask-3.0.3--werkzeug-2.3.0",
+      "reason": "oracle-unresolvable in this environment: python 3.15 stdlib drift fails import before provider code is exercised (AttributeError: module 'ast' has no attribute 'Str'); no provider-compatibility outcome obtainable, not graded"
+    },
+    {
+      "family": "py-family-flask-3.1.1",
+      "id": "py-flask-3.1.1--werkzeug-2.2.2",
+      "reason": "oracle-unresolvable in this environment: python 3.15 stdlib drift fails import before provider code is exercised (AttributeError: module 'ast' has no attribute 'Str'); no provider-compatibility outcome obtainable, not graded"
+    },
+    {
+      "family": "py-family-flask-3.1.1",
+      "id": "py-flask-3.1.1--werkzeug-2.3.0",
+      "reason": "oracle-unresolvable in this environment: python 3.15 stdlib drift fails import before provider code is exercised (AttributeError: module 'ast' has no attribute 'Str'); no provider-compatibility outcome obtainable, not graded"
+    },
+    {
       "family": "singleton-conflict",
       "id": "singleton-conflict",
       "reason": "oracle-unresolvable: e5 independent_verdict is unresolved (resolution-level refusal, not an upgrade-compatibility outcome)"

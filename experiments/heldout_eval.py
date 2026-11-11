@@ -228,6 +228,9 @@ def cmd_compare(args: argparse.Namespace) -> int:
     if not case_ids:
         return _die(f"compare: pool {pool!r} has no cases")
 
+    cases_doc = _load_json(Path(args.cases))
+    eco_by_case = {c["id"]: c.get("ecosystem", "cargo") for c in cases_doc["cases"]}
+
     seal_path = Path(args.seal) / "oracle.seal.json"
     if pool == "held_out":
         if not seal_path.exists():
@@ -256,8 +259,16 @@ def cmd_compare(args: argparse.Namespace) -> int:
 
     checkers = _load_json(Path(args.checkers))["checkers"]
     runs = []
+    skipped = []
     for checker in checkers:
+        allowed = checker.get("ecosystems")
         for case_id in case_ids:
+            if allowed and eco_by_case.get(case_id, "cargo") not in allowed:
+                skipped.append({"checker": checker["name"], "case_id": case_id,
+                                "reason": "ecosystem mismatch (checker not "
+                                          "applicable; excluded from runs and "
+                                          "from this checker's denominators)"})
+                continue
             verdict, elapsed, note = _run_checker(checker["cmd"], case_id)
             runs.append({
                 "case_id": case_id,
@@ -277,12 +288,17 @@ def cmd_compare(args: argparse.Namespace) -> int:
         "freeze_sha256": _sha256_file(freeze_dir / "freeze.json"),
         "oracle_sha256": _sha256_file(Path(args.oracle)),
         "runs": runs,
+        "skipped": skipped,
     })
-    if definite_failures:
-        print(f"comparison found {len(definite_failures)} definite failure(s); "
-              f"report written to {args.out}")
-        return 1
-    print(f"comparison clean; report written to {args.out}")
+    # wild-zfw exit policy: definite failures are findings of the comparison,
+    # not run failures — they are recorded per checker×case and rendered with
+    # denominators in the report. The run itself completed; integrity
+    # refusals (freeze drift, missing seal, oracle drift, missing outcomes)
+    # still exit 2.
+    print(f"comparison graded {len(runs)} checker×case run(s) "
+          f"({len(skipped)} skipped by ecosystem applicability), "
+          f"{len(definite_failures)} definite failure(s) recorded as findings; "
+          f"written to {args.out}")
     return 0
 
 
@@ -302,18 +318,20 @@ def _checker_section(name: str, runs: list[dict], break_count: int, ok_count: in
     unknown = sum(1 for r in runs if r["outcome_class"] == "unknown")
     covered = len(runs) - unknown
     total = len(runs)
+    correct = sum(1 for r in runs
+                  if r["outcome_class"] in {"correct-accept", "correct-reject"})
     lines = [
         f"## checker: {name}",
         "",
         "### missed-breakage",
         f"- count: {missed}",
-        f"- denominator: {break_count} (definite-break cases)",
-        f"- ratio: {json.dumps(_ratio(missed, break_count, 'no definite-break cases in pool'))}",
+        f"- denominator: {break_count} (definite-break cases this checker ran on)",
+        f"- ratio: {json.dumps(_ratio(missed, break_count, 'no definite-break cases run for this checker'))}",
         "",
         "### false-block",
         f"- count: {false_blocks}",
-        f"- denominator: {ok_count} (definite-ok cases)",
-        f"- ratio: {json.dumps(_ratio(false_blocks, ok_count, 'no definite-ok cases in pool'))}",
+        f"- denominator: {ok_count} (definite-ok cases this checker ran on)",
+        f"- ratio: {json.dumps(_ratio(false_blocks, ok_count, 'no definite-ok cases run for this checker'))}",
         "",
         "### unknown-rate",
         f"- count: {unknown}",
@@ -324,6 +342,14 @@ def _checker_section(name: str, runs: list[dict], break_count: int, ok_count: in
         f"- count: {covered}",
         f"- denominator: {total} (cases run for this checker)",
         f"- ratio: {json.dumps(_ratio(covered, total, 'no cases run'))}",
+        "",
+        "### aggregate-accuracy",
+        f"- correct (correct-accept + correct-reject): {correct}",
+        f"- missed-breakage: {missed}; false-block: {false_blocks}; unknown: {unknown}",
+        f"- denominator: {total} cases this checker ran on ({break_count} "
+        "oracle-break + " + str(ok_count) + " oracle-ok); aggregate is recorded "
+        "alongside, never instead of, the separate metrics above",
+        f"- ratio: {json.dumps(_ratio(correct, total, 'no cases run'))}",
         "",
     ]
     return lines
@@ -383,8 +409,44 @@ def cmd_report(args: argparse.Namespace) -> int:
         lines.append("- unavailable entries are reported as null, never as fabricated zeros")
     lines.append("")
 
+    # Per-checker denominators come from the oracle outcomes of the cases
+    # that checker actually ran on (wild-zfw: checkers are ecosystem-scoped,
+    # so pool-wide denominators would misstate applicability).
     for name in sorted(runs_by_checker):
-        lines.extend(_checker_section(name, runs_by_checker[name], break_count, ok_count))
+        checker_runs = runs_by_checker[name]
+        ids = {r["case_id"] for r in checker_runs}
+        b = sum(1 for cid in ids if outcomes.get(cid) == "break")
+        k = sum(1 for cid in ids if outcomes.get(cid) == "ok")
+        lines.extend(_checker_section(name, checker_runs, b, k))
+
+    total_runs = sum(len(rs) for rs in runs_by_checker.values())
+    total_unknown = sum(1 for rs in runs_by_checker.values() for r in rs
+                        if r["outcome_class"] == "unknown")
+    total_decided = total_runs - total_unknown
+    total_correct = sum(1 for rs in runs_by_checker.values() for r in rs
+                        if r["outcome_class"] in {"correct-accept", "correct-reject"})
+    total_missed = sum(1 for rs in runs_by_checker.values() for r in rs
+                       if r["outcome_class"] == "missed-breakage")
+    total_false_blocks = sum(1 for rs in runs_by_checker.values() for r in rs
+                             if r["outcome_class"] == "false-block")
+    skipped = compare.get("skipped", [])
+    lines.extend([
+        "## corpus-aggregate-accuracy (all checkers pooled)",
+        f"- correct: {total_correct}",
+        f"- missed-breakage: {total_missed}",
+        f"- false-block: {total_false_blocks}",
+        f"- unknown: {total_unknown}",
+        f"- denominator: {total_runs} checker×case runs ({break_count} "
+        f"oracle-break + {ok_count} oracle-ok pool cases × applicable "
+        f"checkers); {len(skipped)} checker×case pairs skipped by ecosystem "
+        "applicability and excluded from every denominator",
+        f"- aggregate-accuracy: {json.dumps(_ratio(total_correct, total_decided, 'no decided runs'))} "
+        "(correct / decided — unknown runs excluded from numerator and "
+        "denominator and counted separately above)",
+        "- aggregate accuracy is recorded for wild-zfw; the per-checker "
+        "separate metrics above remain the safety analysis",
+        "",
+    ])
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text("\n".join(lines) + "\n", encoding="utf-8")
