@@ -1,0 +1,107 @@
+wild abstention re-run — SAME 14-pair shadow-pilot replay, CURRENT binary (ticket wild-qic)
+
+baseline: results/shadow-pilot-1.txt (target/debug/wild, pre wild-m7f/wild-7e9), 14/14 unknown
+replay driver: experiments/wild_adopt_audit.py --crate testaruda --limit-pairs 14 (committed script; replay exit 0)
+binary: target/release/wild (wild 0.2.0), built from commit 4cd2f57 at 2026-11-11T15:45:35Z
+binary commit: 4cd2f57
+wild version: 0.2.0
+pair set: FROZEN to the baseline's 14 consecutive pairs (pre-registered; no swaps, no additions).
+  note: crates.io now also lists testaruda 0.5.9 (published after the baseline);
+  --limit-pairs 14 selects the first 15 sorted versions = exactly the baseline inventory, so 0.5.9 is excluded.
+unreplayable pairs: none — all 14 pairs replayed (denominator = 14/14).
+
+## Per-pair delta (baseline verdict -> now verdict)
+prev -> next | bump | baseline | now | delta | flipped-by
+0.1.0 -> 0.2.4 | minor | unknown | unknown | same | n/a (no flip)
+0.2.4 -> 0.2.5 | patch | unknown | unknown | same | n/a (no flip)
+0.2.5 -> 0.2.6 | patch | unknown | unknown | same | n/a (no flip)
+0.2.6 -> 0.3.0 | minor | unknown | unknown | same | n/a (no flip)
+0.3.0 -> 0.3.1 | patch | unknown | unknown | same | n/a (no flip)
+0.3.1 -> 0.4.0 | minor | unknown | unknown | same | n/a (no flip)
+0.4.0 -> 0.5.0 | minor | unknown | unknown | same | n/a (no flip)
+0.5.0 -> 0.5.1 | patch | unknown | unknown | same | n/a (no flip)
+0.5.1 -> 0.5.2 | patch | unknown | unknown | same | n/a (no flip)
+0.5.2 -> 0.5.3 | patch | unknown | unknown | same | n/a (no flip)
+0.5.3 -> 0.5.4 | patch | unknown | unknown | same | n/a (no flip)
+0.5.4 -> 0.5.5 | patch | unknown | unknown | same | n/a (no flip)
+0.5.5 -> 0.5.6 | patch | unknown | unknown | same | n/a (no flip)
+0.5.6 -> 0.5.7 | patch | unknown | unknown | same | n/a (no flip)
+
+## delta line
+Unknown rate now: 14/14 (100%, denominator = 14 pairs actually replayed)
+Unknown rate baseline: 14/14 (100%, denominator = 14)
+delta: 0 vs baseline (14/14 - 14/14); pairs flipped: 0
+verdict: the wild-m7f (std macro surface) + wild-7e9 (string types) extractor widenings bought ZERO abstention reduction on this frozen pair set — every pair still abstains with the same reasons ['incomplete-demand', 'unsupported-construct'] and exit 1 (refuse/Unknown). No flipped construct to record.
+
+## Audit table (current binary, raw replay output)
+prev -> next | bump | verdict | decision/assurance | exit | audit_row | reasons
+0.1.0 -> 0.2.4 | minor | unknown | refuse/Unknown | 1 | abstained | ['incomplete-demand', 'unsupported-construct']
+0.2.4 -> 0.2.5 | patch | unknown | refuse/Unknown | 1 | abstained | ['incomplete-demand', 'unsupported-construct']
+0.2.5 -> 0.2.6 | patch | unknown | refuse/Unknown | 1 | abstained | ['incomplete-demand', 'unsupported-construct']
+0.2.6 -> 0.3.0 | minor | unknown | refuse/Unknown | 1 | abstained | ['incomplete-demand', 'unsupported-construct']
+0.3.0 -> 0.3.1 | patch | unknown | refuse/Unknown | 1 | abstained | ['incomplete-demand', 'unsupported-construct']
+0.3.1 -> 0.4.0 | minor | unknown | refuse/Unknown | 1 | abstained | ['incomplete-demand', 'unsupported-construct']
+0.4.0 -> 0.5.0 | minor | unknown | refuse/Unknown | 1 | abstained | ['incomplete-demand', 'unsupported-construct']
+0.5.0 -> 0.5.1 | patch | unknown | refuse/Unknown | 1 | abstained | ['incomplete-demand', 'unsupported-construct']
+0.5.1 -> 0.5.2 | patch | unknown | refuse/Unknown | 1 | abstained | ['incomplete-demand', 'unsupported-construct']
+0.5.2 -> 0.5.3 | patch | unknown | refuse/Unknown | 1 | abstained | ['incomplete-demand', 'unsupported-construct']
+0.5.3 -> 0.5.4 | patch | unknown | refuse/Unknown | 1 | abstained | ['incomplete-demand', 'unsupported-construct']
+0.5.4 -> 0.5.5 | patch | unknown | refuse/Unknown | 1 | abstained | ['incomplete-demand', 'unsupported-construct']
+0.5.5 -> 0.5.6 | patch | unknown | refuse/Unknown | 1 | abstained | ['incomplete-demand', 'unsupported-construct']
+0.5.6 -> 0.5.7 | patch | unknown | refuse/Unknown | 1 | abstained | ['incomplete-demand', 'unsupported-construct']
+
+## Subprocess echo
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.1.0/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.1.0 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.1.0/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.1.0 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.2.4/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.2.4 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.2.4/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.2.4 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.2.5/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.2.5 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.2.5/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.2.5 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.2.6/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.2.6 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.2.6/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.2.6 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.3.0/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.3.0 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.3.0/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.3.0 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.3.1/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.3.1 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.3.1/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.3.1 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.4.0/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.4.0 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.4.0/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.4.0 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.5.0/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.5.0 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.5.0/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.5.0 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.5.1/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.5.1 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.5.1/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.5.1 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.5.2/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.5.2 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.5.2/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.5.2 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.5.3/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.5.3 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.5.3/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.5.3 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.5.4/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.5.4 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.5.4/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.5.4 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.5.5/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.5.5 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.5.5/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.5.5 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.5.6/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.5.6 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.5.6/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.5.6 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.5.7/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv1/0.5.7 -> exit 1
+$ target/release/wild extract --request /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.5.7/extraction.json --output /tmp/wild-adopt-audit-q6ppgy2e/inv2/0.5.7 -> exit 1
+$ target/release/wild check --request /tmp/wild-adopt-audit-q6ppgy2e/checks/0.1.0-to-0.2.4/check.json --format json --report /tmp/wild-adopt-audit-q6ppgy2e/checks/0.1.0-to-0.2.4/report.json -> exit 1
+$ target/release/wild check --request /tmp/wild-adopt-audit-q6ppgy2e/checks/0.2.4-to-0.2.5/check.json --format json --report /tmp/wild-adopt-audit-q6ppgy2e/checks/0.2.4-to-0.2.5/report.json -> exit 1
+$ target/release/wild check --request /tmp/wild-adopt-audit-q6ppgy2e/checks/0.2.5-to-0.2.6/check.json --format json --report /tmp/wild-adopt-audit-q6ppgy2e/checks/0.2.5-to-0.2.6/report.json -> exit 1
+$ target/release/wild check --request /tmp/wild-adopt-audit-q6ppgy2e/checks/0.2.6-to-0.3.0/check.json --format json --report /tmp/wild-adopt-audit-q6ppgy2e/checks/0.2.6-to-0.3.0/report.json -> exit 1
+$ target/release/wild check --request /tmp/wild-adopt-audit-q6ppgy2e/checks/0.3.0-to-0.3.1/check.json --format json --report /tmp/wild-adopt-audit-q6ppgy2e/checks/0.3.0-to-0.3.1/report.json -> exit 1
+$ target/release/wild check --request /tmp/wild-adopt-audit-q6ppgy2e/checks/0.3.1-to-0.4.0/check.json --format json --report /tmp/wild-adopt-audit-q6ppgy2e/checks/0.3.1-to-0.4.0/report.json -> exit 1
+$ target/release/wild check --request /tmp/wild-adopt-audit-q6ppgy2e/checks/0.4.0-to-0.5.0/check.json --format json --report /tmp/wild-adopt-audit-q6ppgy2e/checks/0.4.0-to-0.5.0/report.json -> exit 1
+$ target/release/wild check --request /tmp/wild-adopt-audit-q6ppgy2e/checks/0.5.0-to-0.5.1/check.json --format json --report /tmp/wild-adopt-audit-q6ppgy2e/checks/0.5.0-to-0.5.1/report.json -> exit 1
+$ target/release/wild check --request /tmp/wild-adopt-audit-q6ppgy2e/checks/0.5.1-to-0.5.2/check.json --format json --report /tmp/wild-adopt-audit-q6ppgy2e/checks/0.5.1-to-0.5.2/report.json -> exit 1
+$ target/release/wild check --request /tmp/wild-adopt-audit-q6ppgy2e/checks/0.5.2-to-0.5.3/check.json --format json --report /tmp/wild-adopt-audit-q6ppgy2e/checks/0.5.2-to-0.5.3/report.json -> exit 1
+$ target/release/wild check --request /tmp/wild-adopt-audit-q6ppgy2e/checks/0.5.3-to-0.5.4/check.json --format json --report /tmp/wild-adopt-audit-q6ppgy2e/checks/0.5.3-to-0.5.4/report.json -> exit 1
+$ target/release/wild check --request /tmp/wild-adopt-audit-q6ppgy2e/checks/0.5.4-to-0.5.5/check.json --format json --report /tmp/wild-adopt-audit-q6ppgy2e/checks/0.5.4-to-0.5.5/report.json -> exit 1
+$ target/release/wild check --request /tmp/wild-adopt-audit-q6ppgy2e/checks/0.5.5-to-0.5.6/check.json --format json --report /tmp/wild-adopt-audit-q6ppgy2e/checks/0.5.5-to-0.5.6/report.json -> exit 1
+$ target/release/wild check --request /tmp/wild-adopt-audit-q6ppgy2e/checks/0.5.6-to-0.5.7/check.json --format json --report /tmp/wild-adopt-audit-q6ppgy2e/checks/0.5.6-to-0.5.7/report.json -> exit 1
+
+## Summary
+pairs audited: 14
+consistent: 0
+disagreement: 0
+abstained: 14
+errored: 0
+unknown (abstention) rate: 100.0%
+determinism (repeated extraction byte identity): pass
+NOTE: >50% of pairs abstained — per the ticket's follow-up threshold, gap-rate measurement is the deliverable, not a failure
