@@ -33,13 +33,15 @@ pub const LOCAL_VERSION: &str = "local-1";
 // add-format-args-demand-support): the closed whitelist, the argument
 // grammar, format-capture scanning, and the capture cross-check.
 mod conveys;
+mod demand_resolution;
 mod macro_demands;
 mod method_demands;
 mod mod_files;
 mod type_inventory;
 
+use demand_resolution::{check_demand_resolution, resolve_in_slots};
 use macro_demands::{CaptureRef, check_capture_disclosure};
-pub(crate) use conveys::{conveyed_scope, validate_conveys};
+pub(crate) use conveys::{conveyed_scope, validate_conveys, validate_on_absent};
 
 const REQUEST_FIELDS: &[&str] = &[
     "version",
@@ -51,6 +53,7 @@ const REQUEST_FIELDS: &[&str] = &[
     "toolchain",
     "features",
     "conveys",
+    "on_absent",
     "extractor",
 ];
 
@@ -93,13 +96,18 @@ struct SlotRecord {
     name: String,
     meaning: String,
     ty: Value,
+    /// Declared absence policy on a required demand in-slot (wild-adc):
+    /// `Some("fallible")` when the entry's demand path is covered by a
+    /// declared `on_absent` clause; the slot stays required, only the
+    /// absence handling changes.
+    on_absent: Option<String>,
 }
 
 /// Validate the request envelope shape; returns bundle root and file
 /// commitment list on success. Every refusal is an error-class input.
 fn validate_request(
     request: &Value,
-) -> Result<(PathBuf, Vec<(String, String)>, Vec<String>), String> {
+) -> Result<(PathBuf, Vec<(String, String)>, Vec<String>, Vec<String>), String> {
     if request.str_field("version")? != LOCAL_VERSION {
         return Err(format!(
             "unsupported protocol version `{}`; expected {LOCAL_VERSION}",
@@ -178,6 +186,7 @@ fn validate_request(
         PathBuf::from(request.str_field("bundle_root")?),
         files,
         validate_conveys(request.get("conveys"))?,
+        validate_on_absent(request.get("on_absent"))?,
     ))
 }
 
@@ -422,6 +431,10 @@ struct SourceWalk<'a> {
     /// these paths record a scoped conveyance claim instead of the
     /// incomplete-demand refusal
     conveys: &'a [String],
+    /// declared on_absent input paths (wild-adc): demand targets at these
+    /// paths record a scoped fallible-absence outcome instead of the
+    /// incomplete-demand refusal; the slot stays required
+    on_absent: &'a [String],
     /// syntactic return types of inventoried public free fns and public
     /// inherent impl methods (wild-158 D1): fn target → crate-qualified
     /// type target, recorded by a per-file pre-pass so one-hop constructor
@@ -468,7 +481,12 @@ impl<'a> SourceWalk<'a> {
 
     fn record_slot(&mut self, name: String, meaning: String, ty: Value, span: proc_macro2::Span) {
         let loc = span.start();
-        self.slots.push(SlotRecord { name, meaning, ty });
+        self.slots.push(SlotRecord {
+            name,
+            meaning,
+            ty,
+            on_absent: None,
+        });
         self.locations.push(formats::obj(vec![
             ("slot", formats::s(&self.slots.last().expect("pushed").name)),
             ("file", formats::s(&self.current_file)),
@@ -490,6 +508,7 @@ impl<'a> SourceWalk<'a> {
             ty: opaque_type(node),
             name: slot_name.clone(),
             meaning,
+            on_absent: None,
         });
         self.locations.push(formats::obj(vec![
             ("slot", formats::s(&slot_name)),
@@ -622,6 +641,7 @@ impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
                     ty: opaque_type(node),
                     name: slot_name.clone(),
                     meaning,
+                    on_absent: None,
                 });
                 self.gap(
                     "unsupported-construct",
@@ -878,9 +898,10 @@ fn walk_crates(
     versions: &BTreeMap<String, String>,
     out: &mut WalkAccumulator,
 ) -> Result<(), String> {
-    // the declared conveys clause scopes every member walk; copied out so
-    // the accumulator stays exclusively borrowed during the walk
+    // the declared clauses scope every member walk; copied out so the
+    // accumulator stays exclusively borrowed during the walk
     let conveys = out.conveys.clone();
+    let on_absent = out.on_absent.clone();
     for manifest in manifests {
         let source_bytes = loaded.get(&manifest.source_path).ok_or_else(|| {
             format!(
@@ -936,6 +957,7 @@ fn walk_crates(
             capture_idents: Vec::new(),
             fn_return_tys: BTreeMap::new(),
             conveys: &conveys,
+            on_absent: &on_absent,
         };
         // per-file pre-pass: record syntactic return types before the
         // demand walk so use sites see declarations declared later in the
@@ -966,81 +988,7 @@ pub(crate) struct WalkAccumulator {
     complete: bool,
     captures: Vec<CaptureRef>,
     conveys: Vec<String>,
-}
-
-/// Cross-check every demand entry against the supplied provider slots.
-/// Merely scanning identifier strings never establishes resolution: a
-/// demand whose target is absent from the provider's declared inventory
-/// (removed, renamed, private, or unsupported-signature slot) is a
-/// completeness gap, never a silently resolved in-slot.
-fn check_demand_resolution(
-    all_slots: &[SlotRecord],
-    all_demand: &[Value],
-    diagnostics: &mut Vec<Diagnostic>,
-    complete: &mut bool,
-) {
-    let meanings: BTreeSet<&str> = all_slots.iter().map(|s| s.meaning.as_str()).collect();
-    for entry in all_demand {
-        // a conveyed entry is claimed, not refused: its scoped claim already
-        // records the forwarded path (wild-hyk), so it never marks the
-        // inventory incomplete
-        if entry.get("conveyed").and_then(Value::as_bool) == Some(true) {
-            continue;
-        }
-        let called = entry.str_field("called").unwrap_or_default();
-        let provider_slot = entry.str_field("provider_slot").unwrap_or_default();
-        if !meanings.contains(provider_slot) {
-            diagnostics.push(Diagnostic {
-                code: "incomplete-demand",
-                severity: "error",
-                source: None,
-                reason: format!(
-                    "demand `{called}` does not resolve to a supplied provider slot; the consumer cannot be checked complete"
-                ),
-            });
-            *complete = false;
-        }
-    }
-}
-
-/// Resolve consumer demand entries to provider slots as in-slots.
-fn resolve_in_slots(
-    all_slots: &[SlotRecord],
-    all_demand: &[Value],
-) -> Result<Vec<SlotRecord>, String> {
-    let by_meaning: BTreeMap<&str, &SlotRecord> =
-        all_slots.iter().map(|s| (s.meaning.as_str(), s)).collect();
-    let mut in_slots: Vec<SlotRecord> = Vec::new();
-    for entry in all_demand {
-        let consumer = entry.str_field("consumer")?;
-        let provider_slot = entry.str_field("provider_slot")?;
-        let slot_name = format!(
-            "{consumer}::demand::{}",
-            by_meaning
-                .get(provider_slot)
-                .map(|s| s.name.as_str())
-                .unwrap_or(provider_slot)
-        );
-        if in_slots.iter().any(|s| s.name == slot_name) {
-            continue;
-        }
-        let ty = match by_meaning.get(provider_slot) {
-            Some(record) => record.ty.clone(),
-            None => formats::obj(vec![
-                ("shape", formats::s("opaque")),
-                (
-                    "fingerprint",
-                    formats::s(&formats::sha256_digest(provider_slot.as_bytes())),
-                ),
-            ]),
-        };
-        in_slots.push(SlotRecord {
-            name: slot_name,
-            meaning: provider_slot.to_string(),
-            ty,
-        });
-    }
-    Ok(in_slots)
+    on_absent: Vec<String>,
 }
 
 /// Assemble the canonical v1 contract document from slots and in-slots.
@@ -1056,18 +1004,25 @@ fn assemble_contract(
         } else {
             "out"
         };
-        contract_slots.push(formats::obj(vec![
-            ("name", formats::s(&record.name)),
-            ("meaning", formats::s(&record.meaning)),
-            ("polarity", formats::s(polarity)),
-            ("facet", formats::s("api")),
-            ("type", record.ty.clone()),
-            ("required", Value::Bool(true)),
-            (
-                "default",
-                formats::obj(vec![("present", Value::Bool(false))]),
-            ),
-        ]));
+        contract_slots.push(formats::obj({
+            let mut fields = vec![
+                ("name", formats::s(&record.name)),
+                ("meaning", formats::s(&record.meaning)),
+                ("polarity", formats::s(polarity)),
+                ("facet", formats::s("api")),
+                ("type", record.ty.clone()),
+                ("required", Value::Bool(true)),
+                (
+                    "default",
+                    formats::obj(vec![("present", Value::Bool(false))]),
+                ),
+            ];
+            // the declared absence policy is contract-level (wild-adc)
+            if let Some(clause) = &record.on_absent {
+                fields.push(("on_absent", formats::s(clause)));
+            }
+            fields
+        }));
         slot_names.push(record.name.clone());
     }
     contract_slots.sort_by(|a, b| {
@@ -1091,7 +1046,7 @@ fn assemble_contract(
 /// Extract the local-1 records for one bundle from a validated request.
 /// `Err` classifies as error (exit 2); `Ok` carries the gap-aware outcome.
 pub fn extract(request: &Value) -> Result<ExtractionOutcome, String> {
-    let (bundle_root, files, conveys) = validate_request(request)?;
+    let (bundle_root, files, conveys, on_absent) = validate_request(request)?;
     let bundle_root = bundle_root
         .canonicalize()
         .map_err(|e| format!("input-mismatch: bundle root unreadable: {e}"))?;
@@ -1111,11 +1066,13 @@ pub fn extract(request: &Value) -> Result<ExtractionOutcome, String> {
         complete: true,
         captures: Vec::new(),
         conveys,
+        on_absent,
     };
     walk_crates(&manifests, &loaded, &versions, &mut accumulated)?;
     check_demand_resolution(
         &accumulated.slots,
-        &accumulated.demand,
+        &mut accumulated.demand,
+        &accumulated.on_absent,
         &mut accumulated.diagnostics,
         &mut accumulated.complete,
     );

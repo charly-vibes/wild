@@ -1,0 +1,12 @@
+id = "clause-direction-is-accretion-then-break"
+description = "Direction is pinned: adding on_absent fallible to a retained input accretes (demand widens) and revoking it narrows demand and is a break, while a NEW fallible-required slot is still a new required input and stays a non-accretion (accretion_monotone unchanged)"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.12.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_on_absent.py::test_clause_direction_gaining_accretes_losing_breaks", timeout_seconds = 300},
+  {flags = "tests/runtime/test_on_absent.py::test_new_fallible_required_slot_is_still_non_accretion", timeout_seconds = 300},
+]

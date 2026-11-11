@@ -81,8 +81,10 @@ impl<'a> SourceWalk<'a> {
     /// (wild-158 method-call resolution routes here). Unsupplied provider
     /// sources keep the incumbent gap unless the target sits under a
     /// declared conveys input path (wild-hyk), which records a scoped
-    /// conveyance claim instead; slot presence is validated at
-    /// demand-resolution time.
+    /// conveyance claim instead, or under a declared on_absent input path
+    /// (wild-adc), which records a scoped fallible-absence outcome instead
+    /// — the slot stays required, only the absence handling changes; slot
+    /// presence is validated at demand-resolution time.
     pub(super) fn record_resolved_demand(
         &mut self,
         target: &str,
@@ -90,7 +92,7 @@ impl<'a> SourceWalk<'a> {
         span: proc_macro2::Span,
     ) {
         if let Some(provider_slot) = self.meaning_of(target) {
-            self.demand.push(formats::obj(vec![
+            let mut entry = vec![
                 ("consumer", formats::s(&self.crate_name)),
                 ("called", formats::s(target)),
                 (
@@ -101,7 +103,14 @@ impl<'a> SourceWalk<'a> {
                     },
                 ),
                 ("provider_slot", formats::s(&provider_slot)),
-            ]));
+            ];
+            // the declared absence policy rides on the demand entry
+            // (wild-adc) so the contract slot carries it
+            if let Some(scope) = super::conveyed_scope(self.on_absent, target) {
+                entry.push(("on_absent", formats::s("fallible")));
+                entry.push(("scope", formats::s(&scope)));
+            }
+            self.demand.push(formats::obj(entry));
             let loc = span.start();
             self.locations.push(formats::obj(vec![
                 ("slot", formats::s(target)),
@@ -128,6 +137,36 @@ impl<'a> SourceWalk<'a> {
                 ),
                 ("provider_slot", formats::s(target)),
                 ("conveyed", Value::Bool(true)),
+                ("scope", formats::s(&scope)),
+            ]));
+            let loc = span.start();
+            self.locations.push(formats::obj(vec![
+                ("slot", formats::s(target)),
+                ("file", formats::s(&self.current_file)),
+                ("line", formats::i(loc.line as i64)),
+                ("col", formats::i(loc.column as i64)),
+            ]));
+        } else if let Some(scope) = super::conveyed_scope(self.on_absent, target) {
+            // wild-adc: the target sits under a declared on_absent input
+            // path, so the absent demand records a scoped fallible-absence
+            // outcome instead of the incomplete-demand refusal — the
+            // outside world lacked the fact, and the consumer declared it
+            // handles that. The claim never exempts validation: the slot
+            // stays a required in-slot, and check still refuses a newly
+            // introduced one.
+            self.demand.push(formats::obj(vec![
+                ("consumer", formats::s(&self.crate_name)),
+                ("called", formats::s(target)),
+                (
+                    "alias",
+                    match alias {
+                        Some(a) => formats::s(a),
+                        None => Value::Null,
+                    },
+                ),
+                ("provider_slot", formats::s(target)),
+                ("on_absent", formats::s("fallible")),
+                ("absent", Value::Bool(true)),
                 ("scope", formats::s(&scope)),
             ]));
             let loc = span.start();

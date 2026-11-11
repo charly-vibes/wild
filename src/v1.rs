@@ -247,6 +247,21 @@ fn validate_slot(slot: &Value, tombstone: bool, push: &mut impl FnMut(&str)) {
             push("output-required");
         }
     }
+    // The declared absence policy (wild-adc): only required input slots may
+    // declare `on_absent: fallible` — absence handling changes, never
+    // closure membership, and outputs and tombstones have no caller to
+    // excuse.
+    if let Some(clause) = slot.get("on_absent") {
+        if clause.as_str() != Some("fallible") {
+            push("on-absent-shape");
+        }
+        if tombstone
+            || polarity != "in"
+            || required != Some(true)
+        {
+            push("on-absent-placement");
+        }
+    }
     let facet = slot.str_field("facet").unwrap_or_default();
     if !FACETS.contains(&facet) {
         push("facet-unknown");
@@ -818,6 +833,15 @@ fn retained_inputs(
         // A reintroduced required input is a new requirement and breaks
         // accretion.
         if new_required && !old_required || slot_identity_changed(old_slot, new_slot) {
+            return Err(());
+        }
+        // Clause direction (wild-adc): gaining `on_absent: fallible` on a
+        // retained input widens demand and accretes; revoking it narrows
+        // demand — the slot becomes a bare caller violation again — and is
+        // a break.
+        let old_clause = old_slot.get("on_absent").and_then(Value::as_str);
+        let new_clause = new_slot.get("on_absent").and_then(Value::as_str);
+        if old_clause.is_some() && new_clause.is_none() {
             return Err(());
         }
         verdict = subtype(&slot_type(old_slot), &slot_type(new_slot)).and(verdict);

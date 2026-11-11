@@ -1,0 +1,12 @@
+id = "fallible-slots-stay-in-closure-validation"
+description = "The clause changes absence handling, never closure membership: a substitution introducing a new required input near a declared fallible slot is still refused and the new input is still listed exactly as without the clause, and the static verdict kind set is unchanged — the clause records a scoped tier-1 claim only"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.12.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_on_absent.py::test_fallible_slot_stays_in_closure_validation", timeout_seconds = 300},
+  {flags = "tests/runtime/test_on_absent.py::test_no_new_static_verdict_kind", timeout_seconds = 300},
+]

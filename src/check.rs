@@ -78,6 +78,7 @@ const CHECK_REQUEST_FIELDS: &[&str] = &[
     "toolchain",
     "features",
     "conveys",
+    "on_absent",
     "policy",
     "obligations",
     "checker",
@@ -122,6 +123,7 @@ fn validate_check_request(
         (String, Vec<(String, String)>),
         (String, Vec<(String, String)>),
         String,
+        Vec<String>,
         Vec<String>,
     ),
     String,
@@ -179,6 +181,7 @@ fn validate_check_request(
         candidate,
         checker.str_field("digest")?.to_string(),
         crate::extract::validate_conveys(request.get("conveys"))?,
+        crate::extract::validate_on_absent(request.get("on_absent"))?,
     ))
 }
 
@@ -265,6 +268,7 @@ fn synthetic_extraction_request(
     bundle_root: &str,
     files: &[(String, String)],
     conveys: &[String],
+    on_absent: &[String],
 ) -> Value {
     let mut file_pairs: Vec<(String, Value)> = Vec::new();
     for (rel, digest) in files {
@@ -302,23 +306,29 @@ fn synthetic_extraction_request(
                 .unwrap_or(formats::obj(vec![("name", formats::s("wild"))])),
         ),
     ])
-    .with_conveys(conveys)
+    .with_clauses(conveys, on_absent)
 }
 
-/// Attach the declared conveys paths to a synthetic extraction request;
+/// Attach the declared clause paths to a synthetic extraction request;
 /// absent (not an empty array) when no clause is declared so the incumbent
 /// request shape is preserved.
-trait WithConveys {
-    fn with_conveys(self, conveys: &[String]) -> Value;
+trait WithClauses {
+    fn with_clauses(self, conveys: &[String], on_absent: &[String]) -> Value;
 }
 
-impl WithConveys for Value {
-    fn with_conveys(mut self, conveys: &[String]) -> Value {
+impl WithClauses for Value {
+    fn with_clauses(mut self, conveys: &[String], on_absent: &[String]) -> Value {
         if let Value::Obj(entries) = &mut self {
             if !conveys.is_empty() {
                 entries.push((
                     "conveys".to_string(),
                     formats::arr(conveys.iter().map(|p| formats::s(p)).collect()),
+                ));
+            }
+            if !on_absent.is_empty() {
+                entries.push((
+                    "on_absent".to_string(),
+                    formats::arr(on_absent.iter().map(|p| formats::s(p)).collect()),
                 ));
             }
         }
@@ -406,11 +416,17 @@ fn is_visible(ty: &Value) -> bool {
 }
 
 /// Demanded slot verdicts for the named consumer's base demand set.
+/// Demand entries carrying a fallible-absence outcome (wild-adc) are
+/// claimed, not judged, and a demanded slot absent from the candidate
+/// inventory under a declared `on_absent` path records a scoped absence
+/// claim instead of the caller-violation removal verdict; the call stays
+/// in the demand set either way.
 fn judge_slots(
     consumer: &str,
     base: &ExtractionOutcome,
     candidate: &ExtractionOutcome,
-) -> Result<(Vec<Value>, Vec<String>, i64, i64, bool), String> {
+    on_absent: &[String],
+) -> Result<(Vec<Value>, Vec<String>, i64, i64, bool, Vec<Value>), String> {
     let base_slots = contract_slots(&base.contract)?;
     let cand_slots = contract_slots(&candidate.contract)?;
 
@@ -427,6 +443,11 @@ fn judge_slots(
         if entry.get("conveyed").and_then(Value::as_bool) == Some(true) {
             continue;
         }
+        // absent entries are claimed, not judged: the fallible-absence
+        // outcome records them as handled value outcomes (wild-adc)
+        if entry.get("absent").and_then(Value::as_bool) == Some(true) {
+            continue;
+        }
         if entry.str_field("consumer")? == consumer {
             let called = entry.str_field("called")?.to_string();
             if !demanded_calls.contains(&called) {
@@ -441,6 +462,8 @@ fn judge_slots(
     let mut passed: i64 = 0;
     let mut definite_break = false;
     let mut type_unknown = false;
+    let mut absence_claims: Vec<Value> = Vec::new();
+    let mut claimed_absent: i64 = 0;
     for called in &demanded_calls {
         let base_ty = base_slots
             .iter()
@@ -475,6 +498,21 @@ fn judge_slots(
                 }
             }
             (Some(_), None) => {
+                // a demanded slot absent from the candidate inventory under
+                // a declared on_absent path is a handled value outcome:
+                // record the scoped absence claim instead of the
+                // caller-violation removal verdict (wild-adc). The call
+                // stays demanded and the claim never exempts validation.
+                if let Some(scope) = crate::extract::conveyed_scope(on_absent, called) {
+                    absence_claims.push(formats::obj(vec![
+                        ("side", formats::s("candidate")),
+                        ("called", formats::s(called)),
+                        ("scope", formats::s(&scope)),
+                    ]));
+                    claimed_absent += 1;
+                    demanded_names.push(called.clone());
+                    continue;
+                }
                 verdict = "removed";
                 reason = "demanded slot is absent from the candidate contract inventory".to_string();
                 definite_break = true;
@@ -514,8 +552,9 @@ fn judge_slots(
         verdicts,
         demanded_names,
         passed,
-        demanded_calls.len() as i64,
+        demanded_calls.len() as i64 - claimed_absent,
         definite_break || type_unknown,
+        absence_claims,
     ))
 }
 
@@ -689,6 +728,95 @@ fn conveyance_findings(
     }
 }
 
+/// Fallible-absence evidence for one check (wild-adc): demand entries
+/// recording a handled absent outcome on either side become scoped claim
+/// records, and candidate-side absent demands at paths the base never
+/// demanded carry refusal diagnostics. scoped_substitution stands
+/// unchanged: the claim never exempts a newly introduced required input,
+/// so each new input carries a diagnostic listing the path, exactly as
+/// without the clause.
+struct AbsenceFindings {
+    claim_records: Vec<Value>,
+    new_input_diagnostics: Vec<Value>,
+}
+
+/// Merge the judging-side absence claims into the extraction-stamped claim
+/// records, deduplicating identical (side, called, scope) triples so one
+/// absence yields one claim.
+fn merge_absence_claims(mut records: Vec<Value>, judged: Vec<Value>) -> Vec<Value> {
+    let matches = |existing: &Value, claim: &Value| {
+        ["side", "called", "scope"].iter().all(|field| {
+            existing
+                .str_field(field)
+                .map(|e| Some(e) == claim.str_field(field).ok())
+                .unwrap_or(false)
+        })
+    };
+    for claim in judged {
+        if !records.iter().any(|existing| matches(existing, &claim)) {
+            records.push(claim);
+        }
+    }
+    records
+}
+
+fn absence_findings(base: &ExtractionOutcome, candidate: &ExtractionOutcome) -> AbsenceFindings {
+    let base_demanded: BTreeSet<&str> = base
+        .demand
+        .get("entries")
+        .and_then(Value::as_arr)
+        .map(|entries| {
+            entries
+                .iter()
+                .filter_map(|e| e.str_field("called").ok())
+                .collect()
+        })
+        .unwrap_or_default();
+    let mut claim_records: Vec<Value> = Vec::new();
+    let mut new_input_diagnostics: Vec<Value> = Vec::new();
+    for (side, outcome) in [("base", base), ("candidate", candidate)] {
+        for entry in outcome
+            .demand
+            .get("entries")
+            .and_then(Value::as_arr)
+            .unwrap_or(&[])
+        {
+            if entry.get("absent").and_then(Value::as_bool) != Some(true) {
+                continue;
+            }
+            let called = entry.str_field("called").unwrap_or_default().to_string();
+            let scope = entry.str_field("scope").unwrap_or_default().to_string();
+            if side == "candidate" && !base_demanded.contains(called.as_str()) {
+                new_input_diagnostics.push(obligation_diagnostic(
+                    "absent-new-required-input",
+                    "error",
+                    format!(
+                        "absent demand `{called}` (declared under `{scope}`) is newly introduced on the candidate side; an on_absent fallible claim never exempts a newly introduced required input"
+                    ),
+                ));
+            }
+            claim_records.push(formats::obj(vec![
+                ("side", formats::s(side)),
+                ("called", formats::s(&called)),
+                ("scope", formats::s(&scope)),
+            ]));
+        }
+    }
+    claim_records.sort_by(|a, b| {
+        let key = |v: &Value| {
+            (
+                v.str_field("side").unwrap_or_default().to_string(),
+                v.str_field("called").unwrap_or_default().to_string(),
+            )
+        };
+        key(a).cmp(&key(b))
+    });
+    AbsenceFindings {
+        claim_records,
+        new_input_diagnostics,
+    }
+}
+
 /// Extract one committed side through the synthetic extraction request.
 fn extract_side(
     request: &Value,
@@ -696,8 +824,11 @@ fn extract_side(
     root: &str,
     files: &[(String, String)],
     conveys: &[String],
+    on_absent: &[String],
 ) -> Result<ExtractionOutcome, String> {
-    extract::extract(&synthetic_extraction_request(request, side, root, files, conveys))
+    extract::extract(&synthetic_extraction_request(
+        request, side, root, files, conveys, on_absent,
+    ))
 }
 
 /// Extracted fact records for both sides (relative path, canonical bytes)
@@ -717,12 +848,12 @@ fn fact_records(base: &ExtractionOutcome, candidate: &ExtractionOutcome) -> Vec<
     facts
 }
 
-/// Check one validated request; `Err` classifies as error (exit 2).
-pub fn check(request: &Value) -> Result<CheckOutcome, String> {
-    let (consumer, (base_root, base_files), (cand_root, cand_files), checker_digest, conveys) =
-        validate_check_request(request)?;
-    let obligations: Vec<Obligation> = match request.get("obligations") {
-        None | Some(Value::Null) => Vec::new(),
+/// Load the request's obligations reference: absent or null yields none; a
+/// {digest, path} object loads the committed record; anything else is an
+/// error-class input.
+fn load_request_obligations(request: &Value) -> Result<Vec<Obligation>, String> {
+    match request.get("obligations") {
+        None | Some(Value::Null) => Ok(Vec::new()),
         Some(Value::Obj(_)) => {
             let digest = request
                 .get("obligations")
@@ -734,22 +865,43 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
                 .and_then(|o| o.get("path").and_then(Value::as_str))
                 .unwrap_or_default()
                 .to_string();
-            load_obligations(&digest, &path)?
+            load_obligations(&digest, &path)
         }
-        Some(_) => return Err("`obligations` must be null or a {digest, path} reference".to_string()),
-    };
-    let transition = finalize_transition(request, &obligations)?;
-    let base = extract_side(request, "base", &base_root, &base_files, &conveys)?;
-    let candidate = extract_side(request, "candidate", &cand_root, &cand_files, &conveys)?;
+        Some(_) => Err("`obligations` must be null or a {digest, path} reference".to_string()),
+    }
+}
 
-    let (verdicts, demanded_names, passed, total, _has_break_or_unknown) =
-        judge_slots(&consumer, &base, &candidate)?;
+/// Check one validated request; `Err` classifies as error (exit 2).
+pub fn check(request: &Value) -> Result<CheckOutcome, String> {
+    let (
+        consumer,
+        (base_root, base_files),
+        (cand_root, cand_files),
+        checker_digest,
+        conveys,
+        on_absent,
+    ) = validate_check_request(request)?;
+    let obligations = load_request_obligations(request)?;
+    let transition = finalize_transition(request, &obligations)?;
+    let base = extract_side(request, "base", &base_root, &base_files, &conveys, &on_absent)?;
+    let candidate = extract_side(request, "candidate", &cand_root, &cand_files, &conveys, &on_absent)?;
+
+    let (verdicts, demanded_names, passed, total, _has_break_or_unknown, judge_absence_claims) =
+        judge_slots(&consumer, &base, &candidate, &on_absent)?;
 
     // Scoped conveyance claims (wild-hyk): forwarded-not-interpreted demand
     // under a declared path, recorded per side; candidate-side claims at
     // paths the base never demanded carry their own refusal diagnostics
     // (scoped_substitution unchanged).
     let conveyance = conveyance_findings(&base, &candidate);
+
+    // Scoped fallible-absence claims (wild-adc): demand entries recording a
+    // handled absent outcome on either side, merged with the absence claims
+    // from slot judging. The claim never exempts scoped_substitution: a
+    // newly introduced absent demand on the candidate side carries its own
+    // refusal diagnostic.
+    let absence = absence_findings(&base, &candidate);
+    let claim_records = merge_absence_claims(absence.claim_records, judge_absence_claims);
 
     let base_contract_bytes = formats::canonical(&base.contract).into_bytes();
     let cand_contract_bytes = formats::canonical(&candidate.contract).into_bytes();
@@ -824,7 +976,9 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
     // (wild-hyk, scoped_substitution unchanged).
     let has_side_gap = !base.complete_inventory || !candidate.complete_inventory;
     let has_conveyed_new_input = !conveyance.new_input_diagnostics.is_empty();
+    let has_absent_new_input = !absence.new_input_diagnostics.is_empty();
     diagnostics.extend(conveyance.new_input_diagnostics);
+    diagnostics.extend(absence.new_input_diagnostics);
     let any_removed_or_broken = verdicts.iter().any(|v| {
         let verdict = v.str_field("verdict").unwrap_or_default();
         (verdict == "removed" || verdict == "broken")
@@ -839,7 +993,12 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
     let (decision, assurance): (&'static str, &'static str) =
         if obl_definite || any_removed_or_broken {
             ("refuse", "Reject")
-        } else if has_side_gap || any_type_unknown || obl_unknown || has_conveyed_new_input {
+        } else if has_side_gap
+            || any_type_unknown
+            || obl_unknown
+            || has_conveyed_new_input
+            || has_absent_new_input
+        {
             ("refuse", "Unknown")
         } else {
             ("accept", "PassDeclared")
@@ -859,6 +1018,7 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
         ("version", formats::s(LOCAL_VERSION)),
         ("kind", formats::s("check-report")),
         ("conveyance_claims", formats::arr(conveyance.claim_records)),
+        ("absence_claims", formats::arr(claim_records)),
         ("profile", formats::s(PROFILE)),
         ("consumer", formats::s(&consumer)),
         (

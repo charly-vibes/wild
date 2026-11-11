@@ -30,6 +30,7 @@ The Contract IR and the accretion relation. A contract has slots with polarity (
 | facets_independent | invariant | `compat(v, v') is the conjunction over facets of compat_facet(v, v'); facets ∈ {api, abi, layout, serialization, behavior, dialect, environment, license}; adding a facet kind requires a new IR schema version` | [[wild.core]] |
 | data_artifacts_have_contracts | invariant | `content files, templates, and generated feature files consumed by code carry a contract checked like an API, including arity and size limits` | [[wild.core]] |
 | tombstones_preserve_names | invariant | `a dropped requires leaves a tombstone; re-adding the name must accrete the tombstoned slot` | [[wild.core]] |
+| absence_as_policy | invariant | `a required input slot may declare on_absent fallible; the slot stays required in demand and closure validation and its absence is a value outcome the consumer handles instead of a caller violation; adding the clause to a retained input is an accretion and revoking it narrows demand and is a break; a new fallible-required slot is still a new required input` | [[wild.core]] |
 | accretion_is_category | invariant | `accretions have identities and compose; composing accretions yields an accretion; the relation is reflexive and transitive` | [[wild.core]] |
 | check_against_ancestors | invariant | `a candidate revision is checked against every ancestor in its lineage, not only its predecessor` | [[wild.core]] |
 | demand_restriction_functorial | invariant | `restricting a contract to a demand set preserves accretion and composes: restrict(restrict(c, D1), D2) == restrict(c, D1 ∩ D2)` | [[wild.core]] |
@@ -77,6 +78,9 @@ The Contract IR and the accretion relation. A contract has slots with polarity (
 | facet_break_blocks_compat | unit | [[wild.core.facets_independent]] | `pair_with_break_in_exactly_one_facet()` | `compat == failed` |
 | feature_file_arity_checked | unit | [[wild.core.data_artifacts_have_contracts]] | `template_defining_21_fields_fed_20_inputs()` | `check == failed` |
 | tombstone_blocks_name_reuse | unit | [[wild.core.tombstones_preserve_names]] | `drop_then_readd_input_with_narrower_type()` | `check(readd) == failed` |
+| fallible_absence_handled_not_refused | unit | [[wild.core.absence_as_policy]] | `required_slot_declared_on_absent_fallible()` | `absent input at the slot yields the fallible-absence outcome ∧ no caller-violation refusal` |
+| absence_clause_direction_is_accretion | unit | [[wild.core.absence_as_policy]] | `retained_input_gaining_then_losing_on_absent_fallible()` | `gaining: accretes == true ∧ losing: accretes == false` |
+| fallible_slot_stays_in_closure | unit | [[wild.core.absence_as_policy]] | `substitution_introducing_required_input_near_fallible_slot()` | `closure validation unchanged ∧ new required inputs still listed` |
 | accretion_category_laws | law | [[wild.core.accretion_is_category]] | `arbitrary_contract_chain(length: 3)` | **identity:** `accretes(v, v)` and `compose(id, f) == f` **associativity:** `compose(compose(f, g), h) == compose(f, compose(g, h))` |
 | skipped_ancestor_break_caught | unit | [[wild.core.check_against_ancestors]] | `chain_v1_v2_v3_where_v3_breaks_v1_only()` | `check(v3) == failed` |
 | restriction_functor_laws | law | [[wild.core.demand_restriction_functorial]] | `arbitrary_contract(), two_demand_sets()` | **identity:** `restrict(c, all_slots) == c` **associativity:** `restrict(restrict(c, D1), D2) == restrict(c, D1 ∩ D2)` |
@@ -221,6 +225,25 @@ The system SHALL satisfy `tombstones_preserve_names` as defined in the Constrain
 - **WHEN** the `tombstones_preserve_names` check runs
 - **THEN** `check(readd) == failed`
 
+### Rule: Absence as policy
+
+The system SHALL satisfy `absence_as_policy` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Fallible absence is handled, not refused
+- **GIVEN** the fixture domain `required_slot_declared_on_absent_fallible()`
+- **WHEN** the `absence_as_policy` check runs
+- **THEN** `absent input at the slot yields the fallible-absence outcome ∧ no caller-violation refusal`
+
+#### Acceptance case: Clause direction is accretion then break
+- **GIVEN** the fixture domain `retained_input_gaining_then_losing_on_absent_fallible()`
+- **WHEN** the `absence_as_policy` check runs
+- **THEN** `gaining: accretes == true ∧ losing: accretes == false`
+
+#### Acceptance case: Fallible slot stays in closure validation
+- **GIVEN** the fixture domain `substitution_introducing_required_input_near_fallible_slot()`
+- **WHEN** the `absence_as_policy` check runs
+- **THEN** `closure validation unchanged ∧ new required inputs still listed`
+
 ### Rule: Accretion is category
 
 The system SHALL satisfy `accretion_is_category` as defined in the Constraints table and the v1 format reference.
@@ -322,3 +345,23 @@ The design corpus SHALL expose this capability's constraints as normative, self-
 - **THEN** every constraint has a corresponding rule and acceptance case
 - **AND** both referenced files exist and the schema is valid JSON Schema draft 2020-12
 - **AND** this capability is discoverable by strict OpenSpec validation
+
+### Requirement: Absence is declared policy, not violation
+
+The system SHALL satisfy `absence_as_policy` as defined in the Constraints table and the v1 format reference.
+
+#### Scenario: Fallible absence is a handled value outcome
+- **GIVEN** a required input slot declaring `on_absent: fallible`
+- **WHEN** the input is absent at that slot
+- **WHEN** the demand check runs
+- **THEN** the outcome records fallible absence for the consumer to handle and no caller-violation refusal is raised
+
+#### Scenario: Clause direction is accretion then break
+- **GIVEN** a retained input slot gaining `on_absent: fallible`
+- **WHEN** the accretion check runs
+- **THEN** gaining the clause accretes and revoking it is a break
+
+#### Scenario: Fallible slots stay in closure validation
+- **GIVEN** a substitution whose replacement introduces a new required input near a fallible slot
+- **WHEN** the closure validation runs
+- **THEN** the new required input is still listed exactly as without the clause

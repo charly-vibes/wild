@@ -511,8 +511,12 @@ fn run_update_evaluate(args: &[String]) -> i32 {
 }
 
 fn run_v1(args: &[String]) -> i32 {
-    // args: [prog, v1, --input, <file>, --output, <file>]
-    let usage = "usage: wild v1 --input <file> --output <file>";
+    // args: [prog, v1, accretes, --old, <file>, --new, <file>, --output, <file>]
+    //    or [prog, v1, --input, <file>, --output, <file>]
+    if args.len() >= 3 && args[2] == "accretes" {
+        return run_v1_accretes(args);
+    }
+    let usage = "usage: wild v1 [--input <file> --output <file> | accretes --old <file> --new <file> --output <file>]";
     if args.len() != 6 || args[2] != "--input" || args[4] != "--output" {
         eprintln!("{usage}");
         let envelope_value = envelope(
@@ -661,6 +665,137 @@ fn run_v1(args: &[String]) -> i32 {
                 }
             }
         }
+    }
+}
+
+/// Run the v1 accretion checker over two committed contract documents
+/// (beads wild-adc): `holds` accepts with the accretes verdict recorded;
+/// `breaks` or `unknown` refuse; unreadable or invalid documents classify
+/// per the v1 exit mapping (accept 0 / refuse 1 / error 2).
+fn run_v1_accretes(args: &[String]) -> i32 {
+    let usage = "usage: wild v1 accretes --old <file> --new <file> --output <file>";
+    if args.len() != 9 || args[3] != "--old" || args[5] != "--new" || args[7] != "--output" {
+        eprintln!("{usage}");
+        let envelope_value = envelope(
+            "v1-accretes",
+            "refuse",
+            "Unknown",
+            vec![diagnostic("input-mismatch", usage.to_string())],
+            Vec::new(),
+            Value::Null,
+            (0, 0),
+        );
+        println!("{}", formats::canonical(&envelope_value));
+        return 2;
+    }
+    let read_side = |path: &str| -> Result<Value, wild::v1::ReadError> {
+        let text = std::fs::read_to_string(path).map_err(|e| {
+            wild::v1::ReadError::Malformed(format!("input-mismatch: document unreadable: {e}"))
+        })?;
+        wild::v1::read_document(&text)
+    };
+    let outcome: Result<wild::v1::Verdict, String> = (|| {
+        let old = read_side(&args[4]).map_err(|e| match e {
+            wild::v1::ReadError::UnknownKind(kind) => {
+                format!("kind-unsupported: unknown kind `{kind}`")
+            }
+            other => format!(
+                "input-mismatch: {}",
+                match other {
+                    wild::v1::ReadError::Malformed(m) => m,
+                    wild::v1::ReadError::MissingField(f) => format!("missing field `{f}`"),
+                    wild::v1::ReadError::UnknownVersion(v) => {
+                        format!("unknown schema_version `{v}`")
+                    }
+                    wild::v1::ReadError::UnknownKind(_) => unreachable!(),
+                }
+            ),
+        })?;
+        let new = read_side(&args[6]).map_err(|e| match e {
+            wild::v1::ReadError::UnknownKind(kind) => {
+                format!("kind-unsupported: unknown kind `{kind}`")
+            }
+            other => format!(
+                "input-mismatch: {}",
+                match other {
+                    wild::v1::ReadError::Malformed(m) => m,
+                    wild::v1::ReadError::MissingField(f) => format!("missing field `{f}`"),
+                    wild::v1::ReadError::UnknownVersion(v) => {
+                        format!("unknown schema_version `{v}`")
+                    }
+                    wild::v1::ReadError::UnknownKind(_) => unreachable!(),
+                }
+            ),
+        })?;
+        wild::v1::accretes(&old, &new).map_err(|codes| format!("invalid-contract: {codes:?}"))
+    })();
+    let (decision, assurance, accretes, verdict, code, reason) = match outcome {
+        Err(reason) => ("error", "Unknown", None, "invalid", "input-mismatch", reason),
+        Ok(wild::v1::Verdict::Holds) => (
+            "accept",
+            "PassDeclared",
+            Some(true),
+            "holds",
+            "accretion-holds",
+            "every old output remains with a subtype, retained inputs widen, and the on_absent clause direction holds".to_string(),
+        ),
+        Ok(wild::v1::Verdict::Breaks) => (
+            "refuse",
+            "Reject",
+            Some(false),
+            "breaks",
+            "accretion-breaks",
+            "the candidate contract breaks accretion against the old contract".to_string(),
+        ),
+        Ok(wild::v1::Verdict::Unknown) => (
+            "refuse",
+            "Unknown",
+            Some(false),
+            "unknown",
+            "accretion-unknown",
+            "the accretion relationship cannot be established".to_string(),
+        ),
+    };
+    let diagnostic = formats::obj(vec![
+        ("code", formats::s(code)),
+        ("severity", formats::s("error")),
+        ("source", Value::Null),
+        ("slots", formats::arr(Vec::new())),
+        ("reason", formats::s(&reason)),
+    ]);
+    let envelope_value = envelope(
+        "v1-accretes",
+        decision,
+        assurance,
+        vec![diagnostic.clone()],
+        Vec::new(),
+        Value::Null,
+        (0, 0),
+    );
+    let record = formats::obj(vec![
+        ("schema_version", formats::s("1")),
+        ("kind", formats::s("accretes-report")),
+        (
+            "accretes",
+            match accretes {
+                Some(v) => Value::Bool(v),
+                None => Value::Null,
+            },
+        ),
+        ("verdict", formats::s(verdict)),
+        ("diagnostics", formats::arr(vec![diagnostic])),
+    ]);
+    if let Err(e) = std::fs::write(&args[8], formats::canonical(&record)) {
+        eprintln!("error: cannot write accretes report: {e}");
+        return 2;
+    }
+    println!("{}", formats::canonical(&envelope_value));
+    if decision == "accept" {
+        0
+    } else if decision == "refuse" {
+        1
+    } else {
+        2
     }
 }
 

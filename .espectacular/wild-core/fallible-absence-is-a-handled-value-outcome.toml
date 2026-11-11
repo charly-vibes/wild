@@ -1,0 +1,12 @@
+id = "fallible-absence-is-a-handled-value-outcome"
+description = "A required input slot may declare on_absent fallible: absence at the slot is a normal value outcome the consumer handles instead of a caller violation — the demand records a scoped fallible-absence claim and the slot stays required, while the same slot without the clause keeps the incumbent refusal"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.12.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_on_absent.py::test_absent_input_at_fallible_slot_is_handled_outcome", timeout_seconds = 300},
+  {flags = "tests/runtime/test_on_absent.py::test_absent_input_without_clause_still_refuses", timeout_seconds = 300},
+]

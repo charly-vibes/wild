@@ -6,13 +6,13 @@
 
 ## 2. Red (tests first)
 
-- [ ] 2.1 Failing contract tests: absent input at fallible slot → handled outcome not refusal; clause direction (gaining accretes / revoking breaks); fallible slot stays in closure validation; tier placement (scoped claim recorded, static verdict kinds unchanged)
+- [x] 2.1 Failing contract tests: absent input at fallible slot → handled outcome not refusal; clause direction (gaining accretes / revoking breaks); fallible slot stays in closure validation; tier placement (scoped claim recorded, static verdict kinds unchanged)
 
 ## 3. Green (implementation)
 
-- [ ] 3.1 Parse `on_absent` on required input slots (`src/formats.rs`, `docs/wild-formats-v1.md`, `schemas/wild-v1.schema.json`)
-- [ ] 3.2 Demand/check semantics: fallible-absence outcome instead of caller-violation refusal (`src/check.rs`); accretion direction in the accretion checker (`src/update.rs`)
-- [ ] 3.3 Deploy spec rows: wild-core `absence_as_policy` + 3 properties; wild-tiers `absence_observed_at_runtime` + 1 property; mirrored Requirements in both deployed specs
+- [x] 3.1 Parse `on_absent` on required input slots (`src/formats.rs`, `docs/wild-formats-v1.md`, `schemas/wild-v1.schema.json`)
+- [x] 3.2 Demand/check semantics: fallible-absence outcome instead of caller-violation refusal (`src/check.rs`); accretion direction in the accretion checker (`src/update.rs`)
+- [x] 3.3 Deploy spec rows: wild-core `absence_as_policy` + 3 properties; wild-tiers `absence_observed_at_runtime` + 1 property; mirrored Requirements in both deployed specs
 
 ## 4. Gates
 

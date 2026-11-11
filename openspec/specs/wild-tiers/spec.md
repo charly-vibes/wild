@@ -30,6 +30,7 @@ Checks run in cost order: identity, shape, laws, evidence, attestation. Identity
 | attestation_expiring | invariant | `an attestation carries issue time and expiry and is bound to artifact and contract digests; at evaluation_time ≥ expiry the attestation status is Unknown while independent checks remain unchanged` | [[wild.tiers]] |
 | verdict_cache_keyed | invariant | `structural cache keys include old and new contract hashes and checker version; law cache keys also include implementation, harness, fixtures, seed, method, and budgets; policy evaluation includes demand, policy digest, evidence digests, trust roots, and evaluation time and is never reused past claim expiry` | [[wild.tiers]] |
 | verdict_recorded_immutable | invariant | `recorded check results are immutable; new inputs append new records; current policy decisions are recomputed from those records and claim validity at evaluation time` | [[wild.tiers]] |
+| absence_observed_at_runtime | invariant | `absence at a slot declared on_absent fallible is a tier-3 observation (canary or replayed traffic) recorded as scoped evidence; it is never a new static verdict kind and never overrides structural results` | [[wild.tiers]] |
 
 ## Model
 
@@ -78,6 +79,7 @@ Checks run in cost order: identity, shape, laws, evidence, attestation. Identity
 | expired_attestation_is_unknown | unit | [[wild.tiers.attestation_expiring]] | `attestation_with_past_expiry()` | `attestation_status(a) == Unknown ∧ independent_assurance unchanged` |
 | cache_key_includes_checker | unit | [[wild.tiers.verdict_cache_keyed]] | `same_pair_under_two_checker_versions()` | `keys differ ∧ no cross-hit` |
 | recorded_verdict_unchanged | unit | [[wild.tiers.verdict_recorded_immutable]] | `verdict_recorded_then_rerun_under_new_checker()` | `old record unchanged ∧ new record appended` |
+| absence_is_observation_not_verdict | unit | [[wild.tiers.absence_observed_at_runtime]] | `canary_observing_absent_input_at_fallible_slot()` | `absence appears as tier-3 evidence ∧ verdict kinds unchanged ∧ structural results unaffected` |
 
 ## Notes
 
@@ -232,6 +234,15 @@ The system SHALL satisfy `verdict_recorded_immutable` as defined in the Constrai
 - **GIVEN** an uncontracted dependency has only a patch version label
 - **WHEN** policy requires PassDeclared
 - **THEN** the label remains metadata, assurance is Unknown, and policy refuses
+
+### Rule: Absence observed at runtime
+
+The system SHALL satisfy `absence_observed_at_runtime` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Absence is observation, not verdict
+- **GIVEN** the fixture domain `canary_observing_absent_input_at_fallible_slot()`
+- **WHEN** the `absence_observed_at_runtime` check runs
+- **THEN** `absence appears as tier-3 evidence ∧ verdict kinds unchanged ∧ structural results unaffected`
 ## Requirements
 ### Requirement: Wild tiers design contract
 
@@ -271,4 +282,13 @@ Local evidence SHALL bind actual implementation and harness bytes, suite, fixtur
 - **GIVEN** the available runner cannot prevent an accepted law from reading ambient files or the network
 - **WHEN** that law is required by policy
 - **THEN** its result is inconclusive and the local outcome is unknown unless another definite failure already requires rejection
+
+### Requirement: Absence surfaces as runtime observation
+
+The system SHALL satisfy `absence_observed_at_runtime` as defined in the Constraints table and the v1 format reference.
+
+#### Scenario: Absence is tier-3 evidence, not a static verdict
+- **GIVEN** a slot declared `on_absent: fallible`
+- **WHEN** absence of the input is observed by canary or replayed traffic
+- **THEN** the absence is recorded as tier-3 scoped evidence while the static verdict kinds and structural results remain unchanged
 

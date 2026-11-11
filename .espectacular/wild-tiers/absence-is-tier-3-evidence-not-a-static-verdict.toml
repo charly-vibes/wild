@@ -1,0 +1,11 @@
+id = "absence-is-tier-3-evidence-not-a-static-verdict"
+description = "Absence at a slot declared on_absent fallible is a tier-3 observation (canary or replayed traffic) recorded as scoped evidence; it is never a new static verdict kind and never overrides structural results — there is no observation source surface in the checker"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.12.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_on_absent.py::test_no_new_static_verdict_kind", timeout_seconds = 300},
+]

@@ -384,6 +384,9 @@
         },
         "default": {
           "$ref": "#/$defs/default"
+        },
+        "on_absent": {
+          "const": "fallible"
         }
       },
       "required": [
