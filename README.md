@@ -22,7 +22,7 @@ Part of the [charly-vibes](https://github.com/charly-vibes) toolshed.
 | `docs/integration-failures.md` | 112 integration failure cases with verdicts against the design |
 | `docs/integration-failures-part2.md` | 50 more cases (113 to 162); rows 113 to 122 web-checked, the rest from memory |
 | `src/` | Rust implementation of the `wild extract` and `wild check` subcommands (beads wild-mh5.x) |
-| `openspec/specs/` | Nine specodelic specs (`wild`, `wild-core`, `wild-tiers`, `wild-compose`, `wild-registry`, `wild-bridge`, `wild-adopt`, `wild-deploy`, `wild-extract`) |
+| `openspec/specs/` | Ten specodelic specs (`wild`, `wild-core`, `wild-tiers`, `wild-compose`, `wild-registry`, `wild-bridge`, `wild-adopt`, `wild-deploy`, `wild-evaluate`, `wild-extract`) |
 | `prototype/wild_sim.py` | Toy checker: tier pipeline, accretion relation, tombstones |
 | `prototype/wild_proto.py` | Prototype extractors (Rust via tree-sitter, Python via ast) and demand extraction |
 | `prototype/wild_cat_sim.py` | Category-law, substitution, resolution, and certificate simulations |
@@ -41,7 +41,7 @@ specodelic lint openspec/specs
 specodelic graph openspec/specs        # expect no dangling references
 ```
 
-Last run: nine files, no issues, no warnings. Compile, model-check, and verify were not run.
+Last run: ten files, no issues, no warnings. Compile, model-check, and verify were not run.
 
 ## Run the prototypes
 

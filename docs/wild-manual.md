@@ -2,7 +2,7 @@
 
 Machine-checked compatibility for software components, first-party or third-party.
 
-> **Status, read first.** wild is a design with a prototype, not a finished tool. What exists today: a nine-file specification suite (`specs/`, lint-clean), a toy checker (`wild_sim.py`), prototype extractors for Rust, Python, and command-line tools (`wild_proto.py`, `experiments/cli_extract.py`), and experiments on real projects. The `wild` command described below is the intended interface. Sections are marked **[prototype]** where code exists and **[designed]** where only the spec exists. The normative [v1 formats](wild-formats-v1.md) and [JSON Schema](../schemas/wild-v1.schema.json) are specified; the older TOML sketch below is illustrative and is not the wire protocol.
+> **Status, read first.** wild is a design with a prototype, not a finished tool. What exists today: a ten-file specification suite (`openspec/specs/`, lint-clean), a Rust implementation of the `wild extract` and `wild check` subcommands, shipped as prototypes and runtime-tested (`src/`, `tests/runtime/`), a toy checker (`wild_sim.py`), prototype extractors for Rust, Python, and command-line tools (`wild_proto.py`, `experiments/cli_extract.py`), and experiments on real projects. The remaining `wild` subcommands described below are designed, not built. Sections are marked **[prototype]** where code exists and **[designed]** where only the spec exists. The normative [v1 formats](wild-formats-v1.md) and [JSON Schema](../schemas/wild-v1.schema.json) are specified; the older TOML sketch below is illustrative and is not the wire protocol.
 
 ---
 
@@ -92,7 +92,7 @@ wild adopt native        # publishes sidecar records next to your existing artif
 - **baseline**: first enforcement atomically records existing findings with an owner and acknowledgements expiring in 30 days. Rerunning init or changing levels never resets it; replacement and renewal require signed audit events. Expired acknowledgements reject.
 - **native** adds a sidecar record that binds your host artifact's digest to a revision hash. Your package, tag, and version are never modified.
 
-### 5.2 Publishing a release (provider) **[designed]**
+### 5.2 Publishing a release (provider) **[prototype]**
 
 ```
 wild extract .           # source → contract (draft)
@@ -123,7 +123,7 @@ wild publish --lineage acme.payments
 - An adapter declares its source/target hashes and losses. A lossless claim needs a reverse mapping and round-trip checks whose proof, exhaustive, or sampled method is disclosed. An infeasible adapter leaves an explicit unbridged boundary.
 - Consumers whose demand does not touch the broken slot may move to the new lineage without an adapter. Moving is always opt-in.
 
-### 5.4 Consuming a component **[designed]**
+### 5.4 Consuming a component **[designed; update prototyped]**
 
 ```
 wild demand              # derive the slots you use from code and tests (editable)
@@ -246,7 +246,7 @@ All from toy models or small real experiments; none from a production deployment
 
 ## 11. Reference
 
-### Commands **[designed]**
+### Commands **[designed; extract, check, and update prototyped]**
 
 | Command | Purpose |
 |---|---|
