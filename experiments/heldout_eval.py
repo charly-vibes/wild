@@ -290,15 +290,16 @@ def cmd_compare(args: argparse.Namespace) -> int:
         "runs": runs,
         "skipped": skipped,
     })
-    # wild-zfw exit policy: definite failures are findings of the comparison,
-    # not run failures — they are recorded per checker×case and rendered with
-    # denominators in the report. The run itself completed; integrity
-    # refusals (freeze drift, missing seal, oracle drift, missing outcomes)
-    # still exit 2.
+    # wild-1xk contract: a comparison with definite failures exits 1 — the
+    # findings are recorded per checker×case, but the nonzero exit is what
+    # gates the sealed protocol. Integrity refusals (freeze drift, missing
+    # seal, oracle drift, missing outcomes) still exit 2.
     print(f"comparison graded {len(runs)} checker×case run(s) "
           f"({len(skipped)} skipped by ecosystem applicability), "
           f"{len(definite_failures)} definite failure(s) recorded as findings; "
           f"written to {args.out}")
+    if definite_failures:
+        return 1
     return 0
 
 
@@ -318,8 +319,6 @@ def _checker_section(name: str, runs: list[dict], break_count: int, ok_count: in
     unknown = sum(1 for r in runs if r["outcome_class"] == "unknown")
     covered = len(runs) - unknown
     total = len(runs)
-    correct = sum(1 for r in runs
-                  if r["outcome_class"] in {"correct-accept", "correct-reject"})
     lines = [
         f"## checker: {name}",
         "",
@@ -342,14 +341,6 @@ def _checker_section(name: str, runs: list[dict], break_count: int, ok_count: in
         f"- count: {covered}",
         f"- denominator: {total} (cases run for this checker)",
         f"- ratio: {json.dumps(_ratio(covered, total, 'no cases run'))}",
-        "",
-        "### aggregate-accuracy",
-        f"- correct (correct-accept + correct-reject): {correct}",
-        f"- missed-breakage: {missed}; false-block: {false_blocks}; unknown: {unknown}",
-        f"- denominator: {total} cases this checker ran on ({break_count} "
-        "oracle-break + " + str(ok_count) + " oracle-ok); aggregate is recorded "
-        "alongside, never instead of, the separate metrics above",
-        f"- ratio: {json.dumps(_ratio(correct, total, 'no cases run'))}",
         "",
     ]
     return lines
@@ -418,35 +409,6 @@ def cmd_report(args: argparse.Namespace) -> int:
         b = sum(1 for cid in ids if outcomes.get(cid) == "break")
         k = sum(1 for cid in ids if outcomes.get(cid) == "ok")
         lines.extend(_checker_section(name, checker_runs, b, k))
-
-    total_runs = sum(len(rs) for rs in runs_by_checker.values())
-    total_unknown = sum(1 for rs in runs_by_checker.values() for r in rs
-                        if r["outcome_class"] == "unknown")
-    total_decided = total_runs - total_unknown
-    total_correct = sum(1 for rs in runs_by_checker.values() for r in rs
-                        if r["outcome_class"] in {"correct-accept", "correct-reject"})
-    total_missed = sum(1 for rs in runs_by_checker.values() for r in rs
-                       if r["outcome_class"] == "missed-breakage")
-    total_false_blocks = sum(1 for rs in runs_by_checker.values() for r in rs
-                             if r["outcome_class"] == "false-block")
-    skipped = compare.get("skipped", [])
-    lines.extend([
-        "## corpus-aggregate-accuracy (all checkers pooled)",
-        f"- correct: {total_correct}",
-        f"- missed-breakage: {total_missed}",
-        f"- false-block: {total_false_blocks}",
-        f"- unknown: {total_unknown}",
-        f"- denominator: {total_runs} checker×case runs ({break_count} "
-        f"oracle-break + {ok_count} oracle-ok pool cases × applicable "
-        f"checkers); {len(skipped)} checker×case pairs skipped by ecosystem "
-        "applicability and excluded from every denominator",
-        f"- aggregate-accuracy: {json.dumps(_ratio(total_correct, total_decided, 'no decided runs'))} "
-        "(correct / decided — unknown runs excluded from numerator and "
-        "denominator and counted separately above)",
-        "- aggregate accuracy is recorded for wild-zfw; the per-checker "
-        "separate metrics above remain the safety analysis",
-        "",
-    ])
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text("\n".join(lines) + "\n", encoding="utf-8")
