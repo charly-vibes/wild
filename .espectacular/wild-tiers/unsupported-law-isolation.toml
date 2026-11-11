@@ -8,5 +8,5 @@ authored_with = "0.9.2"
 [tests]
 pytest = [
   {flags = "tests/runtime/test_authored_laws.py::test_unsupported_law_is_isolated_and_other_obligations_still_evaluate", timeout_seconds = 300},
-  {flags = "tests/runtime/test_authored_laws.py::test_ambient_access_attempt_yields_inconclusive", timeout_seconds = 300},
+  {flags = "tests/runtime/test_authored_laws.py::test_failed_execution_scenarios_yield_runner_authored_inconclusive", timeout_seconds = 300},
 ]

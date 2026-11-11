@@ -7,9 +7,8 @@ authored_with = "0.10.0"
 
 [tests]
 pytest = [
-  {flags = "tests/runtime/test_extract.py::TestExtraction::test_format_capture_of_provider_value_item_is_disclosed", timeout_seconds = 300},
-  {flags = "tests/runtime/test_extract.py::TestExtraction::test_format_capture_via_alias_is_disclosed", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_provider_value_item_capture_is_disclosed", timeout_seconds = 300},
   {flags = "tests/runtime/test_extract.py::TestExtraction::test_named_argument_shadowing_provider_name_emits_no_capture_gap", timeout_seconds = 300},
-  {flags = "tests/runtime/test_extract.py::TestExtraction::test_format_capture_of_plain_local_stays_demand_inert", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_whitelisted_macro_descent_records_provider_demand", timeout_seconds = 300},
   {flags = "tests/runtime/test_extract.py::TestExtraction::test_escaped_braces_emit_no_capture_and_no_gap", timeout_seconds = 300},
 ]

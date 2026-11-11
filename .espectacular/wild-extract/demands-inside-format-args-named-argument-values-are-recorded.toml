@@ -7,5 +7,5 @@ authored_with = "0.10.0"
 
 [tests]
 pytest = [
-  {flags = "tests/runtime/test_extract.py::TestExtraction::test_format_args_named_argument_values_record_demands", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_whitelisted_macro_descent_records_provider_demand", timeout_seconds = 300},
 ]

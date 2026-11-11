@@ -8,5 +8,5 @@ authored_with = "0.10.0"
 [tests]
 pytest = [
   {flags = "tests/runtime/test_extract.py::TestExtraction::test_statement_macro_arguments_record_demands_like_direct_calls", timeout_seconds = 300},
-  {flags = "tests/runtime/test_extract.py::TestExtraction::test_expression_position_whitelisted_macro_descends_arguments", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_whitelisted_macro_descent_records_provider_demand", timeout_seconds = 300},
 ]

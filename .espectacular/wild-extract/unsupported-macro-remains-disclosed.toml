@@ -7,8 +7,5 @@ authored_with = "0.10.0"
 
 [tests]
 pytest = [
-  {flags = "tests/runtime/test_extract.py::TestExtraction::test_nested_macro_inside_whitelisted_args_retains_gap", timeout_seconds = 300},
-  {flags = "tests/runtime/test_extract.py::TestExtraction::test_statement_position_non_whitelisted_macro_retains_gap", timeout_seconds = 300},
-  {flags = "tests/runtime/test_extract.py::TestExtraction::test_expression_position_non_whitelisted_macro_retains_gap", timeout_seconds = 300},
-  {flags = "tests/runtime/test_extract.py::TestExtraction::test_unparseable_whitelisted_head_retains_gap", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_non_whitelisted_macro_positions_retain_the_gap", timeout_seconds = 300},
 ]
