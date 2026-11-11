@@ -1,0 +1,42 @@
+# compile-oracle.yml — CI reproduction of experiments/compile_oracle.sh (wild-150)
+#
+# The recorded evidence for RESULTS.md §1 is the LOCAL run (cargo/rustc 1.98.1, verdicts in
+# experiments/compile_oracle_results.txt). This workflow is the reproduction harness: it
+# re-runs the oracle on ubuntu-latest and uploads the verdicts as an artifact. It fetches
+# the 16 genesis-vibes crate sources from static.crates.io and creates detached (read-only)
+# worktrees of the specodelic repo per RESULTS.md §1 tag.
+name: compile-oracle
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # weekly Monday 06:00 UTC
+
+jobs:
+  oracle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        # edition 2024 needs a 1.85+ toolchain; stable satisfies it. The oracle script
+        # pins the exact cargo/rustc versions it ran under into the verdict output.
+
+      - name: Show toolchain (pinned into verdicts)
+        run: |
+          cargo --version
+          rustc --version
+
+      - name: Check out specodelic tags (read-only consumer sources)
+        run: git clone https://github.com/charly-vibes/specodelic.git /tmp/specodelic
+
+      - name: Run compile oracle
+        env:
+          SPECODELIC_DIR: /tmp/specodelic
+        run: bash experiments/compile_oracle.sh
+
+      - name: Upload verdicts
+        uses: actions/upload-artifact@v4
+        with:
+          name: compile-oracle-results
+          path: experiments/compile_oracle_results.txt

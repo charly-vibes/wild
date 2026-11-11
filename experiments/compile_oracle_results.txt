@@ -1,0 +1,47 @@
+# compile oracle — genesis-vibes (provider) × specodelic (consumer), disputed transitions
+# date: 2026-11-11T14:38:16Z
+# toolchain: cargo 1.98.1 (797e8a9bc 2026-08-05) | rustc 1.98.1 (48a229cea 2026-09-01)
+# method: probe = consumer pinned (="provider_to") compiles? control = consumer pinned (="provider_from").
+#         Applicability = RESULTS.md §1 demand lines (cargo caret range ∪ beyond-range demand).
+transition|consumer_tag|provider_pair|probe(to)|control(from)|first_error|toolchain
+0.8.0->0.8.1|v0.2.0|0.8.0->0.8.1|PASS|FAIL|probe_err:- control_err:error[E0560]: struct `FeedbackArgs` has no field named `title`|rustc 1.98.1 (48a229cea 2026-09-01)
+0.8.0->0.8.2|v0.2.0|0.8.0->0.8.2|PASS|FAIL|probe_err:- control_err:error[E0560]: struct `FeedbackArgs` has no field named `title`|rustc 1.98.1 (48a229cea 2026-09-01)
+0.8.0->0.8.3|v0.2.0|0.8.0->0.8.3|PASS|FAIL|probe_err:- control_err:error[E0560]: struct `FeedbackArgs` has no field named `title`|rustc 1.98.1 (48a229cea 2026-09-01)
+0.8.1->0.9.0|v0.2.0|0.8.1->0.9.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.8.2->0.9.0|v0.2.0|0.8.2->0.9.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.8.3->0.9.0|v0.2.0|0.8.3->0.9.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.10.0->0.11.0|v0.2.0|0.10.0->0.11.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.10.0->0.11.0|v0.3.0|0.10.0->0.11.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.10.0->0.11.1|v0.2.0|0.10.0->0.11.1|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.10.0->0.11.1|v0.3.0|0.10.0->0.11.1|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.10.1->0.11.0|v0.2.0|0.10.1->0.11.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.10.1->0.11.0|v0.3.0|0.10.1->0.11.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.10.1->0.11.1|v0.2.0|0.10.1->0.11.1|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.10.1->0.11.1|v0.3.0|0.10.1->0.11.1|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.10.0->0.12.0|v0.2.0|0.10.0->0.12.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.10.0->0.12.0|v0.3.0|0.10.0->0.12.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.10.0->0.12.0|v0.4.0|0.10.0->0.12.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.10.0->0.12.0|v0.5.0|0.10.0->0.12.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.10.1->0.12.0|v0.2.0|0.10.1->0.12.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.10.1->0.12.0|v0.3.0|0.10.1->0.12.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.10.1->0.12.0|v0.4.0|0.10.1->0.12.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.10.1->0.12.0|v0.5.0|0.10.1->0.12.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.11.0->0.12.0|v0.2.0|0.11.0->0.12.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.11.0->0.12.0|v0.3.0|0.11.0->0.12.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.11.0->0.12.0|v0.4.0|0.11.0->0.12.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.11.0->0.12.0|v0.5.0|0.11.0->0.12.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.11.1->0.12.0|v0.2.0|0.11.1->0.12.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.11.1->0.12.0|v0.3.0|0.11.1->0.12.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.11.1->0.12.0|v0.4.0|0.11.1->0.12.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.11.1->0.12.0|v0.5.0|0.11.1->0.12.0|PASS|PASS|probe_err:- control_err:-|rustc 1.98.1 (48a229cea 2026-09-01)
+0.3.0->0.4.0|—|N/A|N/A|N/A|no consumer tag demands provider_to (RESULTS.md §1 demand lines: earliest consumer v0.1.0 demands 0.7; 0.4.0/0.5.0 allowed by no tag)|-
+0.3.0->0.5.0|—|N/A|N/A|N/A|no consumer tag demands provider_to (RESULTS.md §1 demand lines: earliest consumer v0.1.0 demands 0.7; 0.4.0/0.5.0 allowed by no tag)|-
+0.4.0->0.5.0|—|N/A|N/A|N/A|no consumer tag demands provider_to (RESULTS.md §1 demand lines: earliest consumer v0.1.0 demands 0.7; 0.4.0/0.5.0 allowed by no tag)|-
+
+# supplementary cells (outside the 17 disputed transitions; demand-line probes)
+supplementary_consumer|pinned_version|verdict|first_error|toolchain
+v0.1.0|0.7.0|PASS|-|rustc 1.98.1 (48a229cea 2026-09-01)
+v0.1.0|0.8.0|PASS|-|rustc 1.98.1 (48a229cea 2026-09-01)
+v0.1.0|0.8.1|FAIL|error[E0063]: missing field `title` in initializer of `FeedbackArgs`|rustc 1.98.1 (48a229cea 2026-09-01)
+
+# toolchain: cargo 1.98.1 (797e8a9bc 2026-08-05) | rustc 1.98.1 (48a229cea 2026-09-01)
