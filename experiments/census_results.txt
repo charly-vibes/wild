@@ -1,0 +1,23 @@
+# wild-58c census — serde full crates.io release history (false-break census)
+# PRE-REGISTRATION SKELETON — grading NOT yet performed.
+# This file exists to make the RED state and the pre-registration auditable:
+# the census script (experiments/census.py) carries the crate choice (serde),
+# the full sorted version list (308 plain X.Y.Z releases, created_at
+# ascending, pre-releases excluded, yanked included), and the slot-count /
+# classification methodology. This skeleton is committed BEFORE any
+# transition is graded; the graded per-release and per-transition tables
+# replace this file in the census commit.
+#
+# Pre-registration summary:
+#   crate: serde (serde-rs/serde), crates.io slug `serde`
+#   versions: 308 (see PRE_REGISTERED_VERSIONS in experiments/census.py)
+#   transitions: 307 consecutive pairs in release order
+#   slot counter: PRIMARY tree-sitter experiments path
+#     (prototype/wild_proto.extract_rust); SECONDARY wild extract binary
+#     columns (decision/inventored slots/opaque slots)
+#   opaque share = opaque slots / inventoried slots, per release
+#   false break = contract break AND cargo caret compatible AND no
+#     documented break evidence in the TO version's release notes
+#   evidence source: repos/serde-rs/serde releases bodies (fetched to
+#     scratch before grading; scratch: /tmp/wild-58c-scratch)
+# GRADING: not yet performed (pre-registration commit)
