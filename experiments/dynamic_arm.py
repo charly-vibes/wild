@@ -729,14 +729,15 @@ def main():
         verdict = "useful"
     else:
         verdict = "inconclusive"
+    n_js = len([f for f in FIXTURES if f["arm"] == "js"])
     ev = ("python-arm aggregate unknown rate %d/%d = %.0f%% with %d/%d fixtures carrying a grade-0 (silent,"
           " undiagnosed) unknown; %d/%d grade-2; JS arm adds scope-narrowing evidence: no JS extractor exists"
-          " (4/4 fixtures unsupported-extractor), so the dynamic-language arm cannot cover JS at all"
+          " (%d/%d fixtures unsupported-extractor), so the dynamic-language arm cannot cover JS at all"
           % (agg_unknown, agg_denom, agg_rate * 100, g0_fx, n_py,
-             grade_hist["g2"], n_py, len([f for f in FIXTURES if f["arm"] == "js"])))
+             grade_hist["g2"], n_py, n_js, n_js))
     L.append("## Verdict")
     L.append("")
-    L.append("VERDICT: %s — evidence: %s." % (verdict.upper() if verdict != "inconclusive" else "INCONCLUSIVE", ev))
+    L.append("VERDICT: %s — evidence: %s." % (verdict, ev))
     L.append("")
     L.append("(decision rule, pre-registered: impractical iff aggregate rate >= 0.5 or >= half of python fixtures"
              " carry a grade-0 unknown; useful iff rate <= 0.2 and zero grade-0 fixtures; else inconclusive.)")
