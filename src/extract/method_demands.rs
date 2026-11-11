@@ -79,7 +79,9 @@ impl<'a> SourceWalk<'a> {
 
     /// Record one demand entry against an already-resolved target
     /// (wild-158 method-call resolution routes here). Unsupplied provider
-    /// sources keep the incumbent gap; slot presence is validated at
+    /// sources keep the incumbent gap unless the target sits under a
+    /// declared conveys input path (wild-hyk), which records a scoped
+    /// conveyance claim instead; slot presence is validated at
     /// demand-resolution time.
     pub(super) fn record_resolved_demand(
         &mut self,
@@ -99,6 +101,34 @@ impl<'a> SourceWalk<'a> {
                     },
                 ),
                 ("provider_slot", formats::s(&provider_slot)),
+            ]));
+            let loc = span.start();
+            self.locations.push(formats::obj(vec![
+                ("slot", formats::s(target)),
+                ("file", formats::s(&self.current_file)),
+                ("line", formats::i(loc.line as i64)),
+                ("col", formats::i(loc.column as i64)),
+            ]));
+        } else if let Some(scope) = super::conveyed_scope(self.conveys, target) {
+            // wild-hyk: the target sits under a declared conveys input path,
+            // so the unknown slot is forwarded not interpreted: record a
+            // conveyance claim scoped to the covering declared path instead
+            // of the incomplete-demand refusal. The claim never exempts
+            // validation — the forwarded input stays a required opaque
+            // in-slot, and check still refuses a newly introduced one.
+            self.demand.push(formats::obj(vec![
+                ("consumer", formats::s(&self.crate_name)),
+                ("called", formats::s(target)),
+                (
+                    "alias",
+                    match alias {
+                        Some(a) => formats::s(a),
+                        None => Value::Null,
+                    },
+                ),
+                ("provider_slot", formats::s(target)),
+                ("conveyed", Value::Bool(true)),
+                ("scope", formats::s(&scope)),
             ]));
             let loc = span.start();
             self.locations.push(formats::obj(vec![

@@ -21,6 +21,7 @@ An assembly is components plus bindings from required slots to provided slots. I
 | required_slots_bound | invariant | `every required input of every component is bound by a well-formed binding` | [[wild.compose]] |
 | substitution_preserves_assembly | invariant | `replacing a component with an accretion of itself keeps a well-formed assembly well-formed` | [[wild.compose]] |
 | scoped_substitution | invariant | `scoped replacement preserves every demanded output AND validates all required inputs of the replacement and its transitive dependency closure; restricting demand never hides newly introduced required inputs` | [[wild.compose]] |
+| conveys_forwarding_scoped | invariant | `a contract may declare a conveys clause listing input paths that are forwarded not interpreted; extraction of a demanded slot at a declared path records a conveyance claim scoped to those paths instead of refusing for unextracted demand, and the claim never exempts scoped_substitution — restricting demand still never hides newly introduced required inputs` | [[wild.compose]] |
 | resolution_by_lineage | invariant | `for a finite registry snapshot with one accepted tip per lineage, resolve traverses dependency closure using deterministic newest-tip lookup; missing tips, unmerged forks, singleton conflicts, or relation failures refuse selection without backtracking; dependency cycles reach a fixed point and are checked as a whole` | [[wild.compose]] |
 | resolver_deterministic | invariant | `the same registry snapshot and demand yield the same selection and certificate` | [[wild.compose]] |
 | lineage_copies_listed | invariant | `when consumers demand different lineages of one package, each lineage is resolved separately and the copies are listed` | [[wild.compose]] |
@@ -69,6 +70,8 @@ An assembly is components plus bindings from required slots to provided slots. I
 | unbound_required_slot_rejected | unit | [[wild.compose.required_slots_bound]] | `assembly_with_one_unbound_required_input()` | `well_formed == false` |
 | accretion_substitution_sound | unit | [[wild.compose.substitution_preserves_assembly]] | `well_formed_assembly_and_accepted_accretion()` | `well_formed(after) == true` |
 | scoped_substitution_sound | unit | [[wild.compose.scoped_substitution]] | `assembly_and_change_accreting_on_used_slots()` | `well_formed(after) == true` |
+| conveyed_slot_claimed_not_rejected | unit | [[wild.compose.conveys_forwarding_scoped]] | `passthrough_contract_with_conveys_paths()` | `slot at declared path → claim ∧ no demand refusal` |
+| conveyed_path_new_required_input_still_caught | unit | [[wild.compose.conveys_forwarding_scoped]] | `replacement_introducing_required_input_under_conveyed_path()` | `refusal lists new required input` |
 | resolution_is_chain_max | unit | [[wild.compose.resolution_by_lineage]] | `finite_snapshot_with_unique_tips_and_demand()` | `selection == accepted tips ∧ backtracking_nodes == 0 or refusal lists violated constraints` |
 | resolution_reproducible | unit | [[wild.compose.resolver_deterministic]] | `same_snapshot_resolved_twice()` | `selection(a) == selection(b) ∧ cert(a) == cert(b)` |
 | copies_are_listed | unit | [[wild.compose.lineage_copies_listed]] | `consumers_on_two_lineages_of_one_package()` | `report lists both copies` |
@@ -306,6 +309,26 @@ The system SHALL satisfy `composition_is_category` as defined in the Constraints
 - **GIVEN** the accepted tips violate a declared timeout relation but older revisions would pass
 - **WHEN** resolution completes closure and checks relations
 - **THEN** it refuses with the relation id; no older candidate is selected
+
+### Rule: Conveyance forwards uninterpreted input
+
+The system SHALL satisfy `conveys_forwarding_scoped` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Conveyed slot is claimed, not rejected
+- **GIVEN** a pass-through contract declaring a `conveys` clause over declared input paths
+- **WHEN** extraction meets an unknown input slot at a declared path
+- **THEN** the verdict records a conveyance claim scoped to the declared paths and no demand refusal for that slot
+
+#### Acceptance case: Undeclared unknown slot is still refused
+- **GIVEN** a contract without a `conveys` clause covering a given path
+- **WHEN** extraction meets an unknown input slot at that path
+- **THEN** the current refusal for unextracted demand is preserved
+
+#### Acceptance case: Conveyance never hides newly introduced required inputs
+- **GIVEN** a scoped substitution whose replacement introduces a new required input under a conveyed path
+- **WHEN** the `scoped_substitution` check runs
+- **THEN** the refusal lists the newly introduced required input exactly as without the clause
+
 ## Requirements
 ### Requirement: Wild compose design contract
 
@@ -336,4 +359,23 @@ Local update evaluation SHALL validate the explicit assembly selected by the hos
 - **GIVEN** a valid explicitly pinned host assembly and no Wild registry
 - **WHEN** local structural checking succeeds
 - **THEN** the report identifies its local scope and makes no registry-tip or publication claim
+
+### Requirement: Conveyance forwards uninterpreted input
+
+The system SHALL satisfy `conveys_forwarding_scoped` as defined in the Constraints table and the v1 format reference.
+
+#### Scenario: Conveyed slot is claimed, not rejected
+- **GIVEN** a pass-through contract declaring a `conveys` clause over declared input paths
+- **WHEN** extraction meets an unknown input slot at a declared path
+- **THEN** the verdict records a conveyance claim scoped to the declared paths and no demand refusal for that slot
+
+#### Scenario: Undeclared unknown slot is still refused
+- **GIVEN** a contract without a `conveys` clause covering a given path
+- **WHEN** extraction meets an unknown input slot at that path
+- **THEN** the current refusal for unextracted demand is preserved
+
+#### Scenario: Conveyance never hides newly introduced required inputs
+- **GIVEN** a scoped substitution whose replacement introduces a new required input under a conveyed path
+- **WHEN** the `scoped_substitution` check runs
+- **THEN** the refusal lists the newly introduced required input exactly as without the clause
 

@@ -1,0 +1,11 @@
+id = "undeclared-unknown-slot-is-still-refused"
+description = "A path not covered by a conveys clause claims nothing: the incumbent refusal for unextracted demand is preserved unchanged"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_conveys.py::test_undeclared_unknown_slot_is_still_refused", timeout_seconds = 300},
+]

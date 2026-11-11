@@ -499,6 +499,13 @@
             ],
             "additionalProperties": false
           }
+        },
+        "conveys": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
         }
       },
       "required": [

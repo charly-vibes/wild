@@ -51,6 +51,7 @@
 //   commitment fields with the real supplied values once laws execute.
 
 use crate::extract::{self, ExtractionOutcome, LOCAL_VERSION, PROFILE};
+use std::collections::BTreeSet;
 use crate::obligations::{
     build_law_context,
     evaluate_obligations,
@@ -76,6 +77,7 @@ const CHECK_REQUEST_FIELDS: &[&str] = &[
     "target",
     "toolchain",
     "features",
+    "conveys",
     "policy",
     "obligations",
     "checker",
@@ -114,8 +116,16 @@ pub(crate) struct SlotInfo {
 /// checker identity. Every refusal is an error-class input.
 fn validate_check_request(
     request: &Value,
-) -> Result<(String, (String, Vec<(String, String)>), (String, Vec<(String, String)>), String), String>
-{
+) -> Result<
+    (
+        String,
+        (String, Vec<(String, String)>),
+        (String, Vec<(String, String)>),
+        String,
+        Vec<String>,
+    ),
+    String,
+> {
     if request.str_field("version")? != LOCAL_VERSION {
         return Err(format!(
             "unsupported protocol version `{}`; expected {LOCAL_VERSION}",
@@ -168,6 +178,7 @@ fn validate_check_request(
         base,
         candidate,
         checker.str_field("digest")?.to_string(),
+        crate::extract::validate_conveys(request.get("conveys"))?,
     ))
 }
 
@@ -253,6 +264,7 @@ fn synthetic_extraction_request(
     _side: &str,
     bundle_root: &str,
     files: &[(String, String)],
+    conveys: &[String],
 ) -> Value {
     let mut file_pairs: Vec<(String, Value)> = Vec::new();
     for (rel, digest) in files {
@@ -290,6 +302,28 @@ fn synthetic_extraction_request(
                 .unwrap_or(formats::obj(vec![("name", formats::s("wild"))])),
         ),
     ])
+    .with_conveys(conveys)
+}
+
+/// Attach the declared conveys paths to a synthetic extraction request;
+/// absent (not an empty array) when no clause is declared so the incumbent
+/// request shape is preserved.
+trait WithConveys {
+    fn with_conveys(self, conveys: &[String]) -> Value;
+}
+
+impl WithConveys for Value {
+    fn with_conveys(mut self, conveys: &[String]) -> Value {
+        if let Value::Obj(entries) = &mut self {
+            if !conveys.is_empty() {
+                entries.push((
+                    "conveys".to_string(),
+                    formats::arr(conveys.iter().map(|p| formats::s(p)).collect()),
+                ));
+            }
+        }
+        self
+    }
 }
 
 /// Extract the visible slot inventory from one side's contract record.
@@ -387,6 +421,12 @@ fn judge_slots(
         .ok_or("base demand record has no entries array")?;
     let mut demanded_calls: Vec<String> = Vec::new();
     for entry in base_demand {
+        // conveyed entries are claimed, not judged: forwarding is not
+        // interpretation, so the scoped claim — not a slot verdict — records
+        // them (wild-hyk)
+        if entry.get("conveyed").and_then(Value::as_bool) == Some(true) {
+            continue;
+        }
         if entry.str_field("consumer")? == consumer {
             let called = entry.str_field("called")?.to_string();
             if !demanded_calls.contains(&called) {
@@ -566,9 +606,120 @@ fn assemble_diagnostics(
     diagnostics
 }
 
+/// Scoped conveyance claims on one side: demand entries recorded as
+/// forwarded-not-interpreted under a declared conveys path (wild-hyk),
+/// deduplicated by called path.
+fn conveyance_claims(outcome: &ExtractionOutcome) -> Vec<(String, String)> {
+    let mut claims: Vec<(String, String)> = Vec::new();
+    if let Some(entries) = outcome.demand.get("entries").and_then(Value::as_arr) {
+        for entry in entries {
+            if entry.get("conveyed").and_then(Value::as_bool) == Some(true) {
+                let called = entry
+                    .str_field("called")
+                    .unwrap_or_default()
+                    .to_string();
+                let scope = entry.str_field("scope").unwrap_or_default().to_string();
+                if !claims.iter().any(|(c, _)| c == &called) {
+                    claims.push((called, scope));
+                }
+            }
+        }
+    }
+    claims
+}
+
+/// Conveyance evidence for one check (wild-hyk): report claim records for
+/// both sides, plus the refusal diagnostics for candidate-side claims at
+/// paths the base never demanded. scoped_substitution stands unchanged:
+/// the claim never exempts a newly introduced required input, so each new
+/// input carries a diagnostic listing the path, exactly as without the
+/// clause.
+struct ConveyanceFindings {
+    claim_records: Vec<Value>,
+    new_input_diagnostics: Vec<Value>,
+}
+
+fn conveyance_findings(
+    base: &ExtractionOutcome,
+    candidate: &ExtractionOutcome,
+) -> ConveyanceFindings {
+    let base_demanded: BTreeSet<&str> = base
+        .demand
+        .get("entries")
+        .and_then(Value::as_arr)
+        .map(|entries| {
+            entries
+                .iter()
+                .filter_map(|e| e.str_field("called").ok())
+                .collect()
+        })
+        .unwrap_or_default();
+    let mut claim_records: Vec<Value> = Vec::new();
+    let mut new_input_diagnostics: Vec<Value> = Vec::new();
+    for (side, outcome) in [("base", base), ("candidate", candidate)] {
+        for (called, scope) in conveyance_claims(outcome) {
+            if side == "candidate" && !base_demanded.contains(called.as_str()) {
+                new_input_diagnostics.push(obligation_diagnostic(
+                    "conveyed-new-required-input",
+                    "error",
+                    format!(
+                        "conveyed demand `{called}` (declared under `{scope}`) is newly introduced on the candidate side; a conveyance claim never exempts a newly introduced required input"
+                    ),
+                ));
+            }
+            claim_records.push(formats::obj(vec![
+                ("side", formats::s(side)),
+                ("called", formats::s(&called)),
+                ("scope", formats::s(&scope)),
+            ]));
+        }
+    }
+    claim_records.sort_by(|a, b| {
+        let key = |v: &Value| {
+            (
+                v.str_field("side").unwrap_or_default().to_string(),
+                v.str_field("called").unwrap_or_default().to_string(),
+            )
+        };
+        key(a).cmp(&key(b))
+    });
+    ConveyanceFindings {
+        claim_records,
+        new_input_diagnostics,
+    }
+}
+
+/// Extract one committed side through the synthetic extraction request.
+fn extract_side(
+    request: &Value,
+    side: &str,
+    root: &str,
+    files: &[(String, String)],
+    conveys: &[String],
+) -> Result<ExtractionOutcome, String> {
+    extract::extract(&synthetic_extraction_request(request, side, root, files, conveys))
+}
+
+/// Extracted fact records for both sides (relative path, canonical bytes)
+/// under the report contract's facts/ subdirectories: contract, demand, and
+/// provenance per side.
+fn fact_records(base: &ExtractionOutcome, candidate: &ExtractionOutcome) -> Vec<(String, String)> {
+    let mut facts: Vec<(String, String)> = Vec::new();
+    for (side, outcome) in [("base", base), ("candidate", candidate)] {
+        for (name, value) in [
+            ("contract", &outcome.contract),
+            ("demand", &outcome.demand),
+            ("provenance", &outcome.provenance),
+        ] {
+            facts.push((format!("{side}/{name}.json"), formats::canonical(value)));
+        }
+    }
+    facts
+}
+
 /// Check one validated request; `Err` classifies as error (exit 2).
 pub fn check(request: &Value) -> Result<CheckOutcome, String> {
-    let (consumer, (base_root, base_files), (cand_root, cand_files), checker_digest) =
+    let (consumer, (base_root, base_files), (cand_root, cand_files), checker_digest, conveys) =
         validate_check_request(request)?;
     let obligations: Vec<Obligation> = match request.get("obligations") {
         None | Some(Value::Null) => Vec::new(),
@@ -588,14 +739,17 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
         Some(_) => return Err("`obligations` must be null or a {digest, path} reference".to_string()),
     };
     let transition = finalize_transition(request, &obligations)?;
-    let base_request = synthetic_extraction_request(request, "base", &base_root, &base_files);
-    let cand_request =
-        synthetic_extraction_request(request, "candidate", &cand_root, &cand_files);
-    let base = extract::extract(&base_request)?;
-    let candidate = extract::extract(&cand_request)?;
+    let base = extract_side(request, "base", &base_root, &base_files, &conveys)?;
+    let candidate = extract_side(request, "candidate", &cand_root, &cand_files, &conveys)?;
 
     let (verdicts, demanded_names, passed, total, _has_break_or_unknown) =
         judge_slots(&consumer, &base, &candidate)?;
+
+    // Scoped conveyance claims (wild-hyk): forwarded-not-interpreted demand
+    // under a declared path, recorded per side; candidate-side claims at
+    // paths the base never demanded carry their own refusal diagnostics
+    // (scoped_substitution unchanged).
+    let conveyance = conveyance_findings(&base, &candidate);
 
     let base_contract_bytes = formats::canonical(&base.contract).into_bytes();
     let cand_contract_bytes = formats::canonical(&candidate.contract).into_bytes();
@@ -645,7 +799,7 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
         obl_unknown,
     );
 
-    let diagnostics = assemble_diagnostics(
+    let mut diagnostics = assemble_diagnostics(
         &base,
         &candidate,
         &obl_changes,
@@ -664,8 +818,13 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
     // Accepted obligations are enforced against the candidate regardless of
     // any candidate-sourced weakening: a passing authorized transition
     // supersedes the per-slot break on exactly the slots its accepted
-    // replacement obligation binds; everything else stays definite.
+    // replacement obligation binds; everything else stays definite. A
+    // conveyance claim narrows what is interpreted, never what is validated:
+    // a newly introduced conveyed required input refuses like any gap
+    // (wild-hyk, scoped_substitution unchanged).
     let has_side_gap = !base.complete_inventory || !candidate.complete_inventory;
+    let has_conveyed_new_input = !conveyance.new_input_diagnostics.is_empty();
+    diagnostics.extend(conveyance.new_input_diagnostics);
     let any_removed_or_broken = verdicts.iter().any(|v| {
         let verdict = v.str_field("verdict").unwrap_or_default();
         (verdict == "removed" || verdict == "broken")
@@ -680,7 +839,7 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
     let (decision, assurance): (&'static str, &'static str) =
         if obl_definite || any_removed_or_broken {
             ("refuse", "Reject")
-        } else if has_side_gap || any_type_unknown || obl_unknown {
+        } else if has_side_gap || any_type_unknown || obl_unknown || has_conveyed_new_input {
             ("refuse", "Unknown")
         } else {
             ("accept", "PassDeclared")
@@ -699,6 +858,7 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
     let report = formats::obj(vec![
         ("version", formats::s(LOCAL_VERSION)),
         ("kind", formats::s("check-report")),
+        ("conveyance_claims", formats::arr(conveyance.claim_records)),
         ("profile", formats::s(PROFILE)),
         ("consumer", formats::s(&consumer)),
         (
@@ -737,21 +897,7 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
         ("diagnostics", formats::arr(diagnostics.clone())),
     ]);
 
-    let mut facts: Vec<(String, String)> = Vec::new();
-    for (side, outcome) in [("base", &base), ("candidate", &candidate)] {
-        facts.push((
-            format!("{side}/contract.json"),
-            formats::canonical(&outcome.contract),
-        ));
-        facts.push((
-            format!("{side}/demand.json"),
-            formats::canonical(&outcome.demand),
-        ));
-        facts.push((
-            format!("{side}/provenance.json"),
-            formats::canonical(&outcome.provenance),
-        ));
-    }
+    let facts = fact_records(&base, &candidate);
 
     Ok(CheckOutcome {
         report,

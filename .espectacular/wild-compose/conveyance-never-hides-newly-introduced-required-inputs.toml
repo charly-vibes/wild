@@ -1,0 +1,11 @@
+id = "conveyance-never-hides-newly-introduced-required-inputs"
+description = "A scoped substitution whose replacement introduces a new required input under a conveyed path is still refused and the refusal lists it — the conveyance claim never exempts scoped_substitution"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_conveys.py::test_conveyed_path_new_required_input_still_caught", timeout_seconds = 300},
+]

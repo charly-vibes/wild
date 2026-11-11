@@ -108,6 +108,29 @@ pub fn validate_contract(value: &Value) -> Result<(), Vec<String>> {
     let relations = value.get("relations").and_then(Value::as_arr).unwrap_or(&[]);
     let sunsets = value.get("sunsets").and_then(Value::as_arr).unwrap_or(&[]);
 
+    // Conveys clause (wild-hyk): optional sorted, duplicate-free array of
+    // input path identifiers whose unknown slots are forwarded, not
+    // interpreted. Conveyance narrows what is interpreted, never what is
+    // validated.
+    match value.get("conveys") {
+        None | Some(Value::Null) => {}
+        Some(Value::Arr(items)) => {
+            let mut previous: Option<&str> = None;
+            for item in items {
+                match item.as_str() {
+                    Some(path) if id_syntax(path) => {
+                        if previous == Some(path) || previous.is_some_and(|p| p > path) {
+                            push("set-order");
+                        }
+                        previous = Some(path);
+                    }
+                    _ => push("id-syntax"),
+                }
+            }
+        }
+        Some(_) => push("conveys-shape"),
+    }
+
     // Slot names are unique across slots and tombstones.
     let mut names: Vec<&str> = Vec::new();
     for slot in slots.iter().chain(tombstones.iter()) {
@@ -179,6 +202,11 @@ fn is_digest(text: &str) -> bool {
 }
 
 fn is_id(text: &str) -> bool {
+    id_syntax(text)
+}
+
+/// The v1 identifier grammar (also used for conveys input paths).
+pub(crate) fn id_syntax(text: &str) -> bool {
     let mut chars = text.chars();
     let first_ok = matches!(
         chars.next(),

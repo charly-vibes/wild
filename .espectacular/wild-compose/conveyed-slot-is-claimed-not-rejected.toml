@@ -1,0 +1,13 @@
+id = "conveyed-slot-is-claimed-not-rejected"
+description = "A contract may declare a conveys clause listing input paths that are forwarded not interpreted: extraction of an unknown input slot at a declared path records a conveyance claim scoped to those paths instead of refusing for unextracted demand, while an uncovered path keeps the incumbent refusal and a newly introduced required input under a conveyed path is still refused and listed (scoped_substitution unchanged)"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.9.2"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_conveys.py::test_conveyed_slot_is_claimed_not_rejected", timeout_seconds = 300},
+  {flags = "tests/runtime/test_conveys.py::test_undeclared_unknown_slot_is_still_refused", timeout_seconds = 300},
+  {flags = "tests/runtime/test_conveys.py::test_conveyed_path_new_required_input_still_caught", timeout_seconds = 300},
+]

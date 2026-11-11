@@ -32,12 +32,14 @@ pub const LOCAL_VERSION: &str = "local-1";
 // `macro_demands` (add-std-macro-demand-support +
 // add-format-args-demand-support): the closed whitelist, the argument
 // grammar, format-capture scanning, and the capture cross-check.
+mod conveys;
 mod macro_demands;
 mod method_demands;
 mod mod_files;
 mod type_inventory;
 
 use macro_demands::{CaptureRef, check_capture_disclosure};
+pub(crate) use conveys::{conveyed_scope, validate_conveys};
 
 const REQUEST_FIELDS: &[&str] = &[
     "version",
@@ -48,6 +50,7 @@ const REQUEST_FIELDS: &[&str] = &[
     "target",
     "toolchain",
     "features",
+    "conveys",
     "extractor",
 ];
 
@@ -94,7 +97,9 @@ struct SlotRecord {
 
 /// Validate the request envelope shape; returns bundle root and file
 /// commitment list on success. Every refusal is an error-class input.
-fn validate_request(request: &Value) -> Result<(PathBuf, Vec<(String, String)>), String> {
+fn validate_request(
+    request: &Value,
+) -> Result<(PathBuf, Vec<(String, String)>, Vec<String>), String> {
     if request.str_field("version")? != LOCAL_VERSION {
         return Err(format!(
             "unsupported protocol version `{}`; expected {LOCAL_VERSION}",
@@ -169,7 +174,11 @@ fn validate_request(request: &Value) -> Result<(PathBuf, Vec<(String, String)>),
         }
         _ => return Err("`files` must be an object".to_string()),
     };
-    Ok((PathBuf::from(request.str_field("bundle_root")?), files))
+    Ok((
+        PathBuf::from(request.str_field("bundle_root")?),
+        files,
+        validate_conveys(request.get("conveys"))?,
+    ))
 }
 
 /// Return the bundle-relative normalized path, or None when the reference
@@ -409,6 +418,10 @@ struct SourceWalk<'a> {
     /// named captures are disclosed in the walk; these feed the leaf-name
     /// check at demand-resolution time.
     capture_idents: Vec<String>,
+    /// declared conveys input paths (wild-hyk): unknown demand targets at
+    /// these paths record a scoped conveyance claim instead of the
+    /// incomplete-demand refusal
+    conveys: &'a [String],
     /// syntactic return types of inventoried public free fns and public
     /// inherent impl methods (wild-158 D1): fn target → crate-qualified
     /// type target, recorded by a per-file pre-pass so one-hop constructor
@@ -865,6 +878,9 @@ fn walk_crates(
     versions: &BTreeMap<String, String>,
     out: &mut WalkAccumulator,
 ) -> Result<(), String> {
+    // the declared conveys clause scopes every member walk; copied out so
+    // the accumulator stays exclusively borrowed during the walk
+    let conveys = out.conveys.clone();
     for manifest in manifests {
         let source_bytes = loaded.get(&manifest.source_path).ok_or_else(|| {
             format!(
@@ -919,6 +935,7 @@ fn walk_crates(
             loaded,
             capture_idents: Vec::new(),
             fn_return_tys: BTreeMap::new(),
+            conveys: &conveys,
         };
         // per-file pre-pass: record syntactic return types before the
         // demand walk so use sites see declarations declared later in the
@@ -941,13 +958,14 @@ fn walk_crates(
     Ok(())
 }
 
-struct WalkAccumulator {
+pub(crate) struct WalkAccumulator {
     slots: Vec<SlotRecord>,
     demand: Vec<Value>,
     diagnostics: Vec<Diagnostic>,
     locations: Vec<Value>,
     complete: bool,
     captures: Vec<CaptureRef>,
+    conveys: Vec<String>,
 }
 
 /// Cross-check every demand entry against the supplied provider slots.
@@ -963,6 +981,12 @@ fn check_demand_resolution(
 ) {
     let meanings: BTreeSet<&str> = all_slots.iter().map(|s| s.meaning.as_str()).collect();
     for entry in all_demand {
+        // a conveyed entry is claimed, not refused: its scoped claim already
+        // records the forwarded path (wild-hyk), so it never marks the
+        // inventory incomplete
+        if entry.get("conveyed").and_then(Value::as_bool) == Some(true) {
+            continue;
+        }
         let called = entry.str_field("called").unwrap_or_default();
         let provider_slot = entry.str_field("provider_slot").unwrap_or_default();
         if !meanings.contains(provider_slot) {
@@ -1067,7 +1091,7 @@ fn assemble_contract(
 /// Extract the local-1 records for one bundle from a validated request.
 /// `Err` classifies as error (exit 2); `Ok` carries the gap-aware outcome.
 pub fn extract(request: &Value) -> Result<ExtractionOutcome, String> {
-    let (bundle_root, files) = validate_request(request)?;
+    let (bundle_root, files, conveys) = validate_request(request)?;
     let bundle_root = bundle_root
         .canonicalize()
         .map_err(|e| format!("input-mismatch: bundle root unreadable: {e}"))?;
@@ -1086,6 +1110,7 @@ pub fn extract(request: &Value) -> Result<ExtractionOutcome, String> {
         locations: Vec::new(),
         complete: true,
         captures: Vec::new(),
+        conveys,
     };
     walk_crates(&manifests, &loaded, &versions, &mut accumulated)?;
     check_demand_resolution(
