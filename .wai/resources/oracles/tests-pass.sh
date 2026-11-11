@@ -5,5 +5,7 @@
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-python3 -m pytest -q tests/runtime/test_extract.py
+# NB: `python3 -m pytest` resolves to the brew python which lacks pytest;
+# the user `pytest` shim (/usr/bin/python3) has it. 35 runtime tests, 0.3s.
+pytest -q tests/runtime/test_extract.py
 cargo test -q
