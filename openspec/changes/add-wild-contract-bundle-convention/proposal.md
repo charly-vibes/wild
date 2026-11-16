@@ -54,7 +54,9 @@ gating nothing.
   runs `wild check` candidate-vs-installed-base, and renders the wild verdict
   (compatible / incompatible / unknown + named reasons) beside the existing
   semver/age decision in the same output table. Exit codes and gating behavior
-  are unchanged — the verdict gates nothing (advisory rendering only).
+  are unchanged — the verdict gates nothing (advisory rendering only). Note:
+  this "shadow" is rendering-only — it adds a decision-table column, unlike
+  the adoption ladder's shadow rung (an adoption level with entry criteria).
   Integration point: `dulce_de_leche::installer::upgrade_tool` /
   `upgrade_all_tools` (observed at `src/main.rs::cmd_upgrade`).
 - **Pilot ordering (D5)**: testaruda end-to-end first (its 13-version corpus

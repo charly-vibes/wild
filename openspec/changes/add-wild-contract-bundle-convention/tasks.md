@@ -8,13 +8,16 @@
 ## 2. Implementation — ddl consumer side (bd follow-up, ddl repo owner)
 
 - [ ] 2.1 D2 refusal law in the bundle loader: recompute sha256(contract.json), refuse on `bundle-digest-mismatch`; refuse on `bundle-commit-mismatch` when manifest commit ≠ target release commit; named diagnostics, never silent acceptance
+  - Status: core landed in ddl `f728b03` (feat(wild-xgd)); remaining integration tracked in wild-xgd (in progress)
 - [ ] 2.2 D3 base-contract cache: cache the base bundle at install/upgrade commit time under `contracts/<tool>/<version>/` in the ddl state dir; record the contract digest in the lock entry; missing/corrupt cached base → `missing-base-contract` diagnostic and Unknown verdict (never fabricated, never skipped)
+  - Status: core landed in ddl `f728b03` (feat(wild-xgd)); remaining integration tracked in wild-xgd (in progress)
 - [ ] 2.3 D4 shadow rendering: in `dulce_de_leche::installer::upgrade_tool` / `upgrade_all_tools` (observed at `src/main.rs::cmd_upgrade`), fetch + verify the candidate bundle, run `wild check` candidate-vs-installed-base, render compatible / incompatible / unknown + named reasons beside the existing semver/age decision; exit codes and gating unchanged
 
 ## 3. Pilot cross-check and fleet rollout
 
 - [x] 3.1 Run `experiments/wild_adopt_audit.py --crate testaruda` against released bundles and cross-check shadow verdicts with the measured rung-1 verdicts (`results/adopt-audit-158-1.txt`); record as `results/shadow-pilot-<n>.txt` — results/shadow-pilot-1.txt: 14/14 pairs abstained (was 12/12 pre-0.5.7), determinism pass, 100% abstention — the expected honest outcome; released bundle testaruda-0.5.7-contract-bundle.tar.gz digest-verified from the live release asset (stamped commit d573796 == tag commit)
 - [ ] 3.2 Work the per-tool owner tickets (filed by wild-cdp.3) in owner order: bundle step per repo's `release.yml`
+  - Corpus note: D5's "13-version corpus" was accurate at authoring; the testaruda corpus is now 15 versions/14 pairs (0.1.0→0.5.7, per wild-xc4 landing record) — the audit cross-check should replay the current corpus
 - [ ] 3.3 Rung-3 gating remains out of scope until real gap rates are measured from the pilot data
 
 ## 4. Validation

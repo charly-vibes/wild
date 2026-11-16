@@ -16,6 +16,6 @@
 
 ## 4. Gates
 
-- [ ] 4.1 `spk lint openspec/specs` clean; `openspec validate add-on-absent-fallible --strict` clean
-- [ ] 4.2 `just ci` green; `ah check --run-tests` 0 findings
-- [ ] 4.3 Tasks complete → mark all `[x]`
+- [x] 4.1 `spk lint openspec/specs` clean; `openspec validate add-on-absent-fallible --strict` clean
+- [x] 4.2 `just ci` green; `ah check --run-tests` 0 findings
+- [x] 4.3 Tasks complete → mark all `[x]`
