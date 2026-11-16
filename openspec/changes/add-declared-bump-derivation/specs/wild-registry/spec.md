@@ -28,6 +28,24 @@ The system SHALL satisfy `declared_bump_derived` as defined in the Constraints t
 - **WHEN** the declared-bump derivation runs
 - **THEN** the outcome is Unknown with a named diagnostic and no bump class is proposed
 
+#### Scenario: Renamed requirement classifies as revocation
+
+- **GIVEN** a corpus delta containing a RENAMED requirement and no other changes
+- **WHEN** the declared-bump derivation runs
+- **THEN** the proposed class is major, classified as revoking the old id and accreting the new
+
+#### Scenario: Multiple deployed changes aggregate into one classification
+
+- **GIVEN** two changes deployed since the base, one adding requirements only and one modifying a requirement
+- **WHEN** the declared-bump derivation runs
+- **THEN** the aggregated delta classifies once as major with reason `revokes`
+
+#### Scenario: Spec-row-only additions do not change the class
+
+- **GIVEN** a corpus delta whose requirement-level sections are empty while new property and advisory rows were added
+- **WHEN** the declared-bump derivation runs
+- **THEN** the proposed class is patch and no accretion or revocation reason is claimed
+
 ### Requirement: Bump override is upward-only
 
 The system SHALL satisfy `bump_override_upward_only` as defined in the Constraints table and the v1 format reference.

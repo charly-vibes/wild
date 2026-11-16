@@ -2,13 +2,17 @@
 
 ## 1. Derivation mapping (wild-registry `declared_bump_derived`)
 
-- [ ] 1.1 Red: contract tests for the four mappings — ADDED-only delta →
-  minor/accretes; MODIFIED-or-REMOVED present → major/revokes; empty delta →
-  patch; missing base corpus → Unknown + named diagnostic, no class proposed.
+- [ ] 1.1 Red: contract tests for the mappings — ADDED-only delta →
+  minor/accretes; MODIFIED-or-REMOVED present → major/revokes; RENAMED →
+  major (revoke+accrete); multi-change aggregation → single class; empty
+  requirement-level delta (row-only additions) → patch; missing base corpus →
+  Unknown + named diagnostic, no class proposed.
   Tests fail first.
 - [ ] 1.2 Deploy specodelic rows to `openspec/specs/wild-registry/spec.md`:
-  constraint `declared_bump_derived` (effect), deriving unit properties for
-  the four mappings, mirrored Requirement text identical to the delta.
+  constraint `declared_bump_derived` (effect — give it an observing row so
+  the observability advisory stays clean; budget extra ah TOMLs per the
+  implementor-deviation pattern), deriving unit properties for the mappings,
+  mirrored Requirement text identical to the delta.
 - [ ] 1.3 Land ah contract TOMLs for the deployed scenarios (after rows —
   orphan-TOML ordering), `ah check` green.
 - [ ] 1.4 Green: implement the derivation step; 1.1 tests pass; `just test`.

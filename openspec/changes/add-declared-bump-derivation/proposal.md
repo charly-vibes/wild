@@ -29,8 +29,13 @@ Ticket: wild-zh6.
 - **Declared-bump derivation (wild-registry)**: from the corpus delta between
   the base release and the candidate tree, derive exactly one bump class:
   ADDED-only → minor (accretes); any MODIFIED/REMOVED → major (revokes);
-  empty corpus delta → patch; no computable base → Unknown with a named
-  diagnostic. A missing base never yields a fabricated class.
+  RENAMED is classified as MODIFIED+ADDED (revoke+accrete → major); multiple
+  in-flight changes aggregate into one delta before classification; empty
+  corpus delta → patch; no computable base → Unknown with a named diagnostic.
+  The classifier reads the delta at the **requirement level** (openspec delta
+  sections); specodelic-only row additions (properties, advisories) ride the
+  release without affecting the class. A missing base never yields a
+  fabricated class.
 - **Upward-only override (wild-registry)**: the maintainer may raise the
   proposed class (patch→minor→major) with a recorded reason; lowering is
   refused with the named diagnostic `bump_class_lowering_refused` and the

@@ -29,12 +29,24 @@ abstention would reintroduce exactly the vibes this change removes.
 
 ## Mapping decisions
 
+- Terminology: the **class** is the derived minor/major/patch value; the
+  **claim** is the recorded artifact (proposed class, confirmed class,
+  reason). Used consistently below.
+- **Measurement level**: the classifier reads the aggregated delta at the
+  openspec **requirement level** (ADDED/MODIFIED/REMOVED/RENAMED sections
+  across all changes deployed since the base). Specodelic-only row additions
+  (new properties, advisories, model rows) ride the release and never change
+  the class — they are clarifications of existing promises, not new ones.
 - ADDED-only → **minor** (accretes); any MODIFIED/REMOVED → **major**
-  (revokes); empty corpus delta → **patch**. The patch case presumes a
-  code-only release: the generator classifies the *corpus* delta only;
-  code-change detection is out of scope.
-- RENAMED requirements are treated as MODIFIED+ADDED (revoke+accrete →
-  major); pinned here so the classifier never invents a fifth class.
+  (revokes); **RENAMED → major** (revoke of the old id + accrete of the new);
+  multiple changes deployed since the base **aggregate into one delta**
+  before classification; empty corpus delta → **patch**. The patch case
+  presumes a code-only release: the generator classifies the *corpus* delta
+  only; code-change detection is out of scope.
+- **Upward-only is deliberate strictness**: a revocation stays major even
+  when the maintainer judges it practically harmless, mirroring the house
+  polarity rules (a closed output sum growing is a break regardless of
+  intent). Lowering would let vibes override evidence.
 
 ## Capability placement
 
