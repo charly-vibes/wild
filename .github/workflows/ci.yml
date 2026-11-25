@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Rust (pinned fixture toolchain)
-        uses: dtolnay/rust-toolchain@1.98.1
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
