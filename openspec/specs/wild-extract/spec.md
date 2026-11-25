@@ -14,19 +14,19 @@ The language-blind core sees only IR. Everything ecosystem-specific lives in ext
 
 ## Constraints
 
-| id | kind | expr | traces_to |
-| -- | ---- | ---- | --------- |
-| extractor_contract | extension_point | `for every conforming extractor E: extract(source) yields ContractIR, is deterministic, and reports coverage listing every unextracted construct` | [[wild.extract]] |
-| law_harness | extension_point | `run(suite, implementation, seed, fixtures, budgets) yields the v1 LawResult; it declares proof, exhaustive, or sampled method and returns pass, counterexample, or inconclusive with all content digests` | [[wild.extract]] |
-| extraction_total | invariant | `every parsed declaration relevant to an exported contract maps to a typed or opaque slot; unsupported syntax yields a source-range diagnostic and incomplete extraction, never an invented complete contract` | [[wild.extract]] |
-| extractor_deterministic | invariant | `the same supplied source bundle, extractor artifact digest, options, and IR version yield the same canonical IR bytes; imported schemas and generated artifacts must be supplied and hashed as inputs` | [[wild.extract]] |
-| extractor_isolated | invariant | `extractors read only the source they are given and perform no network or write access` | [[wild.extract]] |
-| ir_versioned | invariant | `emitted IR names its schema version; the core refuses IR of an unknown version` | [[wild.extract]] |
-| data_plane_extractors | invariant | `schemas, templates, and feature files have extractors under the same contract as code extractors` | [[wild.extract]] |
-| ecosystems_pluggable | invariant | `supporting a new ecosystem requires an extractor only, with no change to the core` | [[wild.extract]] |
-| extractor_coverage_reported | advisory | `each extraction reports the share of constructs mapped to opaque slots` | [[wild.extract]] |
-| failure_reported | effect | `an unreadable source emits a failure report naming the source and the cause` | [[wild.extract]] |
-| extractor_noise_reported | advisory | `each extractor reports false breaks / independently adjudicated candidate breaks, sample size, history range, and adjudication source; zero adjudications yield Unknown, not a zero rate` | [[wild.extract]] |
+| id | kind | expr | traces_to | observes |
+| -- | ---- | ---- | --------- | -------- |
+| extractor_contract | extension_point | `for every conforming extractor E: extract(source) yields ContractIR, is deterministic, and reports coverage listing every unextracted construct` | [[wild.extract]] |  |
+| law_harness | extension_point | `run(suite, implementation, seed, fixtures, budgets) yields the v1 LawResult; it declares proof, exhaustive, or sampled method and returns pass, counterexample, or inconclusive with all content digests` | [[wild.extract]] |  |
+| extraction_total | invariant | `every parsed declaration relevant to an exported contract maps to a typed or opaque slot; unsupported syntax yields a source-range diagnostic and incomplete extraction, never an invented complete contract` | [[wild.extract]] | [[wild.extract.failure_reported]] |
+| extractor_deterministic | invariant | `the same supplied source bundle, extractor artifact digest, options, and IR version yield the same canonical IR bytes; imported schemas and generated artifacts must be supplied and hashed as inputs` | [[wild.extract]] |  |
+| extractor_isolated | invariant | `extractors read only the source they are given and perform no network or write access` | [[wild.extract]] |  |
+| ir_versioned | invariant | `emitted IR names its schema version; the core refuses IR of an unknown version` | [[wild.extract]] |  |
+| data_plane_extractors | invariant | `schemas, templates, and feature files have extractors under the same contract as code extractors` | [[wild.extract]] |  |
+| ecosystems_pluggable | invariant | `supporting a new ecosystem requires an extractor only, with no change to the core` | [[wild.extract]] |  |
+| extractor_coverage_reported | advisory | `each extraction reports the share of constructs mapped to opaque slots` | [[wild.extract]] |  |
+| failure_reported | effect | `an unreadable source emits a failure report naming the source and the cause` | [[wild.extract]] |  |
+| extractor_noise_reported | advisory | `each extractor reports false breaks / independently adjudicated candidate breaks, sample size, history range, and adjudication source; zero adjudications yield Unknown, not a zero rate` | [[wild.extract]] |  |
 
 ## Model
 
@@ -51,7 +51,7 @@ The language-blind core sees only IR. Everything ecosystem-specific lives in ext
 
 ## Properties
 
-| id | kind | derives_from | generator | predicate | observes |
+| id | kind | derives_from | generator | predicate | supersedes |
 | -- | ---- | ------------ | --------- | --------- | -------- |
 | extractor_reports_coverage | unit | [[wild.extract.extractor_contract]] | `extractor_output_with_unmapped_construct()` | `coverage lists the construct` |  |
 | harness_deterministic_given_seed | unit | [[wild.extract.law_harness]] | `harness_run_twice_with_same_seed()` | `result(a) == result(b) or result.status == inconclusive with nondeterminism diagnostic` |  |
@@ -62,7 +62,7 @@ The language-blind core sees only IR. Everything ecosystem-specific lives in ext
 | feature_file_extracts_like_code | unit | [[wild.extract.data_plane_extractors]] | `feature_file_with_known_arity()` | `ir.arity == known_arity` |  |
 | new_ecosystem_needs_no_core_change | unit | [[wild.extract.ecosystems_pluggable]] | `extractor_for_new_ecosystem_added()` | `core_diff == empty` |  |
 | opaque_share_reported | unit | [[wild.extract.extractor_coverage_reported]] | `source_with_known_opaque_count(3 of 10)` | `report.opaque_share == 0.3` |  |
-| unreadable_source_reported | unit | [[wild.extract.failure_reported]] | `source_path_that_does_not_exist()` | `report names the source ∧ the cause` | [[wild.extract.failure_reported]] |
+| unreadable_source_reported | unit | [[wild.extract.failure_reported]] | `source_path_that_does_not_exist()` | `report names the source ∧ the cause` |  |
 | noise_rate_reported | unit | [[wild.extract.extractor_noise_reported]] | `extraction_run_over_known_history()` | `report has false_break_rate_ppm and adjudicated_breaks; zero denominator yields null` |  |
 
 ## Notes
