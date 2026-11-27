@@ -105,9 +105,10 @@ struct SlotRecord {
 
 /// Validate the request envelope shape; returns bundle root and file
 /// commitment list on success. Every refusal is an error-class input.
-fn validate_request(
-    request: &Value,
-) -> Result<(PathBuf, Vec<(String, String)>, Vec<String>, Vec<String>), String> {
+/// Bundle commitments: root path, (path, digest) pairs, and two id lists.
+type BundleCommitments = (PathBuf, Vec<(String, String)>, Vec<String>, Vec<String>);
+
+fn validate_request(request: &Value) -> Result<BundleCommitments, String> {
     if request.str_field("version")? != LOCAL_VERSION {
         return Err(format!(
             "unsupported protocol version `{}`; expected {LOCAL_VERSION}",
@@ -617,8 +618,8 @@ impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
             };
             // wild-73j: a non-scalar return type is as unsupported as a
             // non-scalar argument — it must take the opaque-slot gap branch,
-            // never reach result_ok.expect below.
-            if shape_supported && args_ok && result_ok.is_some() {
+            // never reach the supported branch below.
+            if let Some(result_ok) = result_ok.filter(|_| shape_supported && args_ok) {
                 let qualified = if self.module_prefix.is_empty() {
                     name.clone()
                 } else {
@@ -631,7 +632,7 @@ impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
                 self.record_slot(
                     self.slot_name(&name),
                     meaning,
-                    function_type(arg_types, result_ok.expect("unit fallback")),
+                    function_type(arg_types, result_ok),
                     node.sig.ident.span(),
                 );
             } else {

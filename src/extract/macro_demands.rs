@@ -217,8 +217,8 @@ fn format_capture_idents(content: &str) -> Vec<String> {
     // digit-only/empty captures (`{0}`, `{}`) reference arguments, not scope
     // variables, so nothing is recorded for them
     while let Some((_, after_open)) = rest.split_once('{') {
-        if after_open.starts_with('{') {
-            rest = &after_open[1..];
+        if let Some(after_escape) = after_open.strip_prefix('{') {
+            rest = after_escape;
             continue;
         }
         let body_end = after_open.find('}').unwrap_or(after_open.len());

@@ -266,8 +266,7 @@ fn validate_slot(slot: &Value, tombstone: bool, push: &mut impl FnMut(&str)) {
     if !FACETS.contains(&facet) {
         push("facet-unknown");
     }
-    let mut path = String::new();
-    if let Err(code) = validate_type(&slot_type(slot), &mut path) {
+    if let Err(code) = validate_type(&slot_type(slot)) {
         push(&code);
     }
     if let Err(code) = validate_default(slot.get("default"), &slot_type(slot)) {
@@ -281,7 +280,7 @@ fn slot_type(slot: &Value) -> Value {
 
 /// Validate a type value's structural semantics. Returns a diagnostic code
 /// on the first violation found.
-fn validate_type(ty: &Value, path: &mut String) -> Result<(), String> {
+fn validate_type(ty: &Value) -> Result<(), String> {
     let shape = ty.str_field("shape").unwrap_or_default();
     match shape {
         "scalar" => {
@@ -315,7 +314,7 @@ fn validate_type(ty: &Value, path: &mut String) -> Result<(), String> {
             }
             for (_, field) in entries {
                 let field_type = field.get("type").cloned().unwrap_or(Value::Null);
-                validate_type(&field_type, path)?;
+                validate_type(&field_type)?;
             }
             Ok(())
         }
@@ -325,26 +324,26 @@ fn validate_type(ty: &Value, path: &mut String) -> Result<(), String> {
                 return Err("type-shape".to_string());
             };
             for (_, variant) in entries {
-                validate_type(variant, path)?;
+                validate_type(variant)?;
             }
             Ok(())
         }
         "sequence" => {
             interval(ty)?;
             let items = ty.get("items").cloned().unwrap_or(Value::Null);
-            validate_type(&items, path)
+            validate_type(&items)
         }
         "map" => {
             interval(ty)?;
-            validate_type(&ty.get("keys").cloned().unwrap_or(Value::Null), path)?;
-            validate_type(&ty.get("values").cloned().unwrap_or(Value::Null), path)
+            validate_type(&ty.get("keys").cloned().unwrap_or(Value::Null))?;
+            validate_type(&ty.get("values").cloned().unwrap_or(Value::Null))
         }
         "function" => {
             let arguments = ty.get("arguments").and_then(Value::as_arr).unwrap_or(&[]);
             for argument in arguments {
-                validate_type(argument, path)?;
+                validate_type(argument)?;
             }
-            validate_type(&ty.get("result").cloned().unwrap_or(Value::Null), path)
+            validate_type(&ty.get("result").cloned().unwrap_or(Value::Null))
         }
         "opaque" => {
             let fingerprint = ty.str_field("fingerprint").unwrap_or_default();

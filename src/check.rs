@@ -187,7 +187,10 @@ fn validate_check_request(
 
 /// Strictly validate one committed bundle side: only bundle_root and files,
 /// with digests and confinement enforced exactly as extraction does.
-fn validate_side(request: &Value, side: &str) -> Result<(String, Vec<(String, String)>), String> {
+/// One contract side: identity string plus its (name, digest) file pairs.
+type CheckSide = (String, Vec<(String, String)>);
+
+fn validate_side(request: &Value, side: &str) -> Result<CheckSide, String> {
     let side_value = request.get(side).ok_or_else(|| format!("missing field `{side}`"))?;
     let entries = match side_value {
         Value::Obj(entries) => entries,
@@ -421,12 +424,15 @@ fn is_visible(ty: &Value) -> bool {
 /// inventory under a declared `on_absent` path records a scoped absence
 /// claim instead of the caller-violation removal verdict; the call stays
 /// in the demand set either way.
+/// Verdict rows, demanded names, pass/fail counters and slot values.
+type JudgeVerdict = (Vec<Value>, Vec<String>, i64, i64, bool, Vec<Value>);
+
 fn judge_slots(
     consumer: &str,
     base: &ExtractionOutcome,
     candidate: &ExtractionOutcome,
     on_absent: &[String],
-) -> Result<(Vec<Value>, Vec<String>, i64, i64, bool, Vec<Value>), String> {
+) -> Result<JudgeVerdict, String> {
     let base_slots = contract_slots(&base.contract)?;
     let cand_slots = contract_slots(&candidate.contract)?;
 
