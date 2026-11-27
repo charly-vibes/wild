@@ -201,6 +201,10 @@
             "open": {
               "type": "boolean"
             },
+            "closed_reason": {
+              "type": "string",
+              "minLength": 1
+            },
             "fields": {
               "type": "object",
               "propertyNames": {
@@ -226,8 +230,26 @@
           },
           "required": [
             "shape",
-            "open",
             "fields"
+          ],
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "open": {
+                    "const": false
+                  }
+                },
+                "required": [
+                  "open"
+                ]
+              },
+              "then": {
+                "required": [
+                  "closed_reason"
+                ]
+              }
+            }
           ],
           "additionalProperties": false
         },
@@ -239,6 +261,10 @@
             },
             "open": {
               "type": "boolean"
+            },
+            "closed_reason": {
+              "type": "string",
+              "minLength": 1
             },
             "variants": {
               "type": "object",
@@ -252,8 +278,26 @@
           },
           "required": [
             "shape",
-            "open",
             "variants"
+          ],
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "open": {
+                    "const": false
+                  }
+                },
+                "required": [
+                  "open"
+                ]
+              },
+              "then": {
+                "required": [
+                  "closed_reason"
+                ]
+              }
+            }
           ],
           "additionalProperties": false
         },

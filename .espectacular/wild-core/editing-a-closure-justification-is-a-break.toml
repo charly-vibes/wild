@@ -1,0 +1,11 @@
+id = "editing-a-closure-justification-is-a-break"
+description = "Changing only a closed declaration's closed_reason text (or flipping its open value) is not an accretion: the reason is part of the canonical form and immutable within its lineage (update-wild-openness-default)"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.12.0"
+
+[tests]
+cargo = [
+  {flags = "closure_reason_edit_is_break", timeout_seconds = 300},
+]

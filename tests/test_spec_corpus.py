@@ -130,3 +130,29 @@ def test_v1_certificate_requires_commitments_and_refuses_unknown_fields():
         incomplete = {k: v for k, v in certificate.items() if k != field}
         assert not validator.is_valid(incomplete), field
     assert not validator.is_valid({**certificate, "trust_me": True})
+
+
+def test_v1_openness_default_omitted_is_open_and_closure_needs_reason():
+    """The v1 default is open: omitting `open` is valid; an unjustified
+    `open: false` is rejected (update-wild-openness-default)."""
+    schema = json.loads((REPO / "schemas" / "wild-v1.schema.json").read_text())
+    type_validator = Draft202012Validator(
+        {"$ref": "#/$defs/type", "$defs": schema["$defs"]}
+    )
+
+    omitted = {"shape": "record", "fields": {}}
+    assert type_validator.is_valid(omitted)
+
+    explicit = {"shape": "record", "open": True, "fields": {}}
+    assert type_validator.is_valid(explicit)
+
+    unjustified = {"shape": "record", "open": False, "fields": {}}
+    assert not type_validator.is_valid(unjustified)
+
+    justified = {
+        "shape": "record",
+        "open": False,
+        "closed_reason": "mechanism boundary",
+        "fields": {},
+    }
+    assert type_validator.is_valid(justified)

@@ -311,6 +311,12 @@ fn validate_type(ty: &Value) -> Result<(), String> {
             let Value::Obj(entries) = &fields else {
                 return Err("type-shape".to_string());
             };
+            if ty.get("open").and_then(Value::as_bool) == Some(false) {
+                let reason = ty.get("closed_reason").and_then(Value::as_str);
+                if reason.is_none_or(|r| r.trim().is_empty()) {
+                    return Err("closure-unjustified".to_string());
+                }
+            }
             let mut names: Vec<&String> = entries.iter().map(|(k, _)| k).collect();
             names.sort();
             if names.windows(2).any(|w| w[0] == w[1]) {
@@ -327,6 +333,12 @@ fn validate_type(ty: &Value) -> Result<(), String> {
             let Value::Obj(entries) = &variants else {
                 return Err("type-shape".to_string());
             };
+            if ty.get("open").and_then(Value::as_bool) == Some(false) {
+                let reason = ty.get("closed_reason").and_then(Value::as_str);
+                if reason.is_none_or(|r| r.trim().is_empty()) {
+                    return Err("closure-unjustified".to_string());
+                }
+            }
             for (_, variant) in entries {
                 validate_type(variant)?;
             }
@@ -389,7 +401,7 @@ fn validate_default(def: Option<&Value>, ty: &Value) -> Result<(), String> {
     }
 }
 
-fn inhabits(value: &Value, ty: &Value) -> bool {
+pub fn inhabits(value: &Value, ty: &Value) -> bool {
     match ty.str_field("shape").unwrap_or_default() {
         "scalar" => {
             let name = ty.str_field("name").unwrap_or_default();
@@ -450,7 +462,7 @@ fn inhabits(value: &Value, ty: &Value) -> bool {
                     Some((_, variant_ty)) => inhabits(payload, variant_ty),
                     None => {
                         // Open sums accept unknown labels as opaque payloads.
-                        ty.get("open").and_then(Value::as_bool).unwrap_or(false)
+                        effective_openness(ty)
                             && matches!(
                                 payload,
                                 Value::Obj(_)
@@ -651,13 +663,27 @@ fn intervals_contained(a: &Value, b: &Value) -> Verdict {
     }
 }
 
-fn is_open(ty: &Value) -> bool {
-    ty.get("open").and_then(Value::as_bool).unwrap_or(false)
+/// Effective openness: an omitted `open` resolves to open (the v1 default);
+/// a declared value wins. Closure must carry `closed_reason` (validated in
+/// `validate_type`).
+fn effective_openness(ty: &Value) -> bool {
+    ty.get("open").and_then(Value::as_bool).unwrap_or(true)
+}
+
+/// The declared closure justification, present only on closed records/sums.
+fn closed_reason(ty: &Value) -> Option<&str> {
+    ty.get("closed_reason").and_then(Value::as_str)
 }
 
 fn record_subtype(a: &Value, b: &Value) -> Verdict {
     // An open A requires an open B.
-    if is_open(a) && !is_open(b) {
+    if effective_openness(a) && !effective_openness(b) {
+        return Verdict::Breaks;
+    }
+    // A closure justification is part of the canonical form and immutable
+    // within its lineage: two closed shapes must justify closure with the
+    // same text (update-wild-openness-default).
+    if !effective_openness(a) && !effective_openness(b) && closed_reason(a) != closed_reason(b) {
         return Verdict::Breaks;
     }
     let a_fields = a.get("fields").cloned().unwrap_or(Value::Null);
@@ -694,7 +720,7 @@ fn record_subtype(a: &Value, b: &Value) -> Verdict {
                     return Verdict::Breaks;
                 }
                 // Optional B field absent from A.
-                if is_open(a) {
+                if effective_openness(a) {
                     // An open A could emit that field with an incompatible
                     // unknown value.
                     return Verdict::Unknown;
@@ -718,7 +744,7 @@ fn record_subtype(a: &Value, b: &Value) -> Verdict {
                 }
                 None => {
                     // Extra A fields require B to be open.
-                    if !is_open(b) {
+                    if !effective_openness(b) {
                         return Verdict::Breaks;
                     }
                 }
@@ -727,7 +753,7 @@ fn record_subtype(a: &Value, b: &Value) -> Verdict {
         // Optional A fields: if B has a typed field with the same name it
         // was checked above; otherwise A may emit the extra optional field,
         // which an open B accepts and a closed B cannot interpret.
-        if !a_required && !b_entries.iter().any(|(b_name, _)| b_name == a_name) && !is_open(b) {
+        if !a_required && !b_entries.iter().any(|(b_name, _)| b_name == a_name) && !effective_openness(b) {
             verdict = Verdict::Unknown.and(verdict);
         }
     }
@@ -736,7 +762,12 @@ fn record_subtype(a: &Value, b: &Value) -> Verdict {
 
 fn sum_subtype(a: &Value, b: &Value) -> Verdict {
     // Open A requires open B.
-    if is_open(a) && !is_open(b) {
+    if effective_openness(a) && !effective_openness(b) {
+        return Verdict::Breaks;
+    }
+    // Closure justification is immutable within a lineage (see
+    // record_subtype).
+    if !effective_openness(a) && !effective_openness(b) && closed_reason(a) != closed_reason(b) {
         return Verdict::Breaks;
     }
     let a_variants = a.get("variants").cloned().unwrap_or(Value::Null);
@@ -754,7 +785,7 @@ fn sum_subtype(a: &Value, b: &Value) -> Verdict {
                 // Every named A variant exists in B with a subtype payload
                 // unless B is open (unknown variants are retained as opaque
                 // payloads).
-                if !is_open(b) {
+                if !effective_openness(b) {
                     return Verdict::Breaks;
                 }
             }

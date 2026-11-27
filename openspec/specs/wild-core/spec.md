@@ -23,7 +23,7 @@ The Contract IR and the accretion relation. A contract has slots with polarity (
 | name_meaning_immutable | invariant | `within a lineage, slot name, facet, polarity, and semantic meaning are immutable; types may evolve only by the variance rules in docs/wild-formats-v1.md; law definitions are immutable and law sets only grow` | [[wild.core]] |
 | slot_shapes_closed | invariant | `v1 slot shape ∈ {scalar, record, sum, sequence, map, function, opaque}; adding a shape requires a new IR schema version, not merely a new contract hash` | [[wild.core]] |
 | accretion_monotone | invariant | `accretes(v, v') iff every old output remains with a subtype, each retained input accepts a supertype, no new required input appears, tombstones persist, and defaults, limits, laws, and facets satisfy docs/wild-formats-v1.md` | [[wild.core]] |
-| polarity_openness_declared | invariant | `every record and sum declares open or closed (default closed); a closed output sum growing, opening, or becoming unrestricted is a break; an input sum growing is an accretion; an input sum losing tolerance is a break` | [[wild.core]] |
+| polarity_openness_declared | invariant | `a record or sum treats open as optional and omission resolves to open (open by default); a closed declaration carries a non-empty closed_reason and is rejected without one; the reason is part of the canonical form and any change to a closed declaration's open value or reason text is a break; an omitted open and an explicit open true are semantically equal and accrete each other; a closed output sum growing, opening, or becoming unrestricted is a break; an input sum growing is an accretion; an input sum losing tolerance is a break` | [[wild.core]] |
 | limits_are_slots | invariant | `declared limits (size, cardinality, timeout) are slots; tightening a provided limit or loosening a required limit is a break` | [[wild.core]] |
 | defaults_are_slots | invariant | `defaults and environment assumptions are slots; a changed provided default is a break` | [[wild.core]] |
 | opaque_is_frozen | invariant | `any change to an opaque slot is a break` | [[wild.core]] |
@@ -72,6 +72,8 @@ The Contract IR and the accretion relation. A contract has slots with polarity (
 | unknown_shape_rejected | unit | [[wild.core.slot_shapes_closed]] | `slot_with_shape("tensor")` | `check(slot) == failed` |
 | removed_provide_is_break | unit | [[wild.core.accretion_monotone]] | `contract_pair_with(provide_removed: true)` | `accretes(v, v') == false` |
 | closed_output_growth_is_break | unit | [[wild.core.polarity_openness_declared]] | `closed_output_sum_with_added_variant()` | `accretes == false`; the same addition in input position yields true |
+| omitted_open_accretes | unit | [[wild.core.polarity_openness_declared]] | `omitted_open_versus_explicit_true_pair()` | `revision ids differ ∧ accretes == true` |
+| unjustified_closure_rejected | unit | [[wild.core.polarity_openness_declared]] | `closed_declaration_without_reason()` | `check == rejected with the closure-unjustified diagnostic` |
 | tightened_limit_is_break | unit | [[wild.core.limits_are_slots]] | `provided_limit_lowered(500 → 200)` | `accretes == false` |
 | changed_default_is_break | unit | [[wild.core.defaults_are_slots]] | `provided_default_changed(30 → 5)` | `accretes == false` |
 | opaque_change_is_break | unit | [[wild.core.opaque_is_frozen]] | `opaque_slot_with_changed_content()` | `accretes == false` |
@@ -365,3 +367,47 @@ The system SHALL satisfy `absence_as_policy` as defined in the Constraints table
 - **GIVEN** a substitution whose replacement introduces a new required input near a fallible slot
 - **WHEN** the closure validation runs
 - **THEN** the new required input is still listed exactly as without the clause
+
+### Requirement: Openness defaults open
+
+In the v1 wire format, a record or sum SHALL treat `open` as optional and SHALL resolve an omitted `open` to open (true); the reader SHALL resolve the effective value before any polarity rule applies, and the checker's openness fallback SHALL be open. An omitted `open` and an explicit `open: true` SHALL serialize differently and land as distinct revision ids, and SHALL accrete each other as semantically equal.
+
+#### Scenario: Omitted open resolves open
+
+- **GIVEN** a contract record or sum that omits the `open` field
+- **WHEN** an accretion or subtyping check resolves its openness
+- **THEN** the effective openness is open
+
+#### Scenario: Omitted open and explicit true are distinct ids that accrete
+
+- **GIVEN** two contracts differing only in that one omits `open` and the other writes `open: true`
+- **WHEN** both are canonicalized and hashed, and then checked against each other
+- **THEN** their revision ids differ and the accretion check between them succeeds
+
+#### Scenario: Explicit declarations keep their semantics
+
+- **GIVEN** a contract with explicitly declared `open` values
+- **WHEN** the checker resolves its openness
+- **THEN** the declared values are used exactly as before the default change
+
+### Requirement: Closure carries a justification
+
+A record or sum declared with `open: false` SHALL carry a non-empty `closed_reason` string; a closed declaration without one SHALL be rejected with a named diagnostic and SHALL never be silently accepted. The reason SHALL be part of the canonical form and SHALL be immutable within its lineage; any change to a record or sum's `open` value or `closed_reason` text SHALL be a break.
+
+#### Scenario: Unjustified closure rejected
+
+- **GIVEN** a contract record or sum with `open: false` and no `closed_reason`
+- **WHEN** the contract is checked or published
+- **THEN** it is rejected with the named diagnostic for unjustified closure
+
+#### Scenario: Justified closure keeps the break rules
+
+- **GIVEN** a record or sum with `open: false` and a non-empty `closed_reason`
+- **WHEN** a closed output sum grows, opens, or becomes unrestricted
+- **THEN** the existing polarity rules apply unchanged: the change is a break and must start a new lineage
+
+#### Scenario: Editing a closure justification is a break
+
+- **GIVEN** a published revision with a record or sum declared `open: false` and a non-empty `closed_reason`
+- **WHEN** a candidate changes only that `closed_reason` text (or flips `open`)
+- **THEN** the candidate is not an accretion — the change is a break and must start a new lineage, because `closed_reason` is part of the canonical form and immutable within its lineage

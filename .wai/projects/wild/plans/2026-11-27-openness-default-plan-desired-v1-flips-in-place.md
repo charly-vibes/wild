@@ -1,0 +1,5 @@
+---
+tags: [pipeline-run:tdd-ro5-2026-11-27-implement-update-wild-openness-default-open-by-default-with-justified-closure-v1-in-place, pipeline-step:plan]
+---
+
+openness-default plan - Desired: v1 flips in place; open optional (omission=open), open:false requires non-empty closed_reason (closure-unjustified diagnostic), closed_reason part of canonical form (reason edit/open flip = break), omitted-open vs explicit-true distinct ids that accrete. Out of scope: tombstones, conveys, on_absent, extraction, accretion directional rules, IR v2 machinery. Tests: tests/v1_checker.rs red set (omitted_open_resolves_open, unjustified_closure_is_rejected, omitted_open_and_explicit_true_are_distinct_ids_that_accrete, closure_reason_edit_is_break, justified_closed_sum_growth_is_break) + tests/test_spec_corpus.py schema gate. Narrow: cargo test --test v1_checker. Full: just ci. Files: src/v1.rs, schemas/wild-v1.schema.json, tests/*, docs/wild-formats-v1.md, docs/wild-manual.md, openspec/specs/wild-core/spec.md.

@@ -33,7 +33,7 @@ You get three things:
 |---|---|
 | **Contract** | The set of slots, laws, limits, and defaults of one component revision. |
 | **Slot** | A named provided or required item with a type. Outputs have *out* polarity, inputs *in*. |
-| **Openness** | Each record or sum is *open* (consumers must tolerate additions) or *closed* (default). Growing a closed output sum is a break. |
+| **Openness** | Each record or sum is *open* (consumers must tolerate additions) by default; *closed* is a declared, justified choice (`open: false` plus a non-empty `closed_reason`). Growing a closed output sum, opening it, or editing its justification is a break. |
 | **Revision** | A contract identified by the hash of its canonical form. Never edited. |
 | **Lineage** | An authority-qualified ancestry of accretive revisions with one accepted tip; unmerged forks refuse automatic selection. |
 | **Accretion** | The relation "this revision can replace that one". Reflexive and transitive. |
@@ -109,6 +109,7 @@ wild publish             # signs and appends the revision to the registry log
 | Made an optional input required | break |
 | Added a variant to a closed output sum | break |
 | Changed a declared default or tightened a provided limit | break |
+| Closed a record or sum without a `closed_reason` | rejected (`closure-unjustified`) |
 | Reactivated a tombstoned input as required or with narrower acceptance | rejected |
 
 ### 5.3 Handling a break **[designed]**

@@ -1,6 +1,4 @@
 use wild::formats::{self, Value};
-#[warn(unused)]
-use wild::v1::*;
 use wild::v1::*;
 
 fn scalar_int(min: i64, max: i64) -> Value {
@@ -314,4 +312,151 @@ fn dropped_law_breaks_and_new_required_relation_breaks() {
         accretes(&example_contract(), &new_with_relation),
         Ok(Verdict::Breaks)
     );
+}
+
+#[test]
+fn omitted_open_resolves_open() {
+    // A record that omits `open` is open: an extra required field in A is
+    // accepted by an omitted-open B (under the old closed default this
+    // broke).
+    let omitted = formats::obj(vec![
+        ("shape", formats::s("record")),
+        ("fields", formats::obj(Vec::new())),
+    ]);
+    let extra = formats::obj(vec![
+        ("shape", formats::s("record")),
+        (
+            "fields",
+            formats::obj(vec![(
+                "x",
+                formats::obj(vec![
+                    ("type", scalar_str()),
+                    ("required", Value::Bool(true)),
+                ]),
+            )]),
+        ),
+    ]);
+    assert_eq!(subtype(&extra, &omitted), Verdict::Holds);
+    // An omitted-open sum accepts unknown labels as opaque payloads.
+    let sum_ty = formats::obj(vec![
+        ("shape", formats::s("sum")),
+        (
+            "variants",
+            formats::obj(vec![("known", scalar_str())]),
+        ),
+    ]);
+    assert!(inhabits(
+        &formats::obj(vec![("unknown", formats::i(1))]),
+        &sum_ty
+    ));
+}
+
+#[test]
+fn unjustified_closure_is_rejected() {
+    let closed = formats::obj(vec![
+        ("shape", formats::s("record")),
+        ("open", Value::Bool(false)),
+        ("fields", formats::obj(Vec::new())),
+    ]);
+    let contract = contract_with_slot(integer_slot(SlotSpec {
+        name: "value",
+        polarity: "out",
+        required: true,
+        ty: closed,
+    }));
+    let Err(codes) = validate_contract(&contract) else {
+        panic!("closed without reason must be rejected");
+    };
+    assert!(
+        codes.iter().any(|c| c == "closure-unjustified"),
+        "codes: {codes:?}"
+    );
+}
+
+#[test]
+fn omitted_open_and_explicit_true_are_distinct_ids_that_accrete() {
+    let explicit = formats::obj(vec![
+        ("shape", formats::s("record")),
+        ("open", Value::Bool(true)),
+        ("fields", formats::obj(Vec::new())),
+    ]);
+    let omitted = formats::obj(vec![
+        ("shape", formats::s("record")),
+        ("fields", formats::obj(Vec::new())),
+    ]);
+    // Canonicalization stays generic: different bytes, different ids.
+    assert_ne!(formats::canonical(&explicit), formats::canonical(&omitted));
+    let a = contract_with_slot(integer_slot(SlotSpec {
+        name: "value",
+        polarity: "out",
+        required: true,
+        ty: omitted,
+    }));
+    let b = contract_with_slot(integer_slot(SlotSpec {
+        name: "value",
+        polarity: "out",
+        required: true,
+        ty: explicit,
+    }));
+    assert_eq!(accretes(&a, &b), Ok(Verdict::Holds));
+}
+
+#[test]
+fn closure_reason_edit_is_break() {
+    let record = |reason: &str| {
+        formats::obj(vec![
+            ("shape", formats::s("record")),
+            ("open", Value::Bool(false)),
+            ("closed_reason", formats::s(reason)),
+            ("fields", formats::obj(Vec::new())),
+        ])
+    };
+    let old = contract_with_slot(integer_slot(SlotSpec {
+        name: "value",
+        polarity: "out",
+        required: true,
+        ty: record("mechanism boundary"),
+    }));
+    let new = contract_with_slot(integer_slot(SlotSpec {
+        name: "value",
+        polarity: "out",
+        required: true,
+        ty: record("mechanism boundary, revised"),
+    }));
+    assert_eq!(accretes(&old, &new), Ok(Verdict::Breaks));
+}
+
+#[test]
+fn justified_closed_sum_growth_is_break() {
+    let sum_ty = |variant: Option<&str>| {
+        let mut variants = vec![(
+            "known",
+            formats::obj(vec![("shape", formats::s("scalar")), ("name", formats::s("string"))]),
+        )];
+        if let Some(extra) = variant {
+            variants.push((
+                extra,
+                formats::obj(vec![("shape", formats::s("scalar")), ("name", formats::s("string"))]),
+            ));
+        }
+        formats::obj(vec![
+            ("shape", formats::s("sum")),
+            ("open", Value::Bool(false)),
+            ("closed_reason", formats::s("mechanism boundary")),
+            ("variants", formats::obj(variants)),
+        ])
+    };
+    let old = contract_with_slot(integer_slot(SlotSpec {
+        name: "value",
+        polarity: "out",
+        required: true,
+        ty: sum_ty(None),
+    }));
+    let grown = contract_with_slot(integer_slot(SlotSpec {
+        name: "value",
+        polarity: "out",
+        required: true,
+        ty: sum_ty(Some("new")),
+    }));
+    assert_eq!(accretes(&old, &grown), Ok(Verdict::Breaks));
 }

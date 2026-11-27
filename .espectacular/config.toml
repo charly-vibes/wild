@@ -9,5 +9,6 @@ pytest = ["pytest"]
 
 # Pinned specodelic (spk) version: the corpus is derived/lint-checked by
 # this exact binary (specodelic is pre-1.0).
+cargo = ["cargo", "test"]
 [spk]
 version = "0.5.1"

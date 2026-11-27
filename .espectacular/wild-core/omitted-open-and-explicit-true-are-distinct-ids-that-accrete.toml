@@ -1,0 +1,11 @@
+id = "omitted-open-and-explicit-true-are-distinct-ids-that-accrete"
+description = "An omitted open and an explicit open true canonicalize differently (distinct revision ids) while remaining semantically equal and accreting each other (update-wild-openness-default)"
+archetype = "SA"
+status = "active"
+superseded_by = ""
+authored_with = "0.12.0"
+
+[tests]
+cargo = [
+  {flags = "omitted_open_and_explicit_true_are_distinct_ids_that_accrete", timeout_seconds = 300},
+]

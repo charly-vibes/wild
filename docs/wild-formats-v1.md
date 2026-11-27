@@ -34,6 +34,8 @@ A required input slot may declare `on_absent: fallible`: absence at the slot is 
 
 The scalar domains are `unit`, `boolean`, `integer`, `string`, and `bytes`; integer types specify inclusive `min` and `max`, with `min ≤ max`. Byte values are objects containing canonical padded base64; decoded bytes define equality. No implicit conversion, rounding, coercion, or numeric widening across scalar kinds occurs. Defaults must inhabit their declared type. General cardinality and timeout constraints are represented as integer slots in the relevant facet, with immutable meaning describing units and whether they are guarantees or requirements; they are not untyped annotations.
 
+Record and sum types carry an optional `open` boolean: omitting it means open (`true`); only an explicit `open: false` closes the type, and a closed declaration must carry a non-empty human-authored `closed_reason` — a closed declaration without one is rejected with the `closure-unjustified` diagnostic. The reader resolves the effective openness before any polarity rule applies. `closed_reason` is part of the canonical form: any change to a closed declaration's `open` value or `closed_reason` text is a break and must start a new lineage, and two effectively closed shapes in a subtype relation must justify closure with the same reason text. An omitted `open` and an explicit `open: true` serialize differently and land as distinct revision ids — they are semantically equal and accrete each other. `schema_version` stays `"1"`.
+
 `subtype(A,B)` means every value allowed by A is accepted by B. The v1 checker uses these conservative structural rules; when it cannot establish inclusion it returns Unknown rather than guessing:
 
 | Shape | Rule for `subtype(A,B)` |

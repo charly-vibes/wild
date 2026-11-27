@@ -122,7 +122,10 @@ because wild has no released tool, registry, or persisted contracts and every
 extracted contract declares `open` explicitly; the version-scoped IR v2 path
 is the documented rejected alternative and becomes the required path after 1.0
 adoption. → Proposed in
-openspec change `update-wild-openness-default`.
+openspec change `update-wild-openness-default`. **RESOLVED (2026-11-27):** the
+change is implemented — v1 flips in place to open-by-default with justified
+closure (`closed_reason` required on `open: false`, `closure-unjustified`
+diagnostic; see `openspec/changes/update-wild-openness-default/`).
 
 **B. Tombstones are prohibition by design.** "A tombstoned name can never return
 with a different meaning" is exactly the prohibition Hickey warns against
