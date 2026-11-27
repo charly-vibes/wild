@@ -2,7 +2,7 @@ run_id: tdd-ro5-2026-11-27-widen-method-receiver-demands-wild-8j4
 pipeline: tdd-ro5
 topic: widen-method-receiver-demands (wild-8j4)
 created_at: '2026-11-27T23:04:05.055208145+00:00'
-current_step: 7
+current_step: 8
 approvals: {}
 epic: null
 child_issues: []

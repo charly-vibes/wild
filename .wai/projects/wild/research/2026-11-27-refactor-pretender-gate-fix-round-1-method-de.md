@@ -1,0 +1,5 @@
+---
+tags: [pipeline-run:tdd-ro5-2026-11-27-widen-method-receiver-demands-wild-8j4, pipeline-step:quality-ledger]
+---
+
+REFACTOR: pretender-gate fix round — (1) method_demands.rs void mutators 6>3: scan_crate now returns the two bundle maps (no &mut outs), scan_impl/scan_struct_fields became &self collectors returning pairs/Option, scan_mod_declarations merged into scan_items's Mod arm (inline mods recurse as before, public non-inline mods resolved via mod_file_candidates inline); call site in extract.rs pass 1 updated to extend the shared maps. (2) test_extract.py file_lines 1417>1200 + lazy_cluster 5>3 + params 4>2: widen scenarios moved to tests/runtime/test_extract_widen.py as two parametrized tests (6 resolve cases, 3 residual-gap cases; identical assertion structures collapsed into one body each) plus the two structurally distinct tests (trait-impl self, free-fn signature); module-level widen_extract(tmp_path, files) helper = 2 params; test_extract.py back to 1137 lines; 6 contract TOMLs re-pointed to the parametrized ids. Suites: test_extract.py widen 6 passed, test_extract_widen.py 11 passed.
