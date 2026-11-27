@@ -14,6 +14,26 @@ Part of the [charly-vibes](https://github.com/charly-vibes) toolshed.
 
 **Crates.io.** The publishable package is `wild-vibes` — the `wild` crate name on crates.io belongs to an unrelated glob-expansion crate. The repository, binary, and wire-format identities remain `wild`; see `Cargo.toml` for the rationale.
 
+## Install
+
+Download a pre-built binary from the releases (no Rust toolchain needed) —
+Linux x86_64:
+
+```
+curl -fLO https://github.com/charly-vibes/wild/releases/latest/download/wild_linux_amd64.tar.gz
+tar -xzf wild_linux_amd64.tar.gz && ./wild --help
+```
+
+Darwin (Apple silicon) and Windows (`.zip`) archives follow the same naming:
+`wild_darwin_arm64.tar.gz`, `wild_windows_amd64.zip`; `checksums.txt` and
+`provenance.json` in the same release list the sha256 of every asset. Or build
+from source / install the crate from crates.io (package `wild-vibes`, binary
+`wild`):
+
+```
+cargo install wild-vibes
+```
+
 ## Layout
 
 | Path | What it is |
