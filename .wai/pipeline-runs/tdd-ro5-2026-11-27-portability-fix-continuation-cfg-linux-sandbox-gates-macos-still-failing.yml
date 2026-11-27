@@ -1,0 +1,12 @@
+run_id: tdd-ro5-2026-11-27-portability-fix-continuation-cfg-linux-sandbox-gates-macos-still-failing
+pipeline: tdd-ro5
+topic: 'portability fix continuation: cfg linux sandbox gates (macOS still failing)'
+created_at: '2026-11-27T21:10:24.091120117+00:00'
+current_step: 9
+approvals:
+  ship-close: '2026-11-27T21:11:18.503711516+00:00'
+epic: null
+child_issues: []
+child_runs: []
+handoff_artifact: null
+bypasses: []

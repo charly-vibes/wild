@@ -36,25 +36,15 @@ phase: design
 
 ```
  M src/harness.rs
-?? .wai/pipeline-runs/tdd-ro5-2026-11-27-cross-platform-law-runner-portability-cfg-gate-linux-sandbox-refuse-elsewhere.yml
-?? .wai/pipeline-runs/tdd-ro5-2026-11-27-release-workflow-five-target-binaries-checksums-readme-install-wild-bsp.yml
-?? .wai/projects/wild/designs/2026-11-27-green-github-workflows-release-yml-written-five.md
-?? .wai/projects/wild/designs/2026-11-27-green-src-harness-rs-cfg-unix-on-landlock-cons.md
-?? .wai/projects/wild/designs/2026-11-27-refactor-no-production-code-changed-in-this-slice.md
-?? .wai/projects/wild/designs/2026-11-27-refactor-the-fix-itself-is-the-restructure-run.md
-?? .wai/projects/wild/plans/2026-11-27-portability-plan-desired-harness-rs-compiles-on.md
-?? .wai/projects/wild/plans/2026-11-27-wild-bsp-plan-desired-v-tag-push-builds-five-s-2.md
-?? .wai/projects/wild/plans/2026-11-27-wild-bsp-plan-desired-v-tag-push-builds-five-s.md
-?? .wai/projects/wild/research/2026-11-27-orient-red-release-run-46066406609-v0-2-1-b.md
-?? .wai/projects/wild/research/2026-11-27-orient-wild-bsp-audited-gap-no-github-workflo.md
-?? .wai/projects/wild/research/2026-11-27-quality-ledger-portability-fix-changed-src-ha.md
-?? .wai/projects/wild/research/2026-11-27-quality-ledger-wild-bsp-changed-github-workf.md
-?? .wai/projects/wild/research/2026-11-27-red-command-cargo-check-target-x86-64-pc-windo.md
-?? .wai/projects/wild/research/2026-11-27-red-command-gh-release-view-v0-2-1-json-assets.md
-?? .wai/projects/wild/research/2026-11-27-ro5u-fixes-no-critical-high-findings-medium-tag.md
-?? .wai/projects/wild/research/2026-11-27-ro5u-fixes-no-critical-high-medium-findings-low-2.md
-?? .wai/projects/wild/reviews-ro5u-port.md
-?? .wai/projects/wild/reviews/
+?? .wai/pipeline-runs/tdd-ro5-2026-11-27-portability-fix-continuation-cfg-linux-sandbox-gates-macos-still-failing.yml
+?? .wai/projects/wild/designs/2026-11-27-green-every-linux-sandbox-item-narrowed-from-cfg.md
+?? .wai/projects/wild/designs/2026-11-27-green-gates-narrowed-to-linux-refusal-covers-not.md
+?? .wai/projects/wild/designs/2026-11-27-refactor-cfg-unix-leftovers-counted-10-remain-p.md
+?? .wai/projects/wild/plans/2026-11-27-continuation-plan-narrow-cfg-unix-to-cfg-target.md
+?? .wai/projects/wild/research/2026-11-27-orient-red-release-run-46068214448-v0-2-1-at-42e.md
+?? .wai/projects/wild/research/2026-11-27-quality-ledger-portability-continuation-changed.md
+?? .wai/projects/wild/research/2026-11-27-red-command-cargo-check-target-aarch64-apple-d.md
+?? .wai/projects/wild/research/2026-11-27-ro5u-fixes-no-critical-high-medium-findings-low-3.md
 ?? .wai/resources/pipelines/.last-run
 ?? cv/
 ```
@@ -84,17 +74,18 @@ phase: design
 ○ wild-8j4 P3 Method-call demand on non-bounded receivers needs real type inference
 ○ wild-90d P3 rust-cargo-local-1 std/external-crate awareness for demand resolution
 ○ wild-d1p P3 Attach contract bundle to incitaciones releases (release.yml)
+○ wild-h0w P3 release: wire CARGO_REGISTRY_TOKEN for wild-vibes crates.io publish; create first homebrew-charly wild formula / scoop manifest (or record decision not to)
 ○ wild-l04 P3 Attach contract bundle to turu releases (release.yml)
+○ wild-qb1 P3 release: delete stale unreleased v0.2.0 tag (workflow now exists; a re-push would release an old tree)
 ○ wild-twd P3 Attach contract bundle to ddl releases (release.yml)
 ○ wild-u54 P3 Attach contract bundle to vampiro releases (release.yml)
 ○ wild-wdr P3 Attach contract bundle to pretender releases (release.yml)
 ○ wild-zjv P3 Attach contract bundle to wild releases (release.yml)
 
 --------------------------------------------------------------------------------
-Total: 27 issues (27 open, 0 in progress)
+Total: 29 issues (29 open, 0 in progress)
 
 Status: ○ open  ◐ in_progress  ● blocked  ✓ closed  ❄ deferred
 Priority: P0–P4 (label only; not a status icon)
-
 ```
 
