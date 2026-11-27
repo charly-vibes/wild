@@ -1,0 +1,5 @@
+---
+tags: [pipeline-run:tdd-ro5-2026-11-27-feedback-subcommand-adopting-genesis-feedback-additive-bd-wild-8g8, pipeline-step:plan]
+---
+
+behavior: wild feedback [kind] [--title <t>] [--dry-run] [--from-last-error] adopts the genesis::feedback contract: VALID_KINDS bug/feature/question/chore/aix-gap with genesis error strings; stdin title/body partition (first line -> title, 4000-char fence cap); genesis redaction (secret values, home->~, repo strings); sha256 repro hash; no-network LocalFile outcome -> $XDG_CACHE_HOME|~/.cache/wild/reports/report-<ts>.md; dry-run previews to stderr; every stdout outcome through the shared emit() funnel (genesis shell); exit codes 0 accept / 1 refuse? no - refusals exit 2 matching existing command usage errors. Files: src/feedback.rs (new), src/main.rs dispatch + usage strings, src/lib.rs registration, tests/runtime/test_feedback.py, CHANGELOG Unreleased>Added. Additive only: extract/check/update untouched; no scratch writer (barred - would change existing error paths).

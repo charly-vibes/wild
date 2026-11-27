@@ -1,0 +1,12 @@
+run_id: tdd-ro5-2026-11-27-feedback-subcommand-adopting-genesis-feedback-additive-bd-wild-8g8
+pipeline: tdd-ro5
+topic: feedback subcommand adopting genesis::feedback (additive, bd wild-8g8)
+created_at: '2026-11-27T21:40:13.257845077+00:00'
+current_step: 9
+approvals:
+  ship-close: '2026-11-27T21:41:15.368914182+00:00'
+epic: null
+child_issues: []
+child_runs: []
+handoff_artifact: null
+bypasses: []

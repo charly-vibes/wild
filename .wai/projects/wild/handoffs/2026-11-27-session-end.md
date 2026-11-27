@@ -35,18 +35,25 @@ phase: design
 ### git_status
 
 ```
- M src/harness.rs
-?? .wai/pipeline-runs/tdd-ro5-2026-11-27-portability-fix-continuation-cfg-linux-sandbox-gates-macos-still-failing.yml
-?? .wai/projects/wild/designs/2026-11-27-green-every-linux-sandbox-item-narrowed-from-cfg.md
-?? .wai/projects/wild/designs/2026-11-27-green-gates-narrowed-to-linux-refusal-covers-not.md
-?? .wai/projects/wild/designs/2026-11-27-refactor-cfg-unix-leftovers-counted-10-remain-p.md
-?? .wai/projects/wild/plans/2026-11-27-continuation-plan-narrow-cfg-unix-to-cfg-target.md
-?? .wai/projects/wild/research/2026-11-27-orient-red-release-run-46068214448-v0-2-1-at-42e.md
-?? .wai/projects/wild/research/2026-11-27-quality-ledger-portability-continuation-changed.md
-?? .wai/projects/wild/research/2026-11-27-red-command-cargo-check-target-aarch64-apple-d.md
-?? .wai/projects/wild/research/2026-11-27-ro5u-fixes-no-critical-high-medium-findings-low-3.md
-?? .wai/resources/pipelines/.last-run
+ M .wai/pipeline-runs/tdd-ro5-2026-11-27-wild-lof-genesis-envelope-wrap-of-v1.yml
+ M .wai/projects/wild/handoffs/2026-11-27-session-end.md
+ M .wai/resources/pipelines/.last-run
+ M CHANGELOG.md
+ M src/lib.rs
+ M src/main.rs
+?? .wai/pipeline-runs/tdd-ro5-2026-11-27-feedback-subcommand-adopting-genesis-feedback-additive-bd-wild-8g8.yml
+?? .wai/projects/wild/designs/2026-11-27-green-src-feedback-rs-new-genesis-contract-port.md
+?? .wai/projects/wild/designs/2026-11-27-refactor-none-single-module-no-duplication-int.md
+?? .wai/projects/wild/plans/2026-11-27-behavior-wild-feedback-kind-title-t-dr.md
+?? .wai/projects/wild/research/2026-11-27-orient-bd-wild-8g8-genesis-fleet-lane-add-fleet.md
+?? .wai/projects/wild/research/2026-11-27-quality-ledger-feedback-subcommand-changed-sr.md
+?? .wai/projects/wild/research/2026-11-27-red-new-tests-runtime-test-feedback-py-9-cases.md
+?? .wai/projects/wild/research/2026-11-27-red-tests-runtime-test-feedback-py-9-cases-bef.md
+?? .wai/projects/wild/research/2026-11-27-ro5u-fixes-no-critical-high-medium-findings-low-4.md
+?? .wai/projects/wild/reviews/2026-11-27-ro5u-feedback-subcommand-genesis-adoption.md
 ?? cv/
+?? src/feedback.rs
+?? tests/runtime/test_feedback.py
 ```
 
 ### open_issues
@@ -61,7 +68,6 @@ phase: design
 ○ wild-fq1 P1 docs: apply README front-door standard v0.4 (§5.1)
 ○ wild-lof P1 envelope: wrap the v1 envelope as data inside a genesis envelope
 ○ wild-wz9 P1 Research: Hegel property-based testing plan (antithesis-research)
-○ wild-7p9 P2 stale global tests-pass oracle: ~/.wai/resources/oracles/tests-pass.sh hardcodes specodelic-gre-wt worktree
 ○ wild-8g8 P2 feedback: adopt genesis::feedback (new feedback subcommand)
 ○ wild-c41 P2 Authoring-cost study for contract authoring/maintenance
 ○ wild-ee4 P2 tmpfs near-full: /tmp at 18G/25.4G quota after compile-oracle run - Errno 122 risk for next heavy cargo/pytest run
@@ -81,11 +87,13 @@ phase: design
 ○ wild-u54 P3 Attach contract bundle to vampiro releases (release.yml)
 ○ wild-wdr P3 Attach contract bundle to pretender releases (release.yml)
 ○ wild-zjv P3 Attach contract bundle to wild releases (release.yml)
+○ wild-77c P4 release: bump Node-20 actions to Node-24-compatible versions (checkout@v6, download-artifact@v7) - deprecation warnings in release runs
 
 --------------------------------------------------------------------------------
 Total: 29 issues (29 open, 0 in progress)
 
 Status: ○ open  ◐ in_progress  ● blocked  ✓ closed  ❄ deferred
 Priority: P0–P4 (label only; not a status icon)
+
 ```
 
