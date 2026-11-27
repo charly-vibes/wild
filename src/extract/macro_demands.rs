@@ -44,9 +44,9 @@ struct ArgumentExprList(syn::punctuated::Punctuated<syn::Expr, syn::token::Comma
 
 impl syn::parse::Parse for ArgumentExprList {
     fn parse(input: syn::parse::ParseStream) -> syn::parse::Result<Self> {
-        Ok(ArgumentExprList(syn::punctuated::Punctuated::parse_terminated(
-            input,
-        )?))
+        Ok(ArgumentExprList(
+            syn::punctuated::Punctuated::parse_terminated(input)?,
+        ))
     }
 }
 
@@ -65,10 +65,7 @@ impl<'a> SourceWalk<'a> {
             .map(|s| s.ident.to_string())
             .unwrap_or_default();
         if !ARGUMENT_CONFINED_STD_MACROS.contains(&head.as_str()) {
-            self.refuse_invocation(
-                &head,
-                "may introduce usages the profile cannot inventory",
-            );
+            self.refuse_invocation(&head, "may introduce usages the profile cannot inventory");
             return;
         }
         match mac.parse_body::<ArgumentExprList>() {
@@ -109,10 +106,9 @@ impl<'a> SourceWalk<'a> {
         let named_args: BTreeSet<String> = trees
             .windows(2)
             .filter_map(|w| match (&w[0], &w[1]) {
-                (
-                    proc_macro2::TokenTree::Ident(id),
-                    proc_macro2::TokenTree::Punct(p),
-                ) if p.as_char() == '=' && p.spacing() == proc_macro2::Spacing::Alone => {
+                (proc_macro2::TokenTree::Ident(id), proc_macro2::TokenTree::Punct(p))
+                    if p.as_char() == '=' && p.spacing() == proc_macro2::Spacing::Alone =>
+                {
                     Some(id.to_string())
                 }
                 _ => None,
@@ -187,7 +183,12 @@ pub(super) fn check_capture_disclosure(
         let provider_leafs: BTreeSet<String> = all_slots
             .iter()
             .filter(|s| s.meaning.split('.').next().unwrap_or("") != capture.crate_name)
-            .filter_map(|s| s.meaning.rsplit('.').next().map(std::string::ToString::to_string))
+            .filter_map(|s| {
+                s.meaning
+                    .rsplit('.')
+                    .next()
+                    .map(std::string::ToString::to_string)
+            })
             .collect();
         if provider_leafs.contains(capture.ident.as_str()) {
             diagnostics.push(Diagnostic {

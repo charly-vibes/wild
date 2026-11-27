@@ -103,9 +103,15 @@ pub fn validate_contract(value: &Value) -> Result<(), Vec<String>> {
         }
     };
     let slots = value.get("slots").and_then(Value::as_arr).unwrap_or(&[]);
-    let tombstones = value.get("tombstones").and_then(Value::as_arr).unwrap_or(&[]);
+    let tombstones = value
+        .get("tombstones")
+        .and_then(Value::as_arr)
+        .unwrap_or(&[]);
     let laws = value.get("laws").and_then(Value::as_arr).unwrap_or(&[]);
-    let relations = value.get("relations").and_then(Value::as_arr).unwrap_or(&[]);
+    let relations = value
+        .get("relations")
+        .and_then(Value::as_arr)
+        .unwrap_or(&[]);
     let sunsets = value.get("sunsets").and_then(Value::as_arr).unwrap_or(&[]);
 
     // Conveys clause (wild-hyk): optional sorted, duplicate-free array of
@@ -143,10 +149,14 @@ pub fn validate_contract(value: &Value) -> Result<(), Vec<String>> {
     }
     // Set ordering: slots and tombstones by name, laws by id, relations by
     // id, sunsets by date then slot name. Repeated set keys are rejected.
-    if !sorted_by_key(slots, |s| s.str_field("name").unwrap_or_default().to_string())
-        || !sorted_by_key(tombstones, |s| s.str_field("name").unwrap_or_default().to_string())
-        || !sorted_by_key(laws, |l| l.str_field("id").unwrap_or_default().to_string())
-        || !sorted_by_key(relations, |r| r.str_field("id").unwrap_or_default().to_string())
+    if !sorted_by_key(slots, |s| {
+        s.str_field("name").unwrap_or_default().to_string()
+    }) || !sorted_by_key(tombstones, |s| {
+        s.str_field("name").unwrap_or_default().to_string()
+    }) || !sorted_by_key(laws, |l| l.str_field("id").unwrap_or_default().to_string())
+        || !sorted_by_key(relations, |r| {
+            r.str_field("id").unwrap_or_default().to_string()
+        })
         || !sorted_by_key(sunsets, |s| {
             format!(
                 "{}|{}",
@@ -208,10 +218,7 @@ fn is_id(text: &str) -> bool {
 /// The v1 identifier grammar (also used for conveys input paths).
 pub(crate) fn id_syntax(text: &str) -> bool {
     let mut chars = text.chars();
-    let first_ok = matches!(
-        chars.next(),
-        Some('A'..='Z') | Some('a'..='z') | Some('_')
-    );
+    let first_ok = matches!(chars.next(), Some('A'..='Z') | Some('a'..='z') | Some('_'));
     first_ok
         && text.len() <= 256
         && text
@@ -255,10 +262,7 @@ fn validate_slot(slot: &Value, tombstone: bool, push: &mut impl FnMut(&str)) {
         if clause.as_str() != Some("fallible") {
             push("on-absent-shape");
         }
-        if tombstone
-            || polarity != "in"
-            || required != Some(true)
-        {
+        if tombstone || polarity != "in" || required != Some(true) {
             push("on-absent-placement");
         }
     }
@@ -347,7 +351,7 @@ fn validate_type(ty: &Value) -> Result<(), String> {
         }
         "opaque" => {
             let fingerprint = ty.str_field("fingerprint").unwrap_or_default();
-            if !is_digest(&fingerprint) {
+            if !is_digest(fingerprint) {
                 return Err("digest-syntax".to_string());
             }
             Ok(())
@@ -402,7 +406,10 @@ fn inhabits(value: &Value, ty: &Value) -> bool {
                     _ => false,
                 },
                 "integer" => match value {
-                    Value::Int(int) => match (ty.get("min").and_then(Value::as_int), ty.get("max").and_then(Value::as_int)) {
+                    Value::Int(int) => match (
+                        ty.get("min").and_then(Value::as_int),
+                        ty.get("max").and_then(Value::as_int),
+                    ) {
                         (Some(min), Some(max)) => *int >= min && *int <= max,
                         _ => false,
                     },
@@ -422,7 +429,10 @@ fn inhabits(value: &Value, ty: &Value) -> bool {
                         .iter()
                         .find(|(field_name, _)| field_name == name)
                         .map(|(_, field)| {
-                            inhabits(field_value, &field.get("type").cloned().unwrap_or(Value::Null))
+                            inhabits(
+                                field_value,
+                                &field.get("type").cloned().unwrap_or(Value::Null),
+                            )
                         })
                         .unwrap_or(false)
                 })
@@ -440,10 +450,16 @@ fn inhabits(value: &Value, ty: &Value) -> bool {
                     Some((_, variant_ty)) => inhabits(payload, variant_ty),
                     None => {
                         // Open sums accept unknown labels as opaque payloads.
-                        ty.get("open")
-                            .and_then(Value::as_bool)
-                            .unwrap_or(false)
-                            && matches!(payload, Value::Obj(_) | Value::Str(_) | Value::Arr(_) | Value::Int(_) | Value::Bool(_) | Value::Null)
+                        ty.get("open").and_then(Value::as_bool).unwrap_or(false)
+                            && matches!(
+                                payload,
+                                Value::Obj(_)
+                                    | Value::Str(_)
+                                    | Value::Arr(_)
+                                    | Value::Int(_)
+                                    | Value::Bool(_)
+                                    | Value::Null
+                            )
                     }
                 }
             }
@@ -455,9 +471,9 @@ fn inhabits(value: &Value, ty: &Value) -> bool {
                 let max = ty.get("max").and_then(Value::as_int).unwrap_or(i64::MAX);
                 items.len() as i64 >= min
                     && items.len() as i64 <= max
-                    && items
-                        .iter()
-                        .all(|item| inhabits(item, &ty.get("items").cloned().unwrap_or(Value::Null)))
+                    && items.iter().all(|item| {
+                        inhabits(item, &ty.get("items").cloned().unwrap_or(Value::Null))
+                    })
             }
             _ => false,
         },
@@ -487,7 +503,7 @@ fn inhabits(value: &Value, ty: &Value) -> bool {
 
 fn is_canonical_base64(text: &str) -> bool {
     let chars: Vec<char> = text.chars().collect();
-    if chars.len() % 4 != 0 || chars.is_empty() {
+    if !chars.len().is_multiple_of(4) || chars.is_empty() {
         return false;
     }
     let mut padding = 0usize;
@@ -507,7 +523,7 @@ fn is_canonical_base64(text: &str) -> bool {
             _ => return false,
         }
     }
-    matches!(padding, 0 | 1 | 2)
+    matches!(padding, 0..=2)
 }
 
 // --- subtype checker -------------------------------------------------------
@@ -651,7 +667,10 @@ fn record_subtype(a: &Value, b: &Value) -> Verdict {
     };
     let mut verdict = Verdict::Holds;
     for (b_name, b_field) in b_entries.iter() {
-        let b_required = b_field.get("required").and_then(Value::as_bool).unwrap_or(false);
+        let b_required = b_field
+            .get("required")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
         match a_entries.iter().find(|(a_name, _)| a_name == b_name) {
             Some((_, a_field)) => {
                 let a_required = a_field
@@ -758,13 +777,17 @@ pub fn accretes(old: &Value, new: &Value) -> Result<Verdict, Vec<String>> {
         doc.get(key).and_then(Value::as_arr).unwrap_or(&[])
     }
     let (old_slots, new_slots) = (view(old, "slots"), view(new, "slots"));
-    let (old_tombstones, new_tombstones) =
-        (view(old, "tombstones"), view(new, "tombstones"));
+    let (old_tombstones, new_tombstones) = (view(old, "tombstones"), view(new, "tombstones"));
     let verdict = (|| -> Result<Verdict, ()> {
         Ok(Verdict::Holds
             .and(remaining_outputs(old_slots, new_slots)?)
             .and(retained_inputs(old_slots, new_slots, new_tombstones)?)
-            .and(tombstone_history(old_slots, old_tombstones, new_slots, new_tombstones)?)
+            .and(tombstone_history(
+                old_slots,
+                old_tombstones,
+                new_slots,
+                new_tombstones,
+            )?)
             .and(new_inputs_forbidden(old_slots, old_tombstones, new_slots)?)
             .and(unchanged_input_defaults(old_slots, new_slots))
             .and(unchanged_records("laws", old, new)?)
@@ -776,7 +799,8 @@ pub fn accretes(old: &Value, new: &Value) -> Result<Verdict, Vec<String>> {
 }
 
 fn slot_identity_changed(old_slot: &Value, new_slot: &Value) -> bool {
-    new_slot.str_field("facet").unwrap_or_default() != old_slot.str_field("facet").unwrap_or_default()
+    new_slot.str_field("facet").unwrap_or_default()
+        != old_slot.str_field("facet").unwrap_or_default()
         || new_slot.str_field("polarity").unwrap_or_default()
             != old_slot.str_field("polarity").unwrap_or_default()
         || new_slot.str_field("meaning").unwrap_or_default()
@@ -787,9 +811,15 @@ fn slot_identity_changed(old_slot: &Value, new_slot: &Value) -> bool {
 /// meaning, with a subtype output; removed outputs always break.
 fn remaining_outputs(old_slots: &[Value], new_slots: &[Value]) -> Result<Verdict, ()> {
     let mut verdict = Verdict::Holds;
-    for old_slot in old_slots.iter().filter(|s| s.str_field("polarity").unwrap_or_default() == "out") {
+    for old_slot in old_slots
+        .iter()
+        .filter(|s| s.str_field("polarity").unwrap_or_default() == "out")
+    {
         let name = old_slot.str_field("name").unwrap_or_default();
-        let Some(new_slot) = new_slots.iter().find(|s| s.str_field("name").unwrap_or_default() == name) else {
+        let Some(new_slot) = new_slots
+            .iter()
+            .find(|s| s.str_field("name").unwrap_or_default() == name)
+        else {
             return Err(());
         };
         if slot_identity_changed(old_slot, new_slot) {
@@ -808,10 +838,19 @@ fn retained_inputs(
     new_tombstones: &[Value],
 ) -> Result<Verdict, ()> {
     let mut verdict = Verdict::Holds;
-    for old_slot in old_slots.iter().filter(|s| s.str_field("polarity").unwrap_or_default() == "in") {
+    for old_slot in old_slots
+        .iter()
+        .filter(|s| s.str_field("polarity").unwrap_or_default() == "in")
+    {
         let name = old_slot.str_field("name").unwrap_or_default();
-        let old_required = old_slot.get("required").and_then(Value::as_bool).unwrap_or(false);
-        let Some(new_slot) = new_slots.iter().find(|s| s.str_field("name").unwrap_or_default() == name) else {
+        let old_required = old_slot
+            .get("required")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        let Some(new_slot) = new_slots
+            .iter()
+            .find(|s| s.str_field("name").unwrap_or_default() == name)
+        else {
             // Removed input: it must leave a tombstone retaining its last
             // accepted meaning and type.
             let Some(tombstone) = new_tombstones
@@ -828,7 +867,10 @@ fn retained_inputs(
             verdict = subtype(&slot_type(tombstone), &slot_type(old_slot)).and(verdict);
             continue;
         };
-        let new_required = new_slot.get("required").and_then(Value::as_bool).unwrap_or(false);
+        let new_required = new_slot
+            .get("required")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
         // A reintroduced required input is a new requirement and breaks
         // accretion.
         if new_required && !old_required || slot_identity_changed(old_slot, new_slot) {
@@ -915,7 +957,10 @@ fn new_inputs_forbidden(
     old_tombstones: &[Value],
     new_slots: &[Value],
 ) -> Result<Verdict, ()> {
-    for new_slot in new_slots.iter().filter(|s| s.str_field("polarity").unwrap_or_default() == "in") {
+    for new_slot in new_slots
+        .iter()
+        .filter(|s| s.str_field("polarity").unwrap_or_default() == "in")
+    {
         let name = new_slot.str_field("name").unwrap_or_default();
         let known = old_slots
             .iter()
@@ -924,7 +969,10 @@ fn new_inputs_forbidden(
                 .iter()
                 .any(|t| t.str_field("name").unwrap_or_default() == name);
         if !known {
-            let required = new_slot.get("required").and_then(Value::as_bool).unwrap_or(false);
+            let required = new_slot
+                .get("required")
+                .and_then(Value::as_bool)
+                .unwrap_or(false);
             if required {
                 return Err(());
             }

@@ -39,9 +39,9 @@ mod method_demands;
 mod mod_files;
 mod type_inventory;
 
-use demand_resolution::{check_demand_resolution, resolve_in_slots};
-use macro_demands::{CaptureRef, check_capture_disclosure};
 pub(crate) use conveys::{conveyed_scope, validate_conveys, validate_on_absent};
+use demand_resolution::{check_demand_resolution, resolve_in_slots};
+use macro_demands::{check_capture_disclosure, CaptureRef};
 
 const REQUEST_FIELDS: &[&str] = &[
     "version",
@@ -146,7 +146,9 @@ fn validate_request(request: &Value) -> Result<BundleCommitments, String> {
     if features.iter().any(|f| f.as_str().is_none()) {
         return Err("features must be an array of strings".to_string());
     }
-    let extractor = request.get("extractor").ok_or("missing field `extractor`")?;
+    let extractor = request
+        .get("extractor")
+        .ok_or("missing field `extractor`")?;
     if let Value::Obj(entries) = extractor {
         for (key, _) in entries {
             if !matches!(key.as_str(), "name" | "digest") {
@@ -300,10 +302,7 @@ fn parse_member_manifest(
                 return Err(format!(
                     "input-mismatch: crate `{}` in `{rel_manifest}` has no committed \
                      crate-root source (`{lib}` or `{bin}`)",
-                    package
-                        .get("name")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("?"),
+                    package.get("name").and_then(|v| v.as_str()).unwrap_or("?"),
                 ));
             }
         }
@@ -325,8 +324,6 @@ fn join_rel(dir: &Path, rel: &str) -> String {
         .collect::<Vec<_>>()
         .join("/")
 }
-
-
 
 fn integer_scalar(min: i64, max: i64) -> Value {
     formats::obj(vec![
@@ -352,8 +349,9 @@ fn scalar_type(ty: &syn::Type) -> Option<Value> {
         syn::Type::Paren(paren) => scalar_type(&paren.elem),
         // beads wild-7e9: borrowed text; mutable borrows stay outside the v1 value-transfer model.
         syn::Type::Reference(reference) => match reference.elem.as_ref() {
-            syn::Type::Path(elem) if reference.mutability.is_none()
-                && elem.qself.is_none()
+            syn::Type::Path(elem)
+                if reference.mutability.is_none()
+                    && elem.qself.is_none()
                     && elem.path.segments.len() == 1
                     && elem.path.segments.last().is_some_and(|seg| {
                         matches!(seg.ident.to_string().as_str(), "str" | "String")
@@ -400,7 +398,9 @@ fn opaque_type(item: &impl ToTokens) -> Value {
         ("shape", formats::s("opaque")),
         (
             "fingerprint",
-            formats::s(&formats::sha256_digest(item.to_token_stream().to_string().as_bytes())),
+            formats::s(&formats::sha256_digest(
+                item.to_token_stream().to_string().as_bytes(),
+            )),
         ),
     ])
 }
@@ -444,8 +444,6 @@ struct SourceWalk<'a> {
 }
 
 impl<'a> SourceWalk<'a> {
-
-
     fn gap(&mut self, code: &'static str, reason: String, complete_killer: bool) {
         if complete_killer {
             self.complete = false;
@@ -500,7 +498,12 @@ impl<'a> SourceWalk<'a> {
     /// a formatting-invariant fingerprint; cfg-gated declarations also
     /// produce a gap because visibility cannot be established for a
     /// conditionally compiled item.
-    fn opaque_pub_item(&mut self, ident: &proc_macro2::Ident, node: &impl ToTokens, cfg_gated: bool) {
+    fn opaque_pub_item(
+        &mut self,
+        ident: &proc_macro2::Ident,
+        node: &impl ToTokens,
+        cfg_gated: bool,
+    ) {
         let slot_name = self.slot_name(&ident.to_string());
         let meaning = format!("{}.{}", self.crate_name, slot_name.replace("::", "."));
         let span = ident.span();
@@ -542,7 +545,6 @@ impl<'a> SourceWalk<'a> {
         let start = path.span().start();
         (start.line, start.column)
     }
-
 }
 
 // The visit lifetime ('b) is independent of the borrowed-context
@@ -860,9 +862,7 @@ fn attr_is_cfg(attr: &syn::Attribute) -> bool {
 /// Extract the local-1 records for one bundle from a validated request.
 /// `Err` classifies as error (exit 2); `Ok` carries the gap-aware outcome.
 /// Parse workspace member manifests from the committed bundle bytes.
-fn load_workspace(
-    loaded: &BTreeMap<String, Vec<u8>>,
-) -> Result<Vec<MemberManifest>, String> {
+fn load_workspace(loaded: &BTreeMap<String, Vec<u8>>) -> Result<Vec<MemberManifest>, String> {
     let root_manifest_bytes = loaded
         .get("Cargo.toml")
         .ok_or("input-mismatch: bundle has no committed Cargo.toml")?;
@@ -870,17 +870,17 @@ fn load_workspace(
         .map_err(|e| format!("malformed Cargo.toml: {e}"))?;
     let root_doc: toml::Value =
         toml::from_str(root_text).map_err(|e| format!("malformed Cargo.toml: {e}"))?;
-    let member_manifests: Vec<String> = match root_doc.get("workspace").and_then(|w| w.get("members"))
-    {
-        Some(members) => members
-            .as_array()
-            .ok_or("workspace members must be an array")?
-            .iter()
-            .filter_map(|m| m.as_str().map(str::to_string))
-            .map(|m| format!("{m}/Cargo.toml"))
-            .collect(),
-        None => vec!["Cargo.toml".to_string()],
-    };
+    let member_manifests: Vec<String> =
+        match root_doc.get("workspace").and_then(|w| w.get("members")) {
+            Some(members) => members
+                .as_array()
+                .ok_or("workspace members must be an array")?
+                .iter()
+                .filter_map(|m| m.as_str().map(str::to_string))
+                .map(|m| format!("{m}/Cargo.toml"))
+                .collect(),
+            None => vec!["Cargo.toml".to_string()],
+        };
     let mut manifests = Vec::new();
     for rel in &member_manifests {
         let text = loaded
@@ -924,12 +924,7 @@ fn walk_crates(
         let mut use_gaps: Vec<String> = Vec::new();
         for item in &file.items {
             if let syn::Item::Use(use_item) = item {
-                collect_use_tree(
-                    &use_item.tree,
-                    String::new(),
-                    &mut alias_map,
-                    &mut use_gaps,
-                );
+                collect_use_tree(&use_item.tree, String::new(), &mut alias_map, &mut use_gaps);
             }
         }
         for reason in use_gaps {
@@ -993,10 +988,7 @@ pub(crate) struct WalkAccumulator {
 }
 
 /// Assemble the canonical v1 contract document from slots and in-slots.
-fn assemble_contract(
-    all_slots: &[SlotRecord],
-    in_slots: &[SlotRecord],
-) -> (Value, Vec<String>) {
+fn assemble_contract(all_slots: &[SlotRecord], in_slots: &[SlotRecord]) -> (Value, Vec<String>) {
     let mut contract_slots: Vec<Value> = Vec::new();
     let mut slot_names: Vec<String> = Vec::new();
     for record in all_slots.iter().chain(in_slots.iter()) {
