@@ -1,0 +1,12 @@
+archetype = "PF"
+authored_with = "0.12.3"
+derived_from = "declared_bump_empty_delta_patch@5f5d23947f11"
+description = "`proposed == patch ∧ no accretion or revocation reason claimed`"
+falsifiability_class = "safety"
+id = "declared-bump-empty-delta-patch"
+status = "active"
+superseded_by = ""
+
+[[tests.pytest]]
+flags = "tests/test_declared_bump.py::TestDeclaredBumpDerivation::test_empty_delta_proposes_patch"
+timeout_seconds = 300

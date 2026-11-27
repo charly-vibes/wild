@@ -1,0 +1,12 @@
+archetype = "PF"
+authored_with = "0.12.3"
+derived_from = "declared_bump_rename_major@3d38a0bc9b58"
+description = "`proposed == major ∧ rename revokes the old id and accretes the new`"
+falsifiability_class = "safety"
+id = "declared-bump-rename-major"
+status = "active"
+superseded_by = ""
+
+[[tests.pytest]]
+flags = "tests/test_declared_bump.py::TestDeclaredBumpDerivation::test_declared_change_proposes_major_revokes"
+timeout_seconds = 300

@@ -1,0 +1,11 @@
+run_id: tdd-ro5-2026-11-27-declared-bump-derivation-wild-zh6
+pipeline: tdd-ro5
+topic: declared-bump-derivation-wild-zh6
+created_at: '2026-11-27T22:11:06.499311002+00:00'
+current_step: 0
+approvals: {}
+epic: null
+child_issues: []
+child_runs: []
+handoff_artifact: null
+bypasses: []

@@ -1,0 +1,12 @@
+archetype = "PF"
+authored_with = "0.12.3"
+derived_from = "declared_claim_audited@a136554bd47e"
+description = "`the audit compares the declared class against the computed verdict ∧ lists the agreement or disagreement`"
+falsifiability_class = "safety"
+id = "declared-claim-audited"
+status = "active"
+superseded_by = ""
+
+[[tests.pytest]]
+flags = "tests/test_adopt_audit.py::TestDeclaredClaimRecord::test_agreement_is_listed_when_declared_matches_verdict"
+timeout_seconds = 300

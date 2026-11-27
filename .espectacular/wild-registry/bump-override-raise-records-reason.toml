@@ -1,0 +1,12 @@
+archetype = "PF"
+authored_with = "0.12.3"
+derived_from = "bump_override_raise_records_reason@c490879c59c3"
+description = "`confirmed == the raised class ∧ the reason is carried on the declared-claim record`"
+falsifiability_class = "safety"
+id = "bump-override-raise-records-reason"
+status = "active"
+superseded_by = ""
+
+[[tests.pytest]]
+flags = "tests/test_declared_bump.py::TestUpwardOnlyOverride::test_raise_records_reason_on_the_claim"
+timeout_seconds = 300

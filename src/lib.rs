@@ -16,6 +16,7 @@
 //   (src/{main,lib,formats,extract,check,harness,obligations,update,
 //   cargo_host,delivery,v1}.rs).
 
+pub mod bump;
 pub mod cargo_host;
 pub mod check;
 pub mod delivery;

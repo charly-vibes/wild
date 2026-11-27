@@ -1,0 +1,16 @@
+archetype = "PF"
+authored_with = "0.12.3"
+derived_from = "declared_bump_added_only_minor@30dada9cbba1"
+description = "`proposed == minor ∧ reason == accretes ∧ no requirement modified or removed`"
+falsifiability_class = "safety"
+id = "declared-bump-added-only-minor"
+status = "active"
+superseded_by = ""
+
+[[tests.pytest]]
+flags = "tests/test_declared_bump.py::TestDeclaredBumpDerivation::test_added_only_proposes_minor_accretes"
+timeout_seconds = 300
+
+[[tests.pytest]]
+flags = "tests/test_declared_bump.py::TestDeclaredBumpDerivation::test_every_computed_outcome_exits_zero_advisory"
+timeout_seconds = 300

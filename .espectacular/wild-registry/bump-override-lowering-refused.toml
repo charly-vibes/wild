@@ -1,0 +1,12 @@
+archetype = "PF"
+authored_with = "0.12.3"
+derived_from = "bump_override_lowering_refused@33bc930bb4b7"
+description = "`refused with bump_class_lowering_refused ∧ the proposed class stands as the confirmed claim`"
+falsifiability_class = "safety"
+id = "bump-override-lowering-refused"
+status = "active"
+superseded_by = ""
+
+[[tests.pytest]]
+flags = "tests/test_declared_bump.py::TestUpwardOnlyOverride::test_lowering_refused_and_proposal_stands"
+timeout_seconds = 300

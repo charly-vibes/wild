@@ -406,9 +406,30 @@ def inventory_versions(
     return inventories, unavailable, determinism_failures
 
 
+def claim_row_for(claims: dict, release: str, verdict: str) -> tuple[str, str]:
+    """Declared-claim comparison (add-declared-bump-derivation): the delta-
+    derived declared side is compared against the computed verdict; a
+    release without a recorded declaration is an Unknown claim and is never
+    folded into agreement counts. Disagreements are listed, never
+    reconciled."""
+    record = claims.get(release)
+    if not isinstance(record, dict) or "confirmed" not in record:
+        return "unknown", "unknown"
+    declared = record["confirmed"]
+    if verdict == "error":
+        return declared, "errored"
+    if verdict == "unknown":
+        return declared, "unknown"
+    if declared in ("minor", "patch"):
+        return declared, ("agreement" if verdict == "accept" else "disagreement")
+    # declared major: the maintainer claims a break; a computed accept is
+    # an over-claim note, per the established semver audit semantics
+    return declared, "agreement"
+
+
 def check_pairs(
     args, inventories: dict[str, dict], work: Path, bin_path: Path,
-    echoes: list[str],
+    echoes: list[str], claims: dict | None = None,
 ) -> list[dict]:
     """Phase 2: consecutive pairs, base = prev bundle, candidate = next
     bundle, both carrying the same generated caller (demand from prev's
@@ -452,6 +473,7 @@ def check_pairs(
             f"{d.get('code')}: {d.get('reason')}"
             for d in report.get("diagnostics", [])[:3]
         ]
+        declared_claim, claim_row = claim_row_for(claims or {}, nxt, verdict)
         rows.append(
             {
                 "prev": prev,
@@ -459,6 +481,8 @@ def check_pairs(
                 "bump_kind": bump,
                 "computed_verdict": verdict,
                 "audit_row": audit_pair(verdict, bump),
+                "declared_claim": declared_claim,
+                "claim_row": claim_row,
                 "decision": envelope.get("decision"),
                 "assurance": envelope.get("assurance"),
                 "exit_code": proc.returncode,
@@ -542,6 +566,26 @@ def render_results(
             "NOTE: >50% of pairs abstained — per the ticket's follow-up "
             "threshold, gap-rate measurement is the deliverable, not a failure"
         )
+    declared = [row for row in rows if row.get("claim_row") != "unknown"]
+    agreements = sum(1 for row in declared if row["claim_row"] == "agreement")
+    disagreements = sum(
+        1 for row in declared if row["claim_row"] == "disagreement"
+    )
+    lines.append(f"declared agreements: {agreements}")
+    lines.append(f"declared disagreements: {disagreements}")
+    unknown_claims = len(rows) - len(declared)
+    if unknown_claims:
+        lines.append(
+            f"declared claims unknown (no recorded declaration, excluded "
+            f"from counts): {unknown_claims}"
+        )
+    for row in declared:
+        if row["claim_row"] == "disagreement":
+            lines.append(
+                f"DISAGREEMENT: release {row['next']} declared "
+                f"{row['declared_claim']} but computed {row['computed_verdict']}; "
+                "neither the declared record nor the verdict is rewritten"
+            )
     out_path.write_text("\n".join(lines) + "\n")
 
 
@@ -561,6 +605,12 @@ def main(argv=None) -> None:
         help="local dir mapping version -> unpacked crate tree (overrides fetch)",
     )
     parser.add_argument("--bin", default=None, help="path to the wild binary")
+    parser.add_argument(
+        "--claims", default=None,
+        help="JSON file mapping release version -> declared-bump record "
+        "(from `wild bump --out`); releases without a record stay Unknown "
+        "claims (add-declared-bump-derivation)",
+    )
     args = parser.parse_args(argv)
 
     sources = Path(args.sources).resolve() if args.sources else None
@@ -583,7 +633,16 @@ def main(argv=None) -> None:
     inventories, unavailable, determinism_failures = inventory_versions(
         args, sources, work, bin_path, echoes
     )
-    rows = check_pairs(args, inventories, work, bin_path, echoes)
+    claims: dict = {}
+    if args.claims:
+        claims_path = Path(args.claims)
+        if not claims_path.is_file():
+            die(f"--claims file {claims_path} does not exist")
+        loaded = json.loads(claims_path.read_text())
+        if not isinstance(loaded, dict):
+            die(f"--claims file {claims_path} must be a JSON object")
+        claims = loaded
+    rows = check_pairs(args, inventories, work, bin_path, echoes, claims)
     render_results(
         args, rows, inventories, unavailable, determinism_failures, echoes, out_path
     )

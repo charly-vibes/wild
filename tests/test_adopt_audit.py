@@ -120,3 +120,86 @@ class TestAdoptAuditDriver:
         assert not out.exists() or "0.1.0" not in out.read_text(), (
             "no synthetic substitution of real history"
         )
+
+
+# --- declared bump claims (change add-declared-bump-derivation, wild-zh6) ---
+# The declared side the audit compares is now delta-derived: `wild bump`
+# writes declared-bump-record artifacts, and the driver takes them as
+# --claims (JSON map release -> record). Releases without a recorded
+# declaration stay Unknown claims, excluded from agreement counts.
+
+
+
+def make_claims_file(path: Path, claims: dict) -> Path:
+    path.write_text(json.dumps(claims, indent=1))
+    return path
+
+
+@pytest.mark.usefixtures("wild_binary")
+class TestDeclaredClaimRecord:
+    def test_recorded_claim_is_compared_never_reconciled(self, tmp_path):
+        sources = make_sources(tmp_path / "sources")
+        out = tmp_path / "audit.txt"
+        claims = make_claims_file(
+            tmp_path / "claims.json",
+            {
+                "0.2.0": {
+                    "proposed": "minor",
+                    "confirmed": "minor",
+                    "reason": "accretes",
+                }
+            },
+        )
+        before = claims.read_text()
+        proc = run_driver(
+            ["--crate", CRATE, "--sources", str(sources), "--out", str(out),
+             "--bin", str(BIN), "--claims", str(claims)]
+        )
+        assert proc.returncode == 0, proc.stderr
+        rows = json.loads(proc.stdout)
+        minor = next(r for r in rows if r["next"] == "0.2.0")
+        assert minor["declared_claim"] == "minor"
+        assert minor["computed_verdict"] == "reject"
+        assert minor["claim_row"] == "disagreement", (
+            "declared minor against a computed revocation is a disagreement"
+        )
+        assert claims.read_text() == before, (
+            "the audit never rewrites the declared record"
+        )
+        assert "DISAGREEMENT" in out.read_text()
+
+    def test_absent_claim_stays_unknown_and_excluded_from_counts(self, tmp_path):
+        sources = make_sources(tmp_path / "sources")
+        out = tmp_path / "audit.txt"
+        claims = make_claims_file(tmp_path / "claims.json", {})
+        proc = run_driver(
+            ["--crate", CRATE, "--sources", str(sources), "--out", str(out),
+             "--bin", str(BIN), "--claims", str(claims)]
+        )
+        assert proc.returncode == 0, proc.stderr
+        rows = json.loads(proc.stdout)
+        assert all(r["declared_claim"] == "unknown" for r in rows)
+        assert all(r["claim_row"] == "unknown" for r in rows)
+        text = out.read_text()
+        assert "declared agreements: 0" in text
+        assert "declared disagreements: 0" in text, (
+            "absent claims are excluded from agreement counts, never folded in"
+        )
+
+    def test_agreement_is_listed_when_declared_matches_verdict(self, tmp_path):
+        sources = make_sources(tmp_path / "sources")
+        out = tmp_path / "audit.txt"
+        claims = make_claims_file(
+            tmp_path / "claims.json",
+            {"0.2.1": {"proposed": "patch", "confirmed": "patch", "reason": ""}},
+        )
+        proc = run_driver(
+            ["--crate", CRATE, "--sources", str(sources), "--out", str(out),
+             "--bin", str(BIN), "--claims", str(claims)]
+        )
+        assert proc.returncode == 0, proc.stderr
+        rows = json.loads(proc.stdout)
+        patch = next(r for r in rows if r["next"] == "0.2.1")
+        assert patch["computed_verdict"] == "accept"
+        assert patch["claim_row"] == "agreement"
+        assert "declared agreements: 1" in out.read_text()

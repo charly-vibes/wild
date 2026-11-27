@@ -1,0 +1,12 @@
+archetype = "PF"
+authored_with = "0.12.3"
+derived_from = "absent_claim_stays_unknown@7cf8bc6c572b"
+description = "`the declared claim reports Unknown ∧ it is excluded from agreement counts`"
+falsifiability_class = "safety"
+id = "absent-claim-stays-unknown"
+status = "active"
+superseded_by = ""
+
+[[tests.pytest]]
+flags = "tests/test_adopt_audit.py::TestDeclaredClaimRecord::test_absent_claim_stays_unknown_and_excluded_from_counts"
+timeout_seconds = 300

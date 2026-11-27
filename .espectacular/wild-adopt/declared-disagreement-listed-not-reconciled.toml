@@ -1,0 +1,12 @@
+archetype = "PF"
+authored_with = "0.12.3"
+derived_from = "declared_disagreement_listed_not_reconciled@f43424d31523"
+description = "`the disagreement is listed ∧ neither the declared record nor the computed verdict is rewritten`"
+falsifiability_class = "safety"
+id = "declared-disagreement-listed-not-reconciled"
+status = "active"
+superseded_by = ""
+
+[[tests.pytest]]
+flags = "tests/test_adopt_audit.py::TestDeclaredClaimRecord::test_recorded_claim_is_compared_never_reconciled"
+timeout_seconds = 300

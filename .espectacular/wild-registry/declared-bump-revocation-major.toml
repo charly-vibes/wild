@@ -1,0 +1,20 @@
+archetype = "PF"
+authored_with = "0.12.3"
+derived_from = "declared_bump_revocation_major@b1f2a6868904"
+description = "`proposed == major ∧ reason == revokes`"
+falsifiability_class = "safety"
+id = "declared-bump-revocation-major"
+status = "active"
+superseded_by = ""
+
+[[tests.pytest]]
+flags = "tests/test_declared_bump.py::TestDeclaredBumpDerivation::test_declared_change_proposes_major_revokes"
+timeout_seconds = 300
+
+[[tests.pytest]]
+flags = "tests/test_declared_bump.py::TestDeclaredBumpDerivation::test_declared_change_proposes_major_revokes"
+timeout_seconds = 120
+
+[[tests.pytest]]
+flags = "tests/test_declared_bump.py::test_totality_every_delta_shape_maps_to_one_class"
+timeout_seconds = 120

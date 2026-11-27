@@ -14,20 +14,22 @@ The shared memory of the system: a authenticated hash-chained log with full v1 p
 
 ## Constraints
 
-| id | kind | expr | traces_to |
-| -- | ---- | ---- | --------- |
-| registry_append_only | invariant | `the registry is a authenticated hash-chained log with full v1 prefix proofs; no revision is deleted or mutated after append` | [[wild.registry]] |
-| consistency_proofs | invariant | `any two log heads can be checked for consistency by a proof, so a mirror can be audited` | [[wild.registry]] |
-| signature_required | invariant | `every submitted revision carries a signature by the lineage owner key` | [[wild.registry]] |
-| namespace_ownership | invariant | `each authority-qualified lineage name maps to one active owner key at a log sequence; bootstrap requires a trusted namespace authority signature and public names never shadow a configured private authority` | [[wild.registry]] |
-| key_rotation_signed | invariant | `normal key rotation requires outgoing and incoming key signatures; compromise recovery requires the recovery key designated at namespace bootstrap, revokes the compromised key at an explicit sequence, and never rewrites historical entries` | [[wild.registry]] |
-| lock_pins_hashes | invariant | `every contracted v1 lock entry pins authority, lineage, contract hash, and artifact digest; unresolved host entries preserve their locator with Unknown status; tags and aliases are not identities` | [[wild.registry]] |
-| sidecar_binds_artifact_digest | invariant | `a signed v1 sidecar binds host ecosystem, artifact locator, artifact digest, contract hash, extractor digest, and registry sequence; fetching bytes with a different artifact digest is rejected even if the contract is unchanged` | [[wild.registry]] |
-| ecosystem_untouched | invariant | `wild never replaces or mutates the host ecosystem's package, tag, or version; it adds a sidecar record` | [[wild.registry]] |
-| advisories_never_delete | invariant | `yanking or flagging a revision appends an advisory edge; the revision stays resolvable by hash` | [[wild.registry]] |
-| retraction_only_experimental | invariant | `experimental retraction appends a notice and removes the revision from new tip selection; hash lookup retains bytes and notice; stable retraction is refused; no candidate yields Unknown` | [[wild.registry]] |
-| mirror_equivalence | invariant | `a mirror serving the same authenticated snapshot yields the same verdicts and certificates as the origin for identical caller policy, trust roots, and evaluation time` | [[wild.registry]] |
-| verification_needs_no_write | invariant | `reading, resolving, and verifying never require write access to the registry` | [[wild.registry]] |
+| id | kind | expr | traces_to | observes |
+| -- | ---- | ---- | --------- | -------- |
+| registry_append_only | invariant | `the registry is a authenticated hash-chained log with full v1 prefix proofs; no revision is deleted or mutated after append` | [[wild.registry]] |  |
+| consistency_proofs | invariant | `any two log heads can be checked for consistency by a proof, so a mirror can be audited` | [[wild.registry]] |  |
+| signature_required | invariant | `every submitted revision carries a signature by the lineage owner key` | [[wild.registry]] |  |
+| namespace_ownership | invariant | `each authority-qualified lineage name maps to one active owner key at a log sequence; bootstrap requires a trusted namespace authority signature and public names never shadow a configured private authority` | [[wild.registry]] |  |
+| key_rotation_signed | invariant | `normal key rotation requires outgoing and incoming key signatures; compromise recovery requires the recovery key designated at namespace bootstrap, revokes the compromised key at an explicit sequence, and never rewrites historical entries` | [[wild.registry]] |  |
+| lock_pins_hashes | invariant | `every contracted v1 lock entry pins authority, lineage, contract hash, and artifact digest; unresolved host entries preserve their locator with Unknown status; tags and aliases are not identities` | [[wild.registry]] |  |
+| sidecar_binds_artifact_digest | invariant | `a signed v1 sidecar binds host ecosystem, artifact locator, artifact digest, contract hash, extractor digest, and registry sequence; fetching bytes with a different artifact digest is rejected even if the contract is unchanged` | [[wild.registry]] |  |
+| ecosystem_untouched | invariant | `wild never replaces or mutates the host ecosystem's package, tag, or version; it adds a sidecar record` | [[wild.registry]] |  |
+| advisories_never_delete | invariant | `yanking or flagging a revision appends an advisory edge; the revision stays resolvable by hash` | [[wild.registry]] |  |
+| retraction_only_experimental | invariant | `experimental retraction appends a notice and removes the revision from new tip selection; hash lookup retains bytes and notice; stable retraction is refused; no candidate yields Unknown` | [[wild.registry]] |  |
+| mirror_equivalence | invariant | `a mirror serving the same authenticated snapshot yields the same verdicts and certificates as the origin for identical caller policy, trust roots, and evaluation time` | [[wild.registry]] |  |
+| verification_needs_no_write | invariant | `reading, resolving, and verifying never require write access to the registry` | [[wild.registry]] |  |
+| declared_bump_derived | effect | `the declared bump class is derived from the spec-corpus delta at the requirement level: ADDED-only proposes minor (accretes), any MODIFIED or REMOVED requirement proposes major (revokes), RENAMED is classified as revoking the old id and accreting the new, changes deployed since the base aggregate into one delta classified once, an empty requirement-level delta proposes patch, specodelic-only row additions ride the release without changing the class, and a missing or non-computable base corpus yields Unknown with a named diagnostic and no fabricated class; the derivation is advisory output and never gates` | [[wild.registry]] |  |
+| bump_override_upward_only | invariant | `a maintainer override may only raise the proposed class (patch < minor < major) with a recorded reason carried on the declared-claim record; a lowering attempt is refused with the named diagnostic bump_class_lowering_refused and the proposed class stands as the confirmed claim` | [[wild.registry]] | [[wild.registry.declared_bump_derived]] |
 
 ## Model
 
@@ -64,6 +66,15 @@ The shared memory of the system: a authenticated hash-chained log with full v1 p
 | stable_retraction_rejected | unit | [[wild.registry.retraction_only_experimental]] | `retract_request_on_stable_lineage()` | `retract == rejected` |
 | mirror_matches_origin | unit | [[wild.registry.mirror_equivalence]] | `same_log_served_by_origin_and_mirror()` | `verdicts(origin) == verdicts(mirror)` |
 | read_only_credentials_suffice | unit | [[wild.registry.verification_needs_no_write]] | `resolve_and_verify_with_read_only_access()` | `completes` |
+| declared_bump_added_only_minor | unit | [[wild.registry.declared_bump_derived]] | `corpus_delta_with_added_requirements_only()` | `proposed == minor ∧ reason == accretes ∧ no requirement modified or removed` |  |
+| declared_bump_revocation_major | unit | [[wild.registry.declared_bump_derived]] | `corpus_delta_with_modified_or_removed_requirement()` | `proposed == major ∧ reason == revokes` |  |
+| declared_bump_rename_major | unit | [[wild.registry.declared_bump_derived]] | `corpus_delta_with_renamed_requirement()` | `proposed == major ∧ rename revokes the old id and accretes the new` |  |
+| declared_bump_aggregates_changes | unit | [[wild.registry.declared_bump_derived]] | `two_changes_deployed_since_base()` | `the aggregated delta classifies once as major with reason revokes` |  |
+| declared_bump_row_only_patch | unit | [[wild.registry.declared_bump_derived]] | `corpus_delta_with_property_rows_only()` | `proposed == patch ∧ no accretion or revocation reason claimed` |  |
+| declared_bump_empty_delta_patch | unit | [[wild.registry.declared_bump_derived]] | `corpus_unchanged_since_base()` | `proposed == patch ∧ no accretion or revocation reason claimed` |  |
+| declared_bump_missing_base_unknown | unit | [[wild.registry.declared_bump_derived]] | `candidate_without_computable_base_corpus()` | `outcome == Unknown ∧ a diagnostic is named ∧ no bump class proposed` |  |
+| bump_override_raise_records_reason | unit | [[wild.registry.bump_override_upward_only]] | `override_raising_proposed_class()` | `confirmed == the raised class ∧ the reason is carried on the declared-claim record` |  |
+| bump_override_lowering_refused | unit | [[wild.registry.bump_override_upward_only]] | `override_lowering_proposed_major()` | `refused with bump_class_lowering_refused ∧ the proposed class stands as the confirmed claim` |  |
 
 ## Notes
 
@@ -196,7 +207,122 @@ The system SHALL satisfy `verification_needs_no_write` as defined in the Constra
 - **WHEN** a pinned hash is read and a new unconstrained lookup runs
 - **THEN** hash lookup returns bytes and notice; new lookup excludes the retracted tip and returns Unknown if no candidate exists
 
+### Rule: Declared bump class is derived from the corpus delta
+
+The system SHALL satisfy `declared_bump_derived` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Added only delta proposes minor
+- **GIVEN** the fixture domain `corpus_delta_with_added_requirements_only()`
+- **WHEN** the `declared_bump_derived` check runs
+- **THEN** `proposed == minor ∧ reason == accretes ∧ no requirement modified or removed`
+
+#### Acceptance case: Revocation proposes major
+- **GIVEN** the fixture domain `corpus_delta_with_modified_or_removed_requirement()`
+- **WHEN** the `declared_bump_derived` check runs
+- **THEN** `proposed == major ∧ reason == revokes`
+
+#### Acceptance case: Renamed requirement classifies as revocation
+- **GIVEN** the fixture domain `corpus_delta_with_renamed_requirement()`
+- **WHEN** the `declared_bump_derived` check runs
+- **THEN** `proposed == major ∧ rename revokes the old id and accretes the new`
+
+#### Acceptance case: Multiple deployed changes aggregate into one classification
+- **GIVEN** the fixture domain `two_changes_deployed_since_base()`
+- **WHEN** the `declared_bump_derived` check runs
+- **THEN** `the aggregated delta classifies once as major with reason revokes`
+
+#### Acceptance case: Row only additions do not change the class
+- **GIVEN** the fixture domain `corpus_delta_with_property_rows_only()`
+- **WHEN** the `declared_bump_derived` check runs
+- **THEN** `proposed == patch ∧ no accretion or revocation reason claimed`
+
+#### Acceptance case: Empty corpus delta proposes patch
+- **GIVEN** the fixture domain `corpus_unchanged_since_base()`
+- **WHEN** the `declared_bump_derived` check runs
+- **THEN** `proposed == patch ∧ no accretion or revocation reason claimed`
+
+#### Acceptance case: Missing base corpus is Unknown, never fabricated
+- **GIVEN** the fixture domain `candidate_without_computable_base_corpus()`
+- **WHEN** the `declared_bump_derived` check runs
+- **THEN** `outcome == Unknown ∧ a diagnostic is named ∧ no bump class proposed`
+
+### Rule: Bump override is upward-only
+
+The system SHALL satisfy `bump_override_upward_only` as defined in the Constraints table and the v1 format reference.
+
+#### Acceptance case: Raising the class records a reason
+- **GIVEN** the fixture domain `override_raising_proposed_class()`
+- **WHEN** the `bump_override_upward_only` check runs
+- **THEN** `confirmed == the raised class ∧ the reason is carried on the declared-claim record`
+
+#### Acceptance case: Lowering is refused and the proposal stands
+- **GIVEN** the fixture domain `override_lowering_proposed_major()`
+- **WHEN** the `bump_override_upward_only` check runs
+- **THEN** `refused with bump_class_lowering_refused ∧ the proposed class stands as the confirmed claim`
+
 ## Requirements
+
+### Requirement: Declared bump class is derived from the corpus delta
+
+The system SHALL satisfy `declared_bump_derived` as defined in the Constraints table and the v1 format reference.
+
+#### Scenario: Declared bump added only minor
+
+- **GIVEN** a computable base release corpus and a candidate tree whose corpus delta contains only ADDED requirements
+- **WHEN** the declared-bump derivation runs
+- **THEN** the proposed class is minor with reason accretes and no requirement was modified or removed
+
+#### Scenario: Declared bump revocation major
+
+- **GIVEN** a corpus delta containing at least one MODIFIED or REMOVED requirement
+- **WHEN** the declared-bump derivation runs
+- **THEN** the proposed class is major with reason revokes
+
+#### Scenario: Declared bump rename major
+
+- **GIVEN** a corpus delta containing a RENAMED requirement and no other changes
+- **WHEN** the declared-bump derivation runs
+- **THEN** the proposed class is major, classified as revoking the old id and accreting the new
+
+#### Scenario: Declared bump aggregates changes
+
+- **GIVEN** two changes deployed since the base, one adding requirements only and one modifying a requirement
+- **WHEN** the declared-bump derivation runs
+- **THEN** the aggregated delta classifies once as major with reason revokes
+
+#### Scenario: Declared bump row only patch
+
+- **GIVEN** a corpus delta whose requirement-level sections are empty while new property and advisory rows were added
+- **WHEN** the declared-bump derivation runs
+- **THEN** the proposed class is patch and no accretion or revocation reason is claimed
+
+#### Scenario: Declared bump empty delta patch
+
+- **GIVEN** a computable base and a candidate whose corpus delta changes no requirement
+- **WHEN** the declared-bump derivation runs
+- **THEN** the proposed class is patch and no accretion or revocation reason is claimed
+
+#### Scenario: Declared bump missing base unknown
+
+- **GIVEN** no computable base corpus for the candidate tree
+- **WHEN** the declared-bump derivation runs
+- **THEN** the outcome is Unknown with a named diagnostic and no bump class is proposed
+
+### Requirement: Bump override is upward-only
+
+The system SHALL satisfy `bump_override_upward_only` as defined in the Constraints table and the v1 format reference.
+
+#### Scenario: Bump override raise records reason
+
+- **GIVEN** a proposed class lower than major
+- **WHEN** the maintainer confirms an override to a higher class with a recorded reason
+- **THEN** the confirmed class is the higher class and the reason is carried on the declared-claim record
+
+#### Scenario: Bump override lowering refused
+
+- **GIVEN** a proposed major class
+- **WHEN** the maintainer attempts to confirm a lower class
+- **THEN** the confirmation is refused with the named diagnostic bump_class_lowering_refused and the proposed class stands as the confirmed claim
 
 ### Requirement: Wild registry design contract
 

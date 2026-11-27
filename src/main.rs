@@ -950,6 +950,121 @@ fn run_feedback(args: &[String]) -> i32 {
     }
 }
 
+/// Maintainer-side declared-bump derivation (change
+/// add-declared-bump-derivation, bd wild-zh6): classify the spec-corpus
+/// delta against a base release, apply the upward-only override, and write
+/// the declared-bump record. Advisory output only: every computed outcome —
+/// including Unknown-with-diagnostic — accepts with exit 0 (shadow never
+/// blocks); malformed input exits 2 per the house exit map.
+fn run_bump(args: &[String]) -> i32 {
+    const USAGE: &str = "usage: wild bump --base <ref> [--tree <dir>] \
+[--release <version>] [--confirm <patch|minor|major> --reason <text>] \
+[--out <file>]";
+    let mut base: Option<String> = None;
+    let mut tree: Option<String> = None;
+    let mut release: Option<String> = None;
+    let mut confirm: Option<String> = None;
+    let mut reason: Option<String> = None;
+    let mut out: Option<String> = None;
+    let mut flags = args[2..].iter();
+    let mut malformed: Option<String> = None;
+    while let Some(flag) = flags.next() {
+        let take = |flags: &mut std::slice::Iter<String>, name: &str| {
+            flags
+                .next()
+                .map(|v| v.clone())
+                .unwrap_or_else(|| format!("{name} requires a value"))
+        };
+        match flag.as_str() {
+            "--base" => base = Some(take(&mut flags, "--base")),
+            "--tree" => tree = Some(take(&mut flags, "--tree")),
+            "--release" => release = Some(take(&mut flags, "--release")),
+            "--confirm" => confirm = Some(take(&mut flags, "--confirm")),
+            "--reason" => reason = Some(take(&mut flags, "--reason")),
+            "--out" => out = Some(take(&mut flags, "--out")),
+            other => malformed = Some(format!("unknown bump flag: {other}")),
+        }
+        if malformed.is_some() {
+            break;
+        }
+    }
+    let emit_usage = |reason_text: String| -> i32 {
+        eprintln!("{USAGE}");
+        emit(&envelope(
+            "bump",
+            "refuse",
+            "Unknown",
+            vec![diagnostic_shared("input-mismatch", reason_text)],
+            Vec::new(),
+            Value::Null,
+            (0, 0),
+        ));
+        2
+    };
+    if let Some(m) = malformed {
+        return emit_usage(m);
+    }
+    let Some(base) = base else {
+        return emit_usage("--base is required".to_string());
+    };
+    if confirm.is_some() != reason.is_some() {
+        return emit_usage(
+            "--confirm and --reason are required together".to_string(),
+        );
+    }
+    for class in confirm.iter() {
+        if !matches!(class.as_str(), "patch" | "minor" | "major") {
+            return emit_usage(format!("unknown bump class `{class}`"));
+        }
+    }
+    let tree = tree
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
+    let confirm_class = confirm.as_deref();
+    let reason_text = reason.as_deref();
+    match wild::bump::derive(&tree, &base, release.as_deref(), confirm_class, reason_text)
+    {
+        Ok((record, assurance)) => {
+            if let Some(out_path) = out.as_deref() {
+                let path = std::path::Path::new(out_path);
+                if let Some(parent) = path.parent() {
+                    let _ = std::fs::create_dir_all(parent);
+                }
+                if let Err(e) = std::fs::write(path, formats::canonical(&record)) {
+                    return emit_usage(format!("cannot write record `{out_path}`: {e}"));
+                }
+            }
+            emit(&envelope(
+                "bump",
+                "accept",
+                &assurance,
+                record
+                    .get("diagnostics")
+                    .and_then(Value::as_arr)
+                    .map(|d| d.to_vec())
+                    .unwrap_or_default(),
+                Vec::new(),
+                Value::Null,
+                (0, 0),
+            ));
+            0
+        }
+        Err(message) => {
+            eprintln!("{USAGE}");
+            emit(&envelope(
+                "bump",
+                "error",
+                "Unknown",
+                vec![diagnostic_shared("bump-failed", message)],
+                Vec::new(),
+                Value::Null,
+                (0, 0),
+            ));
+            2
+        }
+    }
+}
+
 fn run() -> i32 {
     let args: Vec<String> = std::env::args().collect();
     // fleet version probes (ddl status) run `$binary --version` and expect
@@ -967,8 +1082,9 @@ fn run() -> i32 {
         Some("update") => run_update(&args),
         Some("v1") => run_v1(&args),
         Some("feedback") => run_feedback(&args),
+        Some("bump") => run_bump(&args),
         _ => {
-            let usage = "usage: wild <extract|check|update|v1|feedback> ...";
+            let usage = "usage: wild <extract|check|update|v1|feedback|bump> ...";
             eprintln!("{usage}");
             let envelope = envelope(
                 "unknown",

@@ -1,0 +1,16 @@
+archetype = "PF"
+authored_with = "0.12.3"
+derived_from = "declared_bump_aggregates_changes@7039274a485f"
+description = "`the aggregated delta classifies once as major with reason revokes`"
+falsifiability_class = "safety"
+id = "declared-bump-aggregates-changes"
+status = "active"
+superseded_by = ""
+
+[[tests.pytest]]
+flags = "tests/test_declared_bump.py::TestDeclaredBumpDerivation::test_multi_change_aggregation_classifies_once"
+timeout_seconds = 300
+
+[[tests.pytest]]
+flags = "tests/test_declared_bump.py::TestDeclaredBumpRecord::test_record_is_the_auditable_artifact"
+timeout_seconds = 300
