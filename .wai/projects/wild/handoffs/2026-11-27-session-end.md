@@ -35,8 +35,17 @@ phase: design
 ### git_status
 
 ```
+ M .wai/pipeline-runs/tdd-ro5-2026-11-27-declared-bump-derivation-wild-zh6.yml
+ D .wai/pipeline-runs/tdd-ro5-2026-11-27-feedback-subcommand-adopting-genesis-feedback-additive-bd-wild-8g8.yml
  M .wai/projects/wild/handoffs/2026-11-27-session-end.md
-?? .wai/projects/wild/research/2026-11-27-ro5u-fixes-no-critical-high-findings-mediums-def.md
+?? .wai/projects/wild/designs/2026-11-27-green-no-refactor-needed-the-derivation-core-st.md
+?? .wai/projects/wild/designs/2026-11-27-refactor-none-needed-the-derivation-core-kept-i.md
+?? .wai/projects/wild/plans/2026-11-27-plan-add-declared-bump-derivation-bd-wild-zh6.md
+?? .wai/projects/wild/research/2026-11-27-orient-implement-add-declared-bump-derivation-bd-2.md
+?? .wai/projects/wild/research/2026-11-27-quality-ledger-declared-bump-derivation-bd-wild.md
+?? .wai/projects/wild/research/2026-11-27-red-command-python3-m-pytest-tests-test-declared.md
+?? .wai/projects/wild/research/2026-11-27-research-adopt-audit-evidence-12-12-pairs-absta.md
+?? .wai/projects/wild/research/2026-11-27-ro5u-fixes-review-gate-for-the-declared-bump-work.md
 ?? cv/
 ```
 
