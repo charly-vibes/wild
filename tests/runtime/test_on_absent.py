@@ -111,6 +111,34 @@ def run_accretes(
     return proc, record
 
 
+def _check_leg_accepts_handled_absence(tmp_path: Path) -> None:
+    """Check leg: the candidate provider drops the demanded `add_one`; with
+    the clause declared the absence is a handled outcome, not the
+    caller-violation removal break."""
+    base = write_bundle(tmp_path / "base")
+    cand = write_bundle(tmp_path / "cand", provider_lib=DEMANDED_REMOVED)
+    proc = run_check(
+        check_request_record(
+            tmp_path / "base", base, tmp_path / "cand", cand, on_absent=["provider"]
+        ),
+        tmp_path / "report.json",
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    env = envelope(proc)
+    assert env["decision"] == "accept"
+    assert env["assurance"] == "PassDeclared"
+    report = json.loads((tmp_path / "report.json").read_text())
+    verdicts = {v["called"]: v["verdict"] for v in report["demanded_slots"]}
+    assert "provider::add_one" not in verdicts
+    assert verdicts["provider::greet"] == "pass"
+    # the scoped absence claim records the handled outcome
+    assert {
+        "side": "candidate",
+        "called": "provider::add_one",
+        "scope": "provider",
+    } in report["absence_claims"]
+
+
 def test_absent_input_at_fallible_slot_is_handled_outcome(tmp_path: Path) -> None:
     # Extraction leg: the consumer's call into an absent external dependency
     # is declared fallible, so the demand records a scoped fallible-absence
@@ -141,31 +169,7 @@ def test_absent_input_at_fallible_slot_is_handled_outcome(tmp_path: Path) -> Non
     assert slot["required"] is True
     assert slot["on_absent"] == "fallible"
 
-    # Check leg: the candidate provider drops the demanded `add_one`; with
-    # the clause declared the absence is a handled outcome, not the
-    # caller-violation removal break.
-    base = write_bundle(tmp_path / "base")
-    cand = write_bundle(tmp_path / "cand", provider_lib=DEMANDED_REMOVED)
-    proc = run_check(
-        check_request_record(
-            tmp_path / "base", base, tmp_path / "cand", cand, on_absent=["provider"]
-        ),
-        tmp_path / "report.json",
-    )
-    assert proc.returncode == 0, proc.stdout + proc.stderr
-    env = envelope(proc)
-    assert env["decision"] == "accept"
-    assert env["assurance"] == "PassDeclared"
-    report = json.loads((tmp_path / "report.json").read_text())
-    verdicts = {v["called"]: v["verdict"] for v in report["demanded_slots"]}
-    assert "provider::add_one" not in verdicts
-    assert verdicts["provider::greet"] == "pass"
-    # the scoped absence claim records the handled outcome
-    assert {
-        "side": "candidate",
-        "called": "provider::add_one",
-        "scope": "provider",
-    } in report["absence_claims"]
+    _check_leg_accepts_handled_absence(tmp_path)
 
 
 def test_absent_input_without_clause_still_refuses(tmp_path: Path) -> None:

@@ -14,6 +14,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use super::{conveyed_scope, Diagnostic, SlotRecord};
 use crate::formats::{self, Value};
+use syn::spanned::Spanned;
 
 /// Cross-check every demand entry against the supplied provider slots.
 /// Merely scanning identifier strings never establishes resolution: a
@@ -120,4 +121,94 @@ pub(super) fn resolve_in_slots(
         });
     }
     Ok(in_slots)
+}
+
+/// Span identity of a path expression: (line, column) of its start, used
+/// to recognize already-recorded callees.
+pub(super) fn path_key(path: &syn::Path) -> (usize, usize) {
+    let start = path.span().start();
+    (start.line, start.column)
+}
+
+/// Pure: the `::`-joined callee of a path expression.
+pub(super) fn path_callee(path: &syn::Path) -> String {
+    path.segments
+        .iter()
+        .map(|s| s.ident.to_string())
+        .collect::<Vec<_>>()
+        .join("::")
+}
+
+/// Pure classification of an expression path against demand resolution:
+/// a demand-shaped path never seen as a direct callee is an unsupported
+/// function-pointer flow (gap); a multi-segment path outside that shape
+/// records demand through bounded resolution (wild-158 D2); anything
+/// else is ignored here.
+pub(super) enum PathDemand {
+    Gap(String),
+    Record(String),
+    Ignored,
+}
+
+pub(super) fn expr_path_demand(
+    path: &syn::Path,
+    alias_map: &BTreeMap<String, String>,
+    dep_names: &[String],
+    callee_spans: &BTreeSet<(usize, usize)>,
+) -> PathDemand {
+    let callee = path_callee(path);
+    let recorded = callee_spans.contains(&path_key(path));
+    let is_demand_shaped = alias_map.contains_key(callee.as_str())
+        || dep_names
+            .iter()
+            .any(|d| callee.starts_with(&format!("{d}::")));
+    if is_demand_shaped && !recorded {
+        PathDemand::Gap(format!(
+            "function-pointer flow `{callee}` is outside the supported demand profile"
+        ))
+    } else if !is_demand_shaped && callee.contains("::") && !recorded {
+        // multi-segment expression paths (e.g. enum-variant paths in
+        // expression position, wild-158 D2) record demand through the
+        // same bounded resolution as direct calls — never silently
+        // skipped, never invented
+        PathDemand::Record(callee)
+    } else {
+        PathDemand::Ignored
+    }
+}
+
+/// Pure: a struct-literal path records demand through bounded resolution
+/// when it is crate-qualified and carries no qualified-self (wild-158 D2).
+pub(super) fn struct_demand(node: &syn::ExprStruct) -> Option<String> {
+    if node.qself.is_some() {
+        return None;
+    }
+    let callee = path_callee(&node.path);
+    if callee.contains("::") {
+        Some(callee)
+    } else {
+        None
+    }
+}
+
+/// Pure: the reasons a macro item records — its unexpanded body may hide
+/// declarations and usages the profile cannot inventory. Never descended.
+pub(super) fn item_macro_reasons(node: &syn::ItemMacro) -> Vec<(&'static str, String)> {
+    let head = node
+        .mac
+        .path
+        .segments
+        .last()
+        .map(|s| s.ident.to_string())
+        .unwrap_or_default();
+    vec![
+        (
+            "unsupported-construct",
+            format!("macro `{head}!` may generate declarations the profile cannot inventory"),
+        ),
+        (
+            "incomplete-demand",
+            format!("macro `{head}!` may introduce usages the profile cannot inventory"),
+        ),
+    ]
 }

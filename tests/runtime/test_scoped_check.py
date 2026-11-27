@@ -96,6 +96,29 @@ def envelope(proc: subprocess.CompletedProcess[str]) -> dict:
     return json.loads(proc.stdout)
 
 
+def _bundle_snapshot(tmp_path, bundles):
+    """Bundle bytes keyed by relative path, for the unchanged-source check.
+    `bundles` pairs a side name with its file map."""
+    return {
+        rel: (tmp_path / name / rel).read_bytes()
+        for name, files in bundles
+        for rel in list(files)
+        if (tmp_path / name / rel).exists()
+    }
+
+
+def _allowed_report_writes():
+    """Report outputs one check request may create: the report file plus the
+    declared facts subdirectories."""
+    allowed = {"report.json", "check.json"}
+    allowed |= {
+        f"facts/{side}/{name}"
+        for side in ("base", "candidate")
+        for name in ("contract.json", "demand.json", "provenance.json")
+    }
+    return allowed
+
+
 @pytest.fixture(scope="session")
 def wild_binary() -> Path:
     if not BIN.exists():
@@ -157,12 +180,7 @@ class TestScopedCheck:
     def test_first_result_reports_scope_without_registry(self, tmp_path):
         base = write_bundle(tmp_path / "base")
         cand = candidate_bundle(tmp_path / "cand")
-        before = {
-            rel: (tmp_path / name / rel).read_bytes()
-            for name in ("base", "cand")
-            for rel in (list(base) + list(cand))
-            if (tmp_path / name / rel).exists()
-        }
+        before = _bundle_snapshot(tmp_path, (("base", base), ("cand", cand)))
         out = tmp_path / "out"
         proc = run_check(
             check_request_record(tmp_path / "base", base, tmp_path / "cand", cand),
@@ -181,22 +199,12 @@ class TestScopedCheck:
         # only explicitly requested report outputs are written: the report
         # file plus its declared facts subdirectories, nothing else
         written = {str(p.relative_to(out)) for p in out.rglob("*") if p.is_file()}
-        allowed = {"report.json", "check.json"}
-        allowed |= {
-            f"facts/{side}/{name}"
-            for side in ("base", "candidate")
-            for name in ("contract.json", "demand.json", "provenance.json")
-        }
-        assert written - allowed == set(), f"unexpected writes: {written - allowed}"
+        unexpected = written - _allowed_report_writes()
+        assert not unexpected, f"unexpected writes: {unexpected}"
         assert (out / "facts/base/contract.json").exists()
         assert (out / "facts/candidate/contract.json").exists()
         # project source, manifests and locks remain unchanged
-        after = {
-            rel: (tmp_path / name / rel).read_bytes()
-            for name in ("base", "cand")
-            for rel in (list(base) + list(cand))
-            if (tmp_path / name / rel).exists()
-        }
+        after = _bundle_snapshot(tmp_path, (("base", base), ("cand", cand)))
         assert before == after
 
     def test_unused_removal_accepts_and_demanded_removal_rejects(self, tmp_path):

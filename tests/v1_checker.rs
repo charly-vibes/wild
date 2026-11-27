@@ -41,12 +41,20 @@ fn example_contract() -> Value {
     )
 }
 
-fn set_key(contract: &mut Value, key: &str, value: Value) {
+/// One rewrite request for a contract field: the key to match and the
+/// replacement value.
+struct KeyUpdate<'a> {
+    key: &'a str,
+    value: Value,
+}
+
+fn set_key(contract: &mut Value, update: KeyUpdate<'_>) {
+    let value = update.value;
     let Value::Obj(entries) = contract else {
         return;
     };
     for (name, slot) in entries.iter_mut() {
-        if name == key {
+        if name == update.key {
             *slot = value.clone();
         }
     }
@@ -54,25 +62,39 @@ fn set_key(contract: &mut Value, key: &str, value: Value) {
 
 fn with_key(key: &str, value: Value) -> Value {
     let mut contract = example_contract();
-    set_key(&mut contract, key, value);
+    set_key(&mut contract, KeyUpdate { key, value });
     contract
 }
 
 fn contract_with_slot(slot: Value) -> Value {
     let mut contract = example_contract();
-    set_key(&mut contract, "slots", formats::arr(vec![slot.clone()]));
+    set_key(
+        &mut contract,
+        KeyUpdate {
+            key: "slots",
+            value: formats::arr(vec![slot.clone()]),
+        },
+    );
     contract
 }
 
-fn integer_slot(name: &str, polarity: &str, required: bool, ty: Value) -> Value {
+/// One slot-spec argument group: the slot identity fields and its type.
+struct SlotSpec {
+    name: &'static str,
+    polarity: &'static str,
+    required: bool,
+    ty: Value,
+}
+
+fn integer_slot(spec: SlotSpec) -> Value {
     let absent = formats::obj(vec![("present", Value::Bool(false))]);
     formats::obj(vec![
-        ("name", formats::s(name)),
+        ("name", formats::s(spec.name)),
         ("meaning", formats::s("example.meaning")),
-        ("polarity", formats::s(polarity)),
+        ("polarity", formats::s(spec.polarity)),
         ("facet", formats::s("api")),
-        ("type", ty),
-        ("required", Value::Bool(required)),
+        ("type", spec.ty),
+        ("required", Value::Bool(spec.required)),
         ("default", absent),
     ])
 }
@@ -172,13 +194,23 @@ fn function_arguments_are_contravariant() {
 
 #[test]
 fn identical_contract_accretes() {
-    let contract = contract_with_slot(integer_slot("value", "out", true, scalar_int(0, 10)));
+    let contract = contract_with_slot(integer_slot(SlotSpec {
+        name: "value",
+        polarity: "out",
+        required: true,
+        ty: scalar_int(0, 10),
+    }));
     assert_eq!(accretes(&contract, &contract), Ok(Verdict::Holds));
 }
 
 #[test]
 fn removed_output_always_breaks() {
-    let old = contract_with_slot(integer_slot("value", "out", true, scalar_int(0, 10)));
+    let old = contract_with_slot(integer_slot(SlotSpec {
+        name: "value",
+        polarity: "out",
+        required: true,
+        ty: scalar_int(0, 10),
+    }));
     let new = example_contract();
     assert_eq!(accretes(&old, &new), Ok(Verdict::Breaks));
 }
@@ -186,18 +218,38 @@ fn removed_output_always_breaks() {
 #[test]
 fn new_required_input_breaks_but_optional_is_permitted() {
     let old = example_contract();
-    let new_required = contract_with_slot(integer_slot("extra", "in", true, scalar_int(0, 10)));
+    let new_required = contract_with_slot(integer_slot(SlotSpec {
+        name: "extra",
+        polarity: "in",
+        required: true,
+        ty: scalar_int(0, 10),
+    }));
     assert_eq!(accretes(&old, &new_required), Ok(Verdict::Breaks));
-    let optional = contract_with_slot(integer_slot("extra", "in", false, scalar_int(0, 10)));
+    let optional = contract_with_slot(integer_slot(SlotSpec {
+        name: "extra",
+        polarity: "in",
+        required: false,
+        ty: scalar_int(0, 10),
+    }));
     assert_eq!(accretes(&old, &optional), Ok(Verdict::Holds));
 }
 
 #[test]
 fn removed_input_requires_a_tombstone() {
-    let old = contract_with_slot(integer_slot("legacy", "in", true, scalar_int(0, 10)));
+    let old = contract_with_slot(integer_slot(SlotSpec {
+        name: "legacy",
+        polarity: "in",
+        required: true,
+        ty: scalar_int(0, 10),
+    }));
     let new_without_tombstone = example_contract();
     assert_eq!(accretes(&old, &new_without_tombstone), Ok(Verdict::Breaks));
-    let tombstone = integer_slot("legacy", "in", false, scalar_int(0, 10));
+    let tombstone = integer_slot(SlotSpec {
+        name: "legacy",
+        polarity: "in",
+        required: false,
+        ty: scalar_int(0, 10),
+    });
     let new_with_tombstone = with_key("tombstones", formats::arr(vec![tombstone.clone()]));
     assert_eq!(accretes(&old, &new_with_tombstone), Ok(Verdict::Holds));
     // Fabricated tombstones without history are refused.
@@ -209,9 +261,19 @@ fn removed_input_requires_a_tombstone() {
 
 #[test]
 fn changed_input_default_is_conservatively_a_break() {
-    let old_slot = integer_slot("opt", "in", false, scalar_int(0, 10));
+    let old_slot = integer_slot(SlotSpec {
+        name: "opt",
+        polarity: "in",
+        required: false,
+        ty: scalar_int(0, 10),
+    });
     let new_slot = {
-        let mut slot = integer_slot("opt", "in", false, scalar_int(0, 10));
+        let mut slot = integer_slot(SlotSpec {
+            name: "opt",
+            polarity: "in",
+            required: false,
+            ty: scalar_int(0, 10),
+        });
         if let Value::Obj(entries) = &mut slot {
             entries.retain(|(k, _)| k != "default");
             entries.push((

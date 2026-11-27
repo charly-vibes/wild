@@ -881,8 +881,8 @@ struct CheckEval<'a> {
 struct SlotResults {
     verdicts: Vec<Value>,
     demanded_names: Vec<String>,
-    passed: i64,
-    total: i64,
+    /// (passed, total) demanded-slot coverage.
+    coverage: (i64, i64),
     conveyance: ConveyanceFindings,
     claim_records: Vec<Value>,
     absent_new_inputs: Vec<Value>,
@@ -988,8 +988,7 @@ fn evaluate_slots(eval: &CheckEval<'_>) -> Result<SlotResults, String> {
     Ok(SlotResults {
         verdicts,
         demanded_names,
-        passed,
-        total,
+        coverage: (passed, total),
         conveyance,
         claim_records,
         absent_new_inputs,
@@ -1010,7 +1009,7 @@ fn evaluate_obligations_for(
         build_law_context(
             &eval.base.root,
             &eval.candidate.root,
-            eval.candidate.files.clone(),
+            eval.base.files.clone(),
             formats::sha256_digest(&slots.cand_contract_bytes),
             slots.cand_commitment.clone(),
             inputs,
@@ -1190,7 +1189,7 @@ fn decide(eval: &CheckEval<'_>, slots: &SlotResults, obl: &ObligationResults) ->
         exit_code,
         diagnostics,
         demanded: slots.demanded_names.clone(),
-        coverage: (slots.passed, slots.total),
+        coverage: slots.coverage,
         facts,
     }
 }
