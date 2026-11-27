@@ -3,9 +3,9 @@ description = "Contracts with explicitly declared open values keep their pre-cha
 archetype = "SA"
 status = "active"
 superseded_by = ""
-authored_with = "0.12.0"
+authored_with = "0.12.3"
 
 [tests]
-cargo = [
-  {flags = "extra_record_field_requires_open_target", timeout_seconds = 300},
+pytest = [
+  {flags = "tests/runtime/test_openness_scenarios.py::test_openness_scenario[explicit-declarations-keep-their-semantics]", timeout_seconds = 300},
 ]

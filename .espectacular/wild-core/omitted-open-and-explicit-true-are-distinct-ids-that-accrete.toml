@@ -3,9 +3,9 @@ description = "An omitted open and an explicit open true canonicalize differentl
 archetype = "SA"
 status = "active"
 superseded_by = ""
-authored_with = "0.12.0"
+authored_with = "0.12.3"
 
 [tests]
-cargo = [
-  {flags = "omitted_open_and_explicit_true_are_distinct_ids_that_accrete", timeout_seconds = 300},
+pytest = [
+  {flags = "tests/runtime/test_openness_scenarios.py::test_openness_scenario[omitted-open-and-explicit-true-are-distinct-ids-that-accrete]", timeout_seconds = 300},
 ]

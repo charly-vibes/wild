@@ -3,9 +3,9 @@ description = "Changing only a closed declaration's closed_reason text (or flipp
 archetype = "SA"
 status = "active"
 superseded_by = ""
-authored_with = "0.12.0"
+authored_with = "0.12.3"
 
 [tests]
-cargo = [
-  {flags = "closure_reason_edit_is_break", timeout_seconds = 300},
+pytest = [
+  {flags = "tests/runtime/test_openness_scenarios.py::test_openness_scenario[editing-a-closure-justification-is-a-break]", timeout_seconds = 300},
 ]

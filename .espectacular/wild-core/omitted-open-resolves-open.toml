@@ -3,9 +3,9 @@ description = "A v1 record or sum that omits open resolves to open: extra emit-a
 archetype = "SA"
 status = "active"
 superseded_by = ""
-authored_with = "0.12.0"
+authored_with = "0.12.3"
 
 [tests]
-cargo = [
-  {flags = "omitted_open_resolves_open", timeout_seconds = 300},
+pytest = [
+  {flags = "tests/runtime/test_openness_scenarios.py::test_openness_scenario[omitted-open-resolves-open]", timeout_seconds = 300},
 ]

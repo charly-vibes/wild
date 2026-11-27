@@ -3,9 +3,9 @@ description = "A record or sum declared open false without a non-empty closed_re
 archetype = "SA"
 status = "active"
 superseded_by = ""
-authored_with = "0.12.0"
+authored_with = "0.12.3"
 
 [tests]
-cargo = [
-  {flags = "unjustified_closure_is_rejected", timeout_seconds = 300},
+pytest = [
+  {flags = "tests/runtime/test_openness_scenarios.py::test_openness_scenario[unjustified-closure-rejected]", timeout_seconds = 300},
 ]
