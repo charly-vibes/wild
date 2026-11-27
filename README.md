@@ -82,6 +82,22 @@ wild check --request check.json --format json --report report.json
 
 Every command prints a v1 envelope on stdout; exit 0 = accept, 1 = refuse, 2 = error. Details in the [manual](docs/wild-manual.md); recurring questions in the [FAQ & troubleshooting](docs/src/faq.md).
 
+## Contract bundle
+
+Every release ships `wild-<version>-contract-bundle.tar.gz` — the extracted
+structural contract (`contract.json`) plus a digest-bound `manifest.toml`,
+consumed by the wild contract checker. The manifest is the trust-chain head:
+verify the bundle before use with
+
+```sh
+tar xzf wild-<version>-contract-bundle.tar.gz
+test "sha256:$(sha256sum contract.json | cut -d' ' -f1)" = \
+  "$(grep contract_sha256 manifest.toml | cut -d'"' -f2)" && echo verified
+```
+
+A `contract_sha256` mismatch means the bundle was tampered with or corrupted —
+refuse it (diagnostic `bundle-digest-mismatch` at the consumer side).
+
 ## Layout
 
 | Path | What it is |

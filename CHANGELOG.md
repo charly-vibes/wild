@@ -6,6 +6,33 @@ Notable user-visible changes to wild. Format: [Keep a Changelog](https://keepach
 
 ### Added
 
+- `wild bump --base <ref>` subcommand (bd wild-zh6, change
+  add-declared-bump-derivation): maintainer-side declared-bump generator —
+  derives exactly one bump class from the spec-corpus delta between the
+  base release and the candidate tree at the openspec requirement level
+  (ADDED-only → minor/accretes; any MODIFIED/REMOVED/RENAMED →
+  major/revokes; aggregated multi-change deltas classify once; empty or
+  row-only deltas → patch; a missing base corpus yields Unknown with the
+  `missing_base_corpus` diagnostic and never a fabricated class). The
+  override is upward-only: raising records the reason, lowering is refused
+  with `bump_class_lowering_refused` and the proposal stands. `--out`
+  writes a local-1 `declared-bump-record`; the adopt audit driver takes
+  `--claims` and lists declared-vs-computed agreement/disagreement per
+  release, excluding absent claims from counts. Advisory output only —
+  every computed outcome exits 0 (shadow never blocks).
+
+- Release contract bundles attached by wild's own release workflow (bd
+  wild-zjv): every GitHub release now carries
+  `wild-<version>-contract-bundle.tar.gz` — the `wild extract` contract of
+  the exact tagged checkout plus a digest-bound `manifest.toml` (tool,
+  version, commit, profile, contract_sha256, extractor_version,
+  extracted_at). The publish job runs the pinned `wild-vibes` extractor
+  before provenance generation, so the bundle digest is bound into
+  `provenance.json`; the `scripts/make-contract-bundle.sh` step attaches on
+  extract exit 0/1 (honest Unknown gap accounting never blocks the release)
+  and fails on exit 2. See the README "Contract bundle" section for the
+  verification one-liner.
+
 - `wild feedback <kind>` subcommand (bd wild-8g8): adopt the
   `genesis::feedback` contract additively — kind validation over
   bug/feature/question/chore/aix-gap, stdin or `--from-last-error` body

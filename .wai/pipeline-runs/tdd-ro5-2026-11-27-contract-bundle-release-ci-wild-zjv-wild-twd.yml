@@ -1,0 +1,11 @@
+run_id: tdd-ro5-2026-11-27-contract-bundle-release-ci-wild-zjv-wild-twd
+pipeline: tdd-ro5
+topic: contract-bundle release CI (wild-zjv + wild-twd)
+created_at: '2026-11-27T21:44:42.730114608+00:00'
+current_step: 8
+approvals: {}
+epic: null
+child_issues: []
+child_runs: []
+handoff_artifact: null
+bypasses: []

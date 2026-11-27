@@ -44,6 +44,7 @@ exclude = [
   "results/**",
   "superseded/**",
   "prototype/**",
+  "scripts/**",
   "theme/**",
   "docs/book/**",
   "**/__pycache__/**",

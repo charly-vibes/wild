@@ -1,0 +1,5 @@
+---
+tags: [pipeline-run:tdd-ro5-2026-11-27-contract-bundle-release-ci-wild-zjv-wild-twd, pipeline-step:plan]
+---
+
+Bundle step into wild + ddl release workflows (wild-zjv, wild-twd). Desired: on tag push, each release.yml publish job runs the pinned wild-vibes extractor over the exact tagged checkout and attaches <tool>-<version>-contract-bundle.tar.gz (contract.json + manifest.toml) before provenance generation so the bundle digest is bound. Out of scope: consumer-side refusal (wild-xgd), gating (shadow_never_blocks). Test (RED first): run scripts/make-contract-bundle.sh <ver> <dir> locally against the wild checkout with WILD_BIN=cargo-built wild; assert asset exists, tar lists exactly contract.json + manifest.toml, manifest.commit == git HEAD, contract_sha256 == sha256: of packed contract.json, tool/profile fields correct, and exit-2 path on a corrupted tree. Narrow: bash + tar + python assertion script over one produced bundle. Full: just test + both repos' workflow YAML lint (actionlint if present). Files: wild+ddl scripts/make-contract-bundle.sh, .github/workflows/release.yml, READMEs, CHANGELOGs, wild Cargo.toml exclude.

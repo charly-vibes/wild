@@ -17,6 +17,7 @@
 
 - [x] 3.1 Run `experiments/wild_adopt_audit.py --crate testaruda` against released bundles and cross-check shadow verdicts with the measured rung-1 verdicts (`results/adopt-audit-158-1.txt`); record as `results/shadow-pilot-<n>.txt` — results/shadow-pilot-1.txt: 14/14 pairs abstained (was 12/12 pre-0.5.7), determinism pass, 100% abstention — the expected honest outcome; released bundle testaruda-0.5.7-contract-bundle.tar.gz digest-verified from the live release asset (stamped commit d573796 == tag commit)
 - [ ] 3.2 Work the per-tool owner tickets (filed by wild-cdp.3) in owner order: bundle step per repo's `release.yml`
+  - Status: testaruda landed (wild-xc4, task 1.1); wild landed (wild-zjv: pinned wild-vibes 0.2.1 + scripts/make-contract-bundle.sh, bundle digest bound into provenance.json); ddl landed (wild-twd: same script shape, verified end-to-end against the ddl checkout — exit 1 gap accounting attaches, contract_sha256 recomputes clean). Remaining fleet tickets (e.g. wild-0yt funkalization) open.
   - Corpus note: D5's "13-version corpus" was accurate at authoring; the testaruda corpus is now 15 versions/14 pairs (0.1.0→0.5.7, per wild-xc4 landing record) — the audit cross-check should replay the current corpus
 - [ ] 3.3 Rung-3 gating remains out of scope until real gap rates are measured from the pilot data
 
