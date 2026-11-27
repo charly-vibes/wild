@@ -1,0 +1,61 @@
+# Close-the-loop: wild-150 evaluation against fresh bundles
+date: 2026-11-27T22:55Z · wild binary: target/debug/wild 0.2.1 (commit b8bb0fd) · baseline: results/adopt-audit-158-1.txt (12/12 abstained, pre-v1 binary)
+
+## 1. Fresh bundle via the new release-pipeline mechanics (proof of the shipped convention)
+
+`WILD_BIN=target/debug/wild bash scripts/make-contract-bundle.sh 0.2.1 /tmp/fresh-bundle` on this repo:
+
+- wrote wild-0.2.1-contract-bundle.tar.gz (contract.json + manifest.toml, exactly two members)
+- manifest: tool=wild version=0.2.1 commit=b8bb0fd0f4d3b99c04cd0b274c487b00f7b2f75
+  profile=rust-cargo-local-1 contract_sha256=sha256:d4ed5cdb27b67d87b883c9b257f38af96339a9bd25ea7f3bbf022c7be142e96e
+  extractor_version="wild 0.2.1"
+- extraction exit 1 attached with honest gap accounting — diagnostic exemplars:
+  incomplete-demand: method call `.is_empty` on receiver `self.added` is outside the supported
+  demand profile (src/bump.rs); function-pointer flow `self` outside the supported demand profile.
+
+  NOTE: the fresh bundle of wild itself exhibits the wild-8j4 blocker on our own code.
+  NOTE (environment): bare `wild` on PATH resolved to a deleted /tmp/wild-pre/target/debug/wild
+  shim and the script failed until WILD_BIN was set — same class as wild-7p9's stale oracle;
+  filed for cleanup.
+
+## 2. Fresh-binary adoption audit replays (wild_adopt_audit.py, crates.io replay, generated-caller consumers)
+
+| crate | pairs | verdict | rate | determinism | disagreement | baseline |
+|---|---|---|---|---|---|---|
+| testaruda | 16 (0.1.0..0.5.10) | abstained 16/16 | 100% unknown | pass | 0 | 12/12 abstained (pre-v1) |
+| genesis-vibes | 24 (0.1.0..0.15.0) | abstained 24/24 | 100% unknown | pass | 0 | n/a (compile oracle covered ≤0.12.0) |
+| wild-vibes | 1 (0.1.0..0.2.0) | abstained 1/1 | 100% unknown | pass | 0 | n/a (self-audit; 0.2.1 unpublished — crates.io half of wild-h0w pending) |
+
+- All runs: diagnostics = ['incomplete-demand', 'unsupported-construct'], exit 1 (refuse/Unknown), zero errors.
+- Gap-set comparison at testaruda 0.5.5: 150 unsupported-signature slots in the baseline,
+  150 in the fresh run, sets identical → the pre-v1→v1 extractor change moved nothing on this
+  surface; the abstention is structural, not a regression.
+- genesis-vibes corpus now extends to 0.15.0 — 3 provider releases newer than the wild-150
+  compile-oracle snapshot (0.12.0); the disputed-transitions enumeration predates them and was
+  not re-derived (compile_oracle.sh table is pre-registered; re-enumeration is follow-up, not
+  part of this run).
+
+## 3. Wild-150 ground truth vs fresh-bundle wild verdicts
+
+The compile oracle (experiments/compile_oracle_results.txt, rustc 1.98.1) established cargo
+ground truth for the 17 disputed genesis transitions: 14 cargo-incompatible-but-accretion cells
+all compile (probe PASS), i.e. cargo's caret rule over-declares breaks; 3 transitions have no
+consumer demand. The fresh-bundle wild emits no verdicts on any of these pairs: with
+inventory incomplete, v1 refuses rather than invents (never-invent-complete-contract). So the
+loop currently gates UPSTREAM of the cargo-agreement question: cargo says "compatible", wild
+says "cannot complete the contract inventory".
+
+## 4. Where the unlock lives (unchanged, now measured on more evidence)
+
+1. wild-8j4: method-call demand on non-bounded receivers — visible verbatim in wild's own
+   fresh bundle (`self.added.is_empty()` in src/bump.rs).
+2. wild-90d: std/external-crate awareness for demand resolution — the unsupported-construct
+   share of the 150-slot gap.
+3. Both shipped as design proposals today (openspec/changes/widen-method-receiver-demands,
+   add-external-crate-awareness); implementation would re-run this exact audit (`--crate` x3)
+   as the acceptance measurement.
+
+## Raw artifacts
+results/adopt-audit-fresh-testaruda-20261127-2250.txt
+results/adopt-audit-fresh-gv-20261127-2250.txt
+results/adopt-audit-fresh-wildvibes-20261127-2251.txt
