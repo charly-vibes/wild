@@ -4,6 +4,15 @@ Notable user-visible changes to wild. Format: [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Added
+
+- `wild feedback <kind>` subcommand (bd wild-8g8): adopt the
+  `genesis::feedback` contract additively — kind validation over
+  bug/feature/question/chore/aix-gap, stdin or `--from-last-error` body
+  derivation, home-path/secret redaction, an environment bundle, and a
+  local report file as the network-free filing outcome. Output goes
+  through the shared emit() funnel, so stdout stays the genesis shell.
+
 ### Changed
 
 - All stdout output (every subcommand, exit 0/1/2) is now a genesis envelope: a

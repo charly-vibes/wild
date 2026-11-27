@@ -7,7 +7,9 @@
 //   integrated update-delivery validation module, and the
 //   v1 canonical reader with semantic contract validation and the
 //   subtype/accretion checkers for the `wild` binary, plus the genesis
-//   envelope shell that wraps the v1 envelope as `data` (bd wild-lof).
+//   envelope shell that wraps the v1 envelope as `data` (bd wild-lof), and
+//   the agent issue-reporting feedback module (bd wild-8g8, following the
+//   genesis::feedback contract).
 // Rationale: A thin library root keeps the executable entrypoint separate
 //   from the testable format, extraction, check, harness, and update
 //   logic, matching the slices' proposed layout
@@ -18,6 +20,7 @@ pub mod cargo_host;
 pub mod check;
 pub mod delivery;
 pub mod extract;
+pub mod feedback;
 pub mod formats;
 pub mod genesis;
 pub mod harness;

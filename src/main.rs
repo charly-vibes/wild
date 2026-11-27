@@ -828,6 +828,128 @@ fn run_v1_accretes(args: &[String]) -> i32 {
     }
 }
 
+/// Run the `feedback` subcommand (bd wild-8g8): validate the usage
+/// (`wild feedback <kind> [--title <title>] [--dry-run]
+/// --from-last-error` optional), delegate to wild::feedback, and map the
+/// outcome through the shared envelope funnel: a dry-run preview or a
+/// written report file accepts (0); a usage mismatch refuses (2, like
+/// the other commands' usage errors); a handler failure (unknown kind,
+/// no content, no scratch record) is an error envelope (2). The human
+/// readable preview/path goes to stderr; stdout carries only the genesis
+/// shell.
+fn run_feedback(args: &[String]) -> i32 {
+    let usage =
+        "usage: wild feedback <kind> [--title <title>] [--dry-run] [--from-last-error]";
+    if args.len() < 3 || args[2].starts_with("--") {
+        eprintln!("{usage}");
+        let envelope_value = envelope(
+            "feedback",
+            "refuse",
+            "Unknown",
+            vec![diagnostic("input-mismatch", usage.to_string())],
+            Vec::new(),
+            Value::Null,
+            (0, 0),
+        );
+        emit(&envelope_value);
+        return 2;
+    }
+    let kind = args[2].clone();
+    let mut title: Option<String> = None;
+    let mut dry_run = false;
+    let mut from_last_error = false;
+    let mut flags = args[3..].iter();
+    while let Some(flag) = flags.next() {
+        match flag.as_str() {
+            "--title" => match flags.next() {
+                Some(value) => title = Some(value.clone()),
+                None => {
+                    eprintln!("{usage}");
+                    let envelope_value = envelope(
+                        "feedback",
+                        "refuse",
+                        "Unknown",
+                        vec![diagnostic(
+                            "input-mismatch",
+                            "--title requires a value".to_string(),
+                        )],
+                        Vec::new(),
+                        Value::Null,
+                        (0, 0),
+                    );
+                    emit(&envelope_value);
+                    return 2;
+                }
+            },
+            "--dry-run" => dry_run = true,
+            "--from-last-error" => from_last_error = true,
+            other => {
+                eprintln!("{usage}");
+                let envelope_value = envelope(
+                    "feedback",
+                    "refuse",
+                    "Unknown",
+                    vec![diagnostic(
+                        "input-mismatch",
+                        format!("unknown feedback flag: {other}"),
+                    )],
+                    Vec::new(),
+                    Value::Null,
+                    (0, 0),
+                );
+                emit(&envelope_value);
+                return 2;
+            }
+        }
+    }
+    let feedback_args = wild::feedback::FeedbackArgs {
+        kind,
+        title,
+        dry_run,
+        from_last_error,
+    };
+    let project_root = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+    match wild::feedback::handle_feedback(&feedback_args, &project_root) {
+        Ok(outcome) => {
+            match &outcome {
+                wild::feedback::FeedbackOutcome::DryRun {
+                    body, gh_command, ..
+                } => {
+                    eprintln!("{body}");
+                    eprintln!();
+                    eprintln!("Would file: {gh_command}");
+                }
+                wild::feedback::FeedbackOutcome::ReportFile(path) => {
+                    eprintln!("feedback report written: {}", path.display());
+                }
+            }
+            emit(&envelope(
+                "feedback",
+                "accept",
+                "Unknown",
+                Vec::new(),
+                Vec::new(),
+                Value::Null,
+                (0, 0),
+            ));
+            0
+        }
+        Err(message) => {
+            let envelope_value = envelope(
+                "feedback",
+                "error",
+                "Unknown",
+                vec![diagnostic_shared("feedback-failed", message)],
+                Vec::new(),
+                Value::Null,
+                (0, 0),
+            );
+            emit(&envelope_value);
+            2
+        }
+    }
+}
+
 fn run() -> i32 {
     let args: Vec<String> = std::env::args().collect();
     // fleet version probes (ddl status) run `$binary --version` and expect
@@ -844,8 +966,9 @@ fn run() -> i32 {
         Some("check") => run_check(&args),
         Some("update") => run_update(&args),
         Some("v1") => run_v1(&args),
+        Some("feedback") => run_feedback(&args),
         _ => {
-            let usage = "usage: wild <extract|check|update|v1> ...";
+            let usage = "usage: wild <extract|check|update|v1|feedback> ...";
             eprintln!("{usage}");
             let envelope = envelope(
                 "unknown",
