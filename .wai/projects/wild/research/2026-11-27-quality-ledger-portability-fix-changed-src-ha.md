@@ -1,0 +1,5 @@
+---
+tags: [pipeline-run:tdd-ro5-2026-11-27-cross-platform-law-runner-portability-cfg-gate-linux-sandbox-refuse-elsewhere, pipeline-step:quality-ledger]
+---
+
+QUALITY LEDGER (portability fix): Changed - src/harness.rs only (cfg(unix) on Landlock consts, CommandExt import, sandbox_caps dual impl, landlock_abi_query, apply_rlimits, apply_landlock, classify_spawn_error; run_once dispatcher + unix_run_once body). Verified - cargo check green on x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-msvc (zero errors each). Review - RO5U pass, LOW-only dispositions recorded, no code changes. Risks - windows-msvc is a check-only verification locally (no link); full link/build proof comes from the next release run's Build Windows job. Next - retag: v0.2.1 already published? release 46066406609 failed; tag points at f61a05d. Since no release was published for v0.2.1 and the tag has never been consumed, moving it now (delete + re-tag at fixed HEAD) is the honest path - document in ship evidence. Also add the wai review --reviews CLI confusion as follow-up (filed wai#67).
