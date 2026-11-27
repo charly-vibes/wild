@@ -35,6 +35,27 @@ phase: design
 ### git_status
 
 ```
+ M src/harness.rs
+?? .wai/pipeline-runs/tdd-ro5-2026-11-27-cross-platform-law-runner-portability-cfg-gate-linux-sandbox-refuse-elsewhere.yml
+?? .wai/pipeline-runs/tdd-ro5-2026-11-27-release-workflow-five-target-binaries-checksums-readme-install-wild-bsp.yml
+?? .wai/projects/wild/designs/2026-11-27-green-github-workflows-release-yml-written-five.md
+?? .wai/projects/wild/designs/2026-11-27-green-src-harness-rs-cfg-unix-on-landlock-cons.md
+?? .wai/projects/wild/designs/2026-11-27-refactor-no-production-code-changed-in-this-slice.md
+?? .wai/projects/wild/designs/2026-11-27-refactor-the-fix-itself-is-the-restructure-run.md
+?? .wai/projects/wild/plans/2026-11-27-portability-plan-desired-harness-rs-compiles-on.md
+?? .wai/projects/wild/plans/2026-11-27-wild-bsp-plan-desired-v-tag-push-builds-five-s-2.md
+?? .wai/projects/wild/plans/2026-11-27-wild-bsp-plan-desired-v-tag-push-builds-five-s.md
+?? .wai/projects/wild/research/2026-11-27-orient-red-release-run-46066406609-v0-2-1-b.md
+?? .wai/projects/wild/research/2026-11-27-orient-wild-bsp-audited-gap-no-github-workflo.md
+?? .wai/projects/wild/research/2026-11-27-quality-ledger-portability-fix-changed-src-ha.md
+?? .wai/projects/wild/research/2026-11-27-quality-ledger-wild-bsp-changed-github-workf.md
+?? .wai/projects/wild/research/2026-11-27-red-command-cargo-check-target-x86-64-pc-windo.md
+?? .wai/projects/wild/research/2026-11-27-red-command-gh-release-view-v0-2-1-json-assets.md
+?? .wai/projects/wild/research/2026-11-27-ro5u-fixes-no-critical-high-findings-medium-tag.md
+?? .wai/projects/wild/research/2026-11-27-ro5u-fixes-no-critical-high-medium-findings-low-2.md
+?? .wai/projects/wild/reviews-ro5u-port.md
+?? .wai/projects/wild/reviews/
+?? .wai/resources/pipelines/.last-run
 ?? cv/
 ```
 
@@ -74,5 +95,6 @@ Total: 27 issues (27 open, 0 in progress)
 
 Status: ○ open  ◐ in_progress  ● blocked  ✓ closed  ❄ deferred
 Priority: P0–P4 (label only; not a status icon)
+
 ```
 

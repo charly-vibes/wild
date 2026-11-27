@@ -1,0 +1,12 @@
+run_id: tdd-ro5-2026-11-27-cross-platform-law-runner-portability-cfg-gate-linux-sandbox-refuse-elsewhere
+pipeline: tdd-ro5
+topic: 'cross-platform law-runner portability: cfg-gate Linux sandbox, refuse elsewhere'
+created_at: '2026-11-27T20:55:21.954241639+00:00'
+current_step: 9
+approvals:
+  ship-close: '2026-11-27T20:57:24.290602270+00:00'
+epic: null
+child_issues: []
+child_runs: []
+handoff_artifact: null
+bypasses: []
