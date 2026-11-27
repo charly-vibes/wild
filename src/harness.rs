@@ -34,6 +34,7 @@
 
 use std::ffi::CString;
 use std::io::{Read, Write};
+#[cfg(unix)]
 use std::os::unix::process::CommandExt;
 use std::path::Path;
 use std::process::{Command, Stdio};
@@ -59,19 +60,33 @@ const LAW_RESULT_FIELDS: &[&str] = &[
 ];
 
 /// Landlock syscall numbers (x86_64/aarch64 unified numbering).
+/// All of this is Linux-only: Landlock is a Linux LSM and the rlimit values
+/// use the Linux ABI; on other platforms the law runner refuses to execute
+/// (see run_once) and sandbox_caps reports enforced=false.
+#[cfg(unix)]
 const SYS_LANDLOCK_CREATE_RULESET: libc::c_long = 444;
+#[cfg(unix)]
 const SYS_LANDLOCK_ADD_RULE: libc::c_long = 445;
+#[cfg(unix)]
 const SYS_LANDLOCK_RESTRICT_SELF: libc::c_long = 446;
+#[cfg(unix)]
 const LANDLOCK_CREATE_RULESET_VERSION: libc::c_int = 1;
+#[cfg(unix)]
 const LANDLOCK_RULE_PATH_BENEATH: libc::c_int = 1;
+#[cfg(unix)]
 const PR_SET_NO_NEW_PRIVS: libc::c_int = 38;
 /// Not exported by this libc version for the gnu target; fixed by Linux ABI.
+#[cfg(unix)]
 const O_PATH: libc::c_int = 0o10000000;
+#[cfg(unix)]
 const LANDLOCK_ACCESS_FS_EXECUTE: u64 = 1 << 0;
+#[cfg(unix)]
 const LANDLOCK_ACCESS_FS_READ_FILE: u64 = 1 << 2;
+#[cfg(unix)]
 const LANDLOCK_ACCESS_FS_READ_DIR: u64 = 1 << 3;
 
 /// Memory cap for law children: 512 MiB is ample for a scripting runtime.
+#[cfg(unix)]
 const LAW_MEM_LIMIT: libc::rlim_t = 512 * 1024 * 1024;
 
 /// One executed (or attempted) law's evidence for the report's
@@ -105,6 +120,7 @@ pub struct SandboxCaps {
     pub landlock_abi: Option<i64>,
 }
 
+#[cfg(unix)]
 pub fn sandbox_caps() -> SandboxCaps {
     let abi = landlock_abi_query();
     SandboxCaps {
@@ -113,7 +129,19 @@ pub fn sandbox_caps() -> SandboxCaps {
     }
 }
 
+/// No Landlock outside Linux: the invocation commitment records the truth
+/// (not enforced), so law-required policies already refuse to accept such
+/// evidence as law-pass.
+#[cfg(not(unix))]
+pub fn sandbox_caps() -> SandboxCaps {
+    SandboxCaps {
+        enforced: false,
+        landlock_abi: None,
+    }
+}
+
 /// Probe the kernel's Landlock ABI version (0 means unavailable).
+#[cfg(unix)]
 fn landlock_abi_query() -> i64 {
     unsafe {
         let ret = libc::syscall(
@@ -356,6 +384,28 @@ fn run_once(
     expected: &ExpectedEcho,
     landlock_roots: &[CString],
 ) -> Result<RunResult, String> {
+    // Outside Linux there is no Landlock, so the enforced-sandbox guarantee
+    // (network denied, writes denied, reads confined) cannot be provided.
+    // Executing a suite unconfined would silently weaken the sandbox for a
+    // law that may be only proposed, so refusal is the honest outcome; this
+    // is an operational runner failure (exit 2), not law evidence.
+    #[cfg(not(unix))]
+    return Err(
+        "law execution requires the Linux enforced sandbox (Landlock + rlimits); unsupported on this platform".to_string(),
+    );
+    #[cfg(unix)]
+    unix_run_once(suite_path, invocation, expected, landlock_roots)
+}
+
+/// The Unix (Linux) law-execution body: rlimits + Landlock are installed in
+/// the child via `pre_exec` before it runs.
+#[cfg(unix)]
+fn unix_run_once(
+    suite_path: &Path,
+    invocation: &[u8],
+    expected: &ExpectedEcho,
+    landlock_roots: &[CString],
+) -> Result<RunResult, String> {
     let mut command = Command::new(suite_path);
     command
         .env_clear()
@@ -367,8 +417,11 @@ fn run_once(
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    #[cfg(unix)]
     let expected_wall = expected.wall_ms;
+    #[cfg(unix)]
     let sandbox_roots: Vec<CString> = landlock_roots.to_vec();
+    #[cfg(unix)]
     unsafe {
         command.pre_exec(move || {
             apply_rlimits(expected_wall)?;
@@ -470,6 +523,7 @@ fn run_once(
 /// Map a spawn failure: sandbox-unavailable errnos mean the child could not
 /// confine itself (refuse-unconfined); ENOEXEC/EACCES mean the bound bytes
 /// are not runnable as a program; anything else is an operational error.
+#[cfg(unix)]
 fn classify_spawn_error(e: std::io::Error) -> Result<RunResult, String> {
     let errno = e.raw_os_error().unwrap_or(-1);
     match errno {
@@ -634,6 +688,7 @@ fn validate_result(text: &str, expected: &ExpectedEcho) -> Result<RunResult, Str
 }
 
 /// Apply the resource budgets inside the child, before exec.
+#[cfg(unix)]
 unsafe fn apply_rlimits(wall_ms: i64) -> std::io::Result<()> {
     let set = |resource: libc::__rlimit_resource_t, cur: libc::rlim_t| -> std::io::Result<()> {
         let limit = libc::rlimit {
@@ -660,6 +715,7 @@ unsafe fn apply_rlimits(wall_ms: i64) -> std::io::Result<()> {
 /// denied, reads (and exec) allowed only under the supplied roots plus the
 /// system runtime (/usr). Raw syscalls keep the hook async-signal-safe;
 /// setup failure reports its errno to the parent as a spawn error.
+#[cfg(unix)]
 unsafe fn apply_landlock(roots: &[CString]) -> std::io::Result<()> {
     let abi = landlock_abi_query();
     if abi < 1 {
