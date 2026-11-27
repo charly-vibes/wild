@@ -959,14 +959,16 @@ fn walk_crates(
                 collect_use_tree(&use_item.tree, String::new(), &mut alias_map, &mut use_gaps);
             }
         }
-        method_demands::BundlePrepass::scan_crate(
+        let (pre_fn_tys, pre_field_tys) = method_demands::BundlePrepass::scan_crate(
             &manifest.name,
             &manifest.source_path,
             &file,
             loaded,
-            &mut shared_fn_tys,
-            &mut shared_field_tys,
         );
+        shared_fn_tys.extend(pre_fn_tys);
+        for (ty, fields) in pre_field_tys {
+            shared_field_tys.entry(ty).or_default().extend(fields);
+        }
         parsed.push((file, alias_map, use_gaps));
     }
 

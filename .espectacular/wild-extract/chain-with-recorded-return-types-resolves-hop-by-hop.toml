@@ -7,5 +7,5 @@ authored_with = "0.10.0"
 
 [tests]
 pytest = [
-  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_chain_with_recorded_returns_resolves", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract_widen.py::test_widen_receiver_shape_resolves[chain-with-recorded-returns]", timeout_seconds = 300},
 ]

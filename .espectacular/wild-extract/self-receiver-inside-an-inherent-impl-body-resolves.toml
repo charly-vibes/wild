@@ -7,5 +7,5 @@ authored_with = "0.10.0"
 
 [tests]
 pytest = [
-  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_self_receiver_in_inherent_impl_resolves", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract_widen.py::test_widen_receiver_shape_resolves[self-receiver-in-inherent-impl]", timeout_seconds = 300},
 ]

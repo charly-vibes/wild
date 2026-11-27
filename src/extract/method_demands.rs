@@ -276,16 +276,17 @@ pub(super) struct BundlePrepass<'a> {
 
 impl<'a> BundlePrepass<'a> {
     /// Scan one crate root file and (recursively) its public non-inline
-    /// module files, accumulating into the shared bundle maps before any
-    /// demand walk runs (widen-method-receiver-demands, rule 1). No
-    /// inference: written syntax only, validated at demand-resolution time.
+    /// module files, returning the bundle maps before any demand walk runs
+    /// (widen-method-receiver-demands, rule 1). No inference: written
+    /// syntax only, validated at demand-resolution time.
     pub(super) fn scan_crate(
         crate_name: &'a str,
         source_path: &str,
         file: &syn::File,
         loaded: &'a BTreeMap<String, Vec<u8>>,
-        fn_return_tys: &mut BTreeMap<String, String>,
-        field_tys: &mut BTreeMap<String, BTreeMap<String, String>>,
+    ) -> (
+        BTreeMap<String, String>,
+        BTreeMap<String, BTreeMap<String, String>>,
     ) {
         let mut pre = BundlePrepass {
             crate_name,
@@ -295,19 +296,18 @@ impl<'a> BundlePrepass<'a> {
             field_tys: BTreeMap::new(),
         };
         pre.scan_items(&file.items, Vec::new());
-        pre.scan_mod_declarations(&file.items, Vec::new());
-        let pre_fn = std::mem::take(&mut pre.fn_return_tys);
-        fn_return_tys.extend(pre_fn);
-        let pre_fields = std::mem::take(&mut pre.field_tys);
-        for (ty, fields) in pre_fields {
-            field_tys.entry(ty).or_default().extend(fields);
-        }
+        (pre.fn_return_tys, pre.field_tys)
     }
 
     fn qualify(&self, prefix: &[String], suffix: &str) -> String {
         qualify(self.crate_name, prefix, suffix)
     }
 
+    /// Scan one file's items (rule 1): public free fn return types,
+    /// inherent-impl constructor return types, public struct field types,
+    /// inline module bodies, and public non-inline module files (rustc
+    /// mod-path rule, mirroring mod_files::resolve_mod_file) so
+    /// cross-file references resolve bundle-wide before any demand walk.
     fn scan_items(&mut self, items: &[syn::Item], prefix: Vec<String>) {
         for item in items {
             match item {
@@ -323,13 +323,46 @@ impl<'a> BundlePrepass<'a> {
                         }
                     }
                 }
-                syn::Item::Impl(imp) => self.scan_impl(imp, &prefix),
-                syn::Item::Struct(s) => self.scan_struct_fields(s, &prefix),
+                syn::Item::Impl(imp) => {
+                    for (target, ty) in self.scan_impl(imp, &prefix) {
+                        self.fn_return_tys.insert(target, ty);
+                    }
+                }
+                syn::Item::Struct(s) => {
+                    if let Some((ty_target, fields)) = self.scan_struct_fields(s, &prefix) {
+                        self.field_tys.entry(ty_target).or_default().extend(fields);
+                    }
+                }
                 syn::Item::Mod(m) => {
+                    let name = m.ident.to_string();
                     if let Some((_, nested)) = &m.content {
                         let mut nested_prefix = prefix.clone();
-                        nested_prefix.push(m.ident.to_string());
+                        nested_prefix.push(name);
                         self.scan_items(nested, nested_prefix);
+                    } else if matches!(m.vis, syn::Visibility::Public(_)) {
+                        // public non-inline module: resolve against the
+                        // loaded bundle files with the rustc mod-path rule
+                        // (mirroring mod_files::resolve_mod_file) and scan
+                        // under the module prefix
+                        let Some(rel) = mod_file_candidates(Path::new(&self.current_file), &name)
+                            .into_iter()
+                            .find(|c| self.loaded.contains_key(c.as_str()))
+                        else {
+                            continue;
+                        };
+                        let Ok(text) = std::str::from_utf8(
+                            self.loaded.get(rel.as_str()).expect("membership checked"),
+                        ) else {
+                            continue;
+                        };
+                        let Ok(file) = syn::parse_file(text) else {
+                            continue;
+                        };
+                        let mut nested_prefix = prefix.clone();
+                        nested_prefix.push(name);
+                        let prev_file = std::mem::replace(&mut self.current_file, rel);
+                        self.scan_items(&file.items, nested_prefix);
+                        self.current_file = prev_file;
                     }
                 }
                 _ => {}
@@ -337,17 +370,22 @@ impl<'a> BundlePrepass<'a> {
         }
     }
 
-    /// Public struct fields with single-segment, uppercase-initial path
-    /// types record field_name → type per defining type (rule 1). A field
-    /// typed by one of the struct's generic parameters records nothing:
-    /// a generic parameter is not a type target, and a generic-typed
-    /// receiver keeps the honest gap.
-    fn scan_struct_fields(&mut self, s: &syn::ItemStruct, prefix: &[String]) {
+    /// Collect a public struct's named fields with single-segment,
+    /// uppercase-initial path types (rule 1). A field typed by one of the
+    /// struct's generic parameters records nothing: a generic parameter is
+    /// not a type target, and a generic-typed receiver keeps the honest
+    /// gap. Returns the type target and its field map, or None when the
+    /// struct is private or no field qualifies.
+    fn scan_struct_fields(
+        &self,
+        s: &syn::ItemStruct,
+        prefix: &[String],
+    ) -> Option<(String, BTreeMap<String, String>)> {
         if !matches!(s.vis, syn::Visibility::Public(_)) {
-            return;
+            return None;
         }
         let syn::Fields::Named(named) = &s.fields else {
-            return;
+            return None;
         };
         let generic_params: BTreeSet<String> = s
             .generics
@@ -359,6 +397,7 @@ impl<'a> BundlePrepass<'a> {
             })
             .collect();
         let ty_target = self.qualify(prefix, &s.ident.to_string());
+        let mut fields = BTreeMap::new();
         for field in &named.named {
             if !matches!(field.vis, syn::Visibility::Public(_)) {
                 continue;
@@ -371,27 +410,31 @@ impl<'a> BundlePrepass<'a> {
             }
             let field_name = field.ident.as_ref().expect("named field").to_string();
             let qualified = self.qualify(prefix, &field_ty);
-            self.field_tys
-                .entry(ty_target.clone())
-                .or_default()
-                .insert(field_name, qualified);
+            fields.insert(field_name, qualified);
+        }
+        if fields.is_empty() {
+            None
+        } else {
+            Some((ty_target, fields))
         }
     }
 
-    /// Record constructor return types from one inherent impl on a named
+    /// Collect constructor return types from one inherent impl on a named
     /// path type; trait impls are outside the profile and record nothing.
-    fn scan_impl(&mut self, imp: &syn::ItemImpl, prefix: &[String]) {
+    /// Returns (method target, return type target) pairs.
+    fn scan_impl(&self, imp: &syn::ItemImpl, prefix: &[String]) -> Vec<(String, String)> {
+        let mut pairs = Vec::new();
         if imp.trait_.is_some() {
-            return;
+            return pairs;
         }
         let syn::Type::Path(path) = imp.self_ty.as_ref() else {
-            return;
+            return pairs;
         };
         if path.qself.is_some() {
-            return;
+            return pairs;
         }
         let Some(seg) = path.path.segments.last() else {
-            return;
+            return pairs;
         };
         let ty_name = seg.ident.to_string();
         for impl_item in &imp.items {
@@ -403,46 +446,10 @@ impl<'a> BundlePrepass<'a> {
             }
             let target = self.qualify(prefix, &format!("{ty_name}::{}", m.sig.ident));
             if let Some(ty) = recorded_return_ty(&m.sig.output) {
-                self.fn_return_tys.insert(target, self.qualify(prefix, &ty));
+                pairs.push((target, self.qualify(prefix, &ty)));
             }
         }
-    }
-
-    /// Public non-inline module declarations resolve against the loaded
-    /// bundle files with the rustc mod-path rule (mirroring
-    /// mod_files::resolve_mod_file) and are scanned under their module
-    /// prefix, so cross-file constructor and field references resolve
-    /// bundle-wide before any demand walk.
-    fn scan_mod_declarations(&mut self, items: &[syn::Item], prefix: Vec<String>) {
-        for item in items {
-            let syn::Item::Mod(m) = item else {
-                continue;
-            };
-            if m.content.is_some() || !matches!(m.vis, syn::Visibility::Public(_)) {
-                continue;
-            }
-            let name = m.ident.to_string();
-            let Some(rel) = mod_file_candidates(Path::new(&self.current_file), &name)
-                .into_iter()
-                .find(|c| self.loaded.contains_key(c.as_str()))
-            else {
-                continue;
-            };
-            let Ok(text) =
-                std::str::from_utf8(self.loaded.get(rel.as_str()).expect("membership checked"))
-            else {
-                continue;
-            };
-            let Ok(file) = syn::parse_file(text) else {
-                continue;
-            };
-            let mut nested_prefix = prefix.clone();
-            nested_prefix.push(name);
-            let prev_file = std::mem::replace(&mut self.current_file, rel);
-            self.scan_items(&file.items, nested_prefix.clone());
-            self.scan_mod_declarations(&file.items, nested_prefix);
-            self.current_file = prev_file;
-        }
+        pairs
     }
 }
 
