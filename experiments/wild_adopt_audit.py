@@ -56,6 +56,19 @@ def die(message: str, code: int = 3) -> "NoReturn":  # type: ignore[name-defined
     sys.exit(code)
 
 
+def v1_envelope(stdout: str) -> dict:
+    """Parse wild stdout as a genesis envelope and return the v1 payload."""
+    if not stdout.strip():
+        return {}
+    try:
+        shell = json.loads(stdout)
+    except json.JSONDecodeError:
+        return {}
+    if isinstance(shell, dict) and "envelope_kind" in shell and isinstance(shell.get("data"), dict):
+        return shell["data"]
+    return shell if isinstance(shell, dict) else {}
+
+
 def run_wild(bin_path: Path, args: list[str], cwd: Path | None = None):
     cmd = [str(bin_path), *args]
     try:
@@ -282,11 +295,7 @@ def run_extract(bin_path, request: dict, out_dir: Path, echoes: list[str]):
         ["extract", "--request", str(request_path), "--output", str(out_dir)],
     )
     echoes.append(f"$ {echo} -> exit {proc.returncode}")
-    try:
-        envelope = json.loads(proc.stdout) if proc.stdout.strip() else {}
-    except json.JSONDecodeError:
-        envelope = {}
-    return proc, envelope
+    return proc, v1_envelope(proc.stdout)
 
 
 def run_check(bin_path, request: dict, out_dir: Path, echoes: list[str]):
@@ -301,11 +310,7 @@ def run_check(bin_path, request: dict, out_dir: Path, echoes: list[str]):
         ],
     )
     echoes.append(f"$ {echo} -> exit {proc.returncode}")
-    try:
-        envelope = json.loads(proc.stdout) if proc.stdout.strip() else {}
-    except json.JSONDecodeError:
-        envelope = {}
-    return proc, envelope
+    return proc, v1_envelope(proc.stdout)
 
 
 def diagnostic_codes(report: dict) -> list[str]:

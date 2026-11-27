@@ -252,10 +252,12 @@ def _check(bin: Path, base: dict, candidate: dict, tmp: Path) -> dict:
     if proc.returncode not in (0, 1):
         raise RuntimeError(
             f"wild check exited {proc.returncode}: {proc.stdout[-300:]!r}")
-    try:
-        return json.loads(proc.stdout)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError(f"unparseable wild check envelope: {exc}") from exc
+    shell = json.loads(proc.stdout)
+    if isinstance(shell, dict) and "envelope_kind" in shell:
+        payload = shell.get("data")
+        if isinstance(payload, dict):
+            return payload
+    return shell
 
 
 def main() -> int:

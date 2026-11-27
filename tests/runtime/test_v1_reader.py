@@ -75,7 +75,7 @@ def out(tmp_path: Path) -> Path:
 
 
 def diagnostics(result: subprocess.CompletedProcess[str]) -> list[dict]:
-    envelope = json.loads(result.stdout)
+    envelope = json.loads(result.stdout)["data"]
     return envelope["diagnostics"]
 
 
@@ -91,7 +91,7 @@ def test_valid_example_contract_is_accepted_with_canonical_bytes(
     target = out(tmp_path)
     result = run_v1(source, target)
     assert result.returncode == 0, result.stdout + result.stderr
-    envelope = json.loads(result.stdout)
+    envelope = json.loads(result.stdout)["data"]
     assert envelope["decision"] == "accept"
     assert envelope["kind"] == "envelope"
     assert envelope["command"] == "v1-read"
@@ -137,7 +137,7 @@ def test_duplicate_object_key_is_refused(tmp_path: Path) -> None:
     source = write(tmp_path, '{"schema_version":"1","kind":"contract","schema_version":"1"}')
     result = run_v1(source, out(tmp_path))
     assert result.returncode == 2, result.stdout
-    envelope = json.loads(result.stdout)
+    envelope = json.loads(result.stdout)["data"]
     assert envelope["decision"] == "error"
 
 
@@ -147,7 +147,7 @@ def test_floating_point_number_is_refused(tmp_path: Path) -> None:
     source = write(tmp_path, json.dumps(contract))
     result = run_v1(source, out(tmp_path))
     assert result.returncode == 2, result.stdout
-    envelope = json.loads(result.stdout)
+    envelope = json.loads(result.stdout)["data"]
     assert envelope["decision"] == "error"
 
 
@@ -162,7 +162,7 @@ def test_refused_semantic_contract_keeps_exit_one_with_diagnostics(
     source = write(tmp_path, contract)
     result = run_v1(source, out(tmp_path))
     assert result.returncode == 1, result.stdout
-    assert json.loads(result.stdout)["decision"] == "refuse"
+    assert json.loads(result.stdout)["data"]["decision"] == "refuse"
     assert "slot-name-duplicate" in codes(result)
 
 
@@ -262,7 +262,7 @@ def test_unknown_schema_version_is_refused(tmp_path: Path) -> None:
     contract["schema_version"] = "2"
     result = run_v1(write(tmp_path, contract), out(tmp_path))
     assert result.returncode == 2
-    assert json.loads(result.stdout)["decision"] == "error"
+    assert json.loads(result.stdout)["data"]["decision"] == "error"
 
 
 def test_manifest_kind_is_out_of_this_slice(tmp_path: Path) -> None:

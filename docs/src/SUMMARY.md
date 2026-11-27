@@ -11,6 +11,7 @@
 # Reference
 
 - [wild manual](wild-manual.md)
+- [FAQ & troubleshooting](faq.md)
 - [Wild v1 formats](wild-formats-v1.md)
 - [JSON Schema](wild-schema.md)
 

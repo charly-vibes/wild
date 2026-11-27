@@ -151,7 +151,10 @@ def run_extract(record: dict, facts: Path) -> subprocess.CompletedProcess[str]:
 
 
 def envelope(proc: subprocess.CompletedProcess[str]) -> dict:
-    return json.loads(proc.stdout)
+    """Parse stdout as a genesis envelope and return the v1 payload (data)."""
+    shell = json.loads(proc.stdout)
+    assert shell["envelope_kind"] in ("ok", "check", "error")
+    return shell["data"]
 
 
 def facts_json(facts: Path, name: str) -> dict:

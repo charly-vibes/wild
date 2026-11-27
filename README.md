@@ -6,13 +6,21 @@
 > *I'll always remember you like a child, girl"*
 > — Cat Stevens
 
-Machine-checked compatibility and composition of software components, modelled as a category of contracts.
+Machine-checked compatibility and composition of software components, modelled as a category of contracts. For Rust developers (and their CI) who want to know whether two crate versions compose before they ship, without a full integration-test cycle.
 
-Part of the [charly-vibes](https://github.com/charly-vibes) toolshed.
+**Why:** dependency and composition breakage today is caught by integration tests — after you've written them, waited for them, and shipped anyway when they pass. Existing tools check version ranges declared in manifests, which the experiments in this repo show disagree with actual compatibility on real projects (e.g. 6 of 15 consecutive Rust releases where Cargo's caret rule and the contract check disagreed). Wild checks compatibility against machine-checked contracts instead of hope.
 
-**Status.** A design with a prototype and a Rust implementation. The `wild extract` and `wild check` subcommands are implemented and runtime-tested (see `src/` and `tests/runtime/`); the manual describes the intended interface and marks what is implemented.
+**Status.** A design with a prototype and a Rust implementation. The `wild extract` and `wild check` subcommands are implemented and runtime-tested (see `src/` and `tests/runtime/`); the manual describes the intended interface and marks what is implemented. · [FAQ & troubleshooting](docs/src/faq.md) · [Motivation & design](docs/src/index.md)
 
 **Crates.io.** The publishable package is `wild-vibes` — the `wild` crate name on crates.io belongs to an unrelated glob-expansion crate. The repository, binary, and wire-format identities remain `wild`; see `Cargo.toml` for the rationale.
+
+## When to use
+
+- Use `wild` when you need to know whether a specific dependency upgrade composes with your code before you take it — checked against extracted contracts, not just declared version ranges.
+- Use `wild` when a manifest range says "compatible" but you have been burned before: the check compares extracted demand and contract facts, which catches cases version rules miss.
+- Use `wild` when you want every verdict (accept / refuse / error) as a machine-readable v1 envelope with exit codes your CI can gate on.
+
+**Don't use it when** your concern is cross-language seam composition across call, effect, or trust boundaries (use [vampiro](https://github.com/charly-vibes/vampiro) instead — it proves composition at seam boundaries; wild checks dependency compatibility), or when you need to shrink which tests run for a change (use [testaruda](https://github.com/charly-vibes/testaruda) instead — it selects tests; wild checks compatibility directly). Wild assumes it is given complete, committed bundles: its verdicts are only as good as the per-file sha256 commitments in the request, and it never writes outside the locations you pass it or touches the network.
 
 ## Install
 
@@ -33,6 +41,46 @@ from source / install the crate from crates.io (package `wild-vibes`, binary
 ```
 cargo install wild-vibes
 ```
+
+## Quick start
+
+`wild` speaks the local-1 wire protocol (`docs/wild-local-v1.md`); commands
+take a request file with per-file sha256 commitments of the bundle. See
+`schemas/examples-local.json` for structural examples of every record kind.
+
+```sh
+wild extract --request extraction.json --output facts/
+# → stdout: a v1 envelope, e.g. {"schema_version":"1","kind":"envelope",
+#   "command":"extract","assurance":"PassDeclared","decision":"accept",...}
+# → exit 0 on accept; facts/ now contains contract.json, demand.json,
+#   provenance.json, report.json
+# → exit 1 with "decision":"refuse" if the inventory is incomplete;
+#   exit 2 if the request is unreadable or malformed
+```
+
+Verify compatibility of a base/candidate pair and write the check report:
+
+```sh
+wild check --request check.json --format json --report report.json
+# → v1 envelope on stdout; exit 0 = compatible, 1 = refused, 2 = error
+```
+
+## Common workflows
+
+1. **Extract facts from a bundle** — `wild extract --request extraction.json --output facts/` → contract, demand, and provenance records in `facts/`, envelope on stdout.
+2. **Gate an upgrade in CI** — `wild check --request check.json --format json --report report.json` → exit 0 lets the upgrade through, exit 1 fails the gate with a refused envelope; the report plus extracted base/candidate fact records land next to the report file.
+3. **Plan a pinned update (read-only)** — `wild update plan --request update.json --output plan.json` → an `update-plan` record with the exact manifest edit; never executes project code or writes to the bundle.
+
+## Commands
+
+| Command | What it does | When |
+|---|---|---|
+| `wild extract --request <file> --output <dir>` | Extract contract/demand/provenance records from a bundle | Building the facts a check consumes |
+| `wild check --request <file> --format json --report <file>` | Check base/candidate compatibility, write the check report | Gating an upgrade |
+| `wild update plan --request <file> --output <file>` | Produce a pinned-update plan without executing anything | Planning a dependency bump |
+| `wild v1` | v1 protocol helpers (canonicalization, `accretes`) | Working with wire formats directly |
+
+Every command prints a v1 envelope on stdout; exit 0 = accept, 1 = refuse, 2 = error. Details in the [manual](docs/wild-manual.md); recurring questions in the [FAQ & troubleshooting](docs/src/faq.md).
 
 ## Layout
 

@@ -7,7 +7,8 @@
 //   to the requested output locations (extraction: contract/demand/
 //   provenance/report records under --output; check: the check-report at
 //   --report plus extracted base/candidate fact records under its parent's
-//   facts/ subdirectories), print the v1 envelope on stdout, and map
+//   facts/ subdirectories), print the v1 envelope wrapped in the genesis
+//   envelope shell on stdout (bd wild-lof), and map
 //   outcomes to exits per the design: accept 0, refuse 1, error 2.
 // Rationale: The design requires every command to emit a v1 envelope, to
 //   refuse with exit 1 for unknown/reject and exit 2 for malformed input or
@@ -23,7 +24,15 @@ use wild::cargo_host;
 use wild::check;
 use wild::extract::{self, PROFILE};
 use wild::formats::{self, Value};
+use wild::genesis;
 use wild::update;
+
+/// Print a v1 envelope on stdout wrapped in the genesis shell (bd wild-lof):
+/// the v1 payload is carried verbatim as `data`, and the v1 decision maps to
+/// the genesis envelope kind (accept -> ok, refuse -> check, else error).
+fn emit(v1: &Value) {
+    println!("{}", formats::canonical(&genesis::wrap(v1)));
+}
 
 fn envelope(
     command: &str,
@@ -115,7 +124,7 @@ fn run_extract(args: &[String]) -> i32 {
             Value::Null,
             (0, 0),
         );
-        println!("{}", formats::canonical(&envelope));
+        emit(&envelope);
         return 2;
     }
     let request_path = std::path::PathBuf::from(&args[3]);
@@ -184,7 +193,7 @@ fn run_extract(args: &[String]) -> i32 {
         eprintln!("error: {msg}");
         return 2;
     }
-    println!("{}", formats::canonical(&envelope_value));
+    emit(&envelope_value);
     exit_code
 }
 
@@ -206,7 +215,7 @@ fn run_check(args: &[String]) -> i32 {
             Value::Null,
             (0, 0),
         );
-        println!("{}", formats::canonical(&envelope));
+        emit(&envelope);
         return 2;
     }
     let request_path = std::path::PathBuf::from(&args[3]);
@@ -264,7 +273,7 @@ fn run_check(args: &[String]) -> i32 {
         eprintln!("error: {msg}");
         return 2;
     }
-    println!("{}", formats::canonical(&envelope_value));
+    emit(&envelope_value);
     exit_code
 }
 
@@ -335,7 +344,7 @@ fn run_update(args: &[String]) -> i32 {
             Value::Null,
             (0, 0),
         );
-        println!("{}", formats::canonical(&envelope_value));
+        emit(&envelope_value);
         return 2;
     }
     let request_path = std::path::PathBuf::from(&args[4]);
@@ -410,7 +419,7 @@ fn run_update(args: &[String]) -> i32 {
             return 2;
         }
     }
-    println!("{}", formats::canonical(&envelope_value));
+    emit(&envelope_value);
     exit_code
 }
 
@@ -435,7 +444,7 @@ fn run_update_evaluate(args: &[String]) -> i32 {
             Value::Null,
             (0, 0),
         );
-        println!("{}", formats::canonical(&envelope_value));
+        emit(&envelope_value);
         return 2;
     }
     let output_dir = std::path::PathBuf::from(&args[10]);
@@ -527,7 +536,7 @@ fn run_update_evaluate(args: &[String]) -> i32 {
             return 2;
         }
     }
-    println!("{}", formats::canonical(&envelope_value));
+    emit(&envelope_value);
     exit_code
 }
 
@@ -549,7 +558,7 @@ fn run_v1(args: &[String]) -> i32 {
             Value::Null,
             (0, 0),
         );
-        println!("{}", formats::canonical(&envelope_value));
+        emit(&envelope_value);
         return 2;
     }
     let input_path = std::path::PathBuf::from(&args[3]);
@@ -597,7 +606,7 @@ fn run_v1(args: &[String]) -> i32 {
                 Value::Null,
                 (0, 0),
             );
-            println!("{}", formats::canonical(&envelope_value));
+            emit(&envelope_value);
             if decision == "refuse" {
                 1
             } else {
@@ -622,7 +631,7 @@ fn run_v1(args: &[String]) -> i32 {
                     Value::Null,
                     (0, 0),
                 );
-                println!("{}", formats::canonical(&envelope_value));
+                emit(&envelope_value);
                 return 1;
             }
             match wild::v1::validate_contract(document) {
@@ -644,7 +653,7 @@ fn run_v1(args: &[String]) -> i32 {
                             Value::Null,
                             (0, 0),
                         );
-                        println!("{}", formats::canonical(&envelope_value));
+                        emit(&envelope_value);
                         return 2;
                     }
                     let slot_names: Vec<String> = document
@@ -663,7 +672,7 @@ fn run_v1(args: &[String]) -> i32 {
                         Value::Null,
                         (slot_names.len() as i64, slot_names.len() as i64),
                     );
-                    println!("{}", formats::canonical(&envelope_value));
+                    emit(&envelope_value);
                     0
                 }
                 Err(codes) => {
@@ -680,7 +689,7 @@ fn run_v1(args: &[String]) -> i32 {
                         Value::Null,
                         (0, 0),
                     );
-                    println!("{}", formats::canonical(&envelope_value));
+                    emit(&envelope_value);
                     1
                 }
             }
@@ -705,7 +714,7 @@ fn run_v1_accretes(args: &[String]) -> i32 {
             Value::Null,
             (0, 0),
         );
-        println!("{}", formats::canonical(&envelope_value));
+        emit(&envelope_value);
         return 2;
     }
     let read_side = |path: &str| -> Result<Value, wild::v1::ReadError> {
@@ -809,7 +818,7 @@ fn run_v1_accretes(args: &[String]) -> i32 {
         eprintln!("error: cannot write accretes report: {e}");
         return 2;
     }
-    println!("{}", formats::canonical(&envelope_value));
+    emit(&envelope_value);
     if decision == "accept" {
         0
     } else if decision == "refuse" {
@@ -847,7 +856,7 @@ fn run() -> i32 {
                 Value::Null,
                 (0, 0),
             );
-            println!("{}", formats::canonical(&envelope));
+            emit(&envelope);
             2
         }
     }

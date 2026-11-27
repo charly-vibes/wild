@@ -230,6 +230,8 @@ def wild_extract(crate_dir, ver):
     envelope = None
     try:
         envelope = json.loads(r.stdout.strip().splitlines()[-1])
+        if isinstance(envelope, dict) and "envelope_kind" in envelope:
+            envelope = envelope.get("data") or {}
     except (ValueError, IndexError):
         pass
     row = {"decision": "bin-error", "wild_slots": 0, "wild_opaque": 0}

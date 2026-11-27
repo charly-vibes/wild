@@ -70,5 +70,10 @@ class TestVersionProbe:
             [str(BIN), "nonsense"], capture_output=True, text=True, cwd=REPO
         )
         assert proc.returncode == 2
-        envelope = json.loads(proc.stdout)
-        assert envelope["decision"] == "refuse"
+        # bd wild-lof: stdout is the genesis shell; the v1 envelope is data.
+        shell = json.loads(proc.stdout)
+        assert shell["ok"] is True
+        assert shell["envelope_kind"] == "check"
+        assert shell["envelope_version"] == "1"
+        assert shell["cli_version"] == PACKAGE_VERSION
+        assert shell["data"]["decision"] == "refuse"

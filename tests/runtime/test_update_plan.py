@@ -118,7 +118,8 @@ def run_plan(record: dict, output: Path) -> subprocess.CompletedProcess[str]:
 
 
 def envelope(proc: subprocess.CompletedProcess[str]) -> dict:
-    return json.loads(proc.stdout)
+    """Parse stdout as a genesis envelope and return the v1 payload (data)."""
+    return json.loads(proc.stdout)["data"]
 
 
 def digests_of(root: Path, files: dict[str, str]) -> dict[str, str]:

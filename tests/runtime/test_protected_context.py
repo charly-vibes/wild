@@ -548,7 +548,7 @@ def test_malformed_obligations_documents_are_error_class(
         report_path,
     )
     assert proc.returncode == 2
-    envelope = json.loads(proc.stdout)
+    envelope = json.loads(proc.stdout)["data"]
     assert envelope["decision"] == "refuse"
 
 

@@ -93,3 +93,23 @@ test-blast *files:
     else
       testaruda select --pre-edit --human --files "{{files}}"
     fi
+
+# Capture a research-record snapshot: observe wai and git, then rebuild the
+# compiled research and publication projections (pattern: kaya justfile
+# `record-capture`). Serialized against concurrent captures via a lockfile;
+# skipped when the tree is dirty (checked under the lock, so a queued capture
+# re-checks), so a capture never builds over half-finished work.
+record-capture:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p .kaya
+    exec 9>.kaya/capture.lock
+    flock 9
+    if [ -n "$(git status --porcelain)" ]; then
+      echo "record-capture: SKIP - working tree is dirty; commit or stash first"
+      exit 0
+    fi
+    kaya import wai --project wild
+    kaya import git --project wild --exclude-message-prefix "chore(record):"
+    kaya build
+    kaya publish

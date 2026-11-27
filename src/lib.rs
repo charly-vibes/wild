@@ -6,7 +6,8 @@
 //   law-execution harness, the read-only update-planning module, the
 //   integrated update-delivery validation module, and the
 //   v1 canonical reader with semantic contract validation and the
-//   subtype/accretion checkers for the `wild` binary.
+//   subtype/accretion checkers for the `wild` binary, plus the genesis
+//   envelope shell that wraps the v1 envelope as `data` (bd wild-lof).
 // Rationale: A thin library root keeps the executable entrypoint separate
 //   from the testable format, extraction, check, harness, and update
 //   logic, matching the slices' proposed layout
@@ -18,6 +19,7 @@ pub mod check;
 pub mod delivery;
 pub mod extract;
 pub mod formats;
+pub mod genesis;
 pub mod harness;
 pub(crate) mod obligations;
 pub mod update;

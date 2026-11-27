@@ -166,7 +166,7 @@ def test_evaluate_resolves_authorized_target_offline(tmp_path: Path) -> None:
     authority = make_authority(tmp_path, plan)
     proc = run_evaluate(plan, authority, trusted_pin(plan, authority), tmp_path)
     assert proc.returncode == 1, proc.stdout + proc.stderr
-    env = json.loads(proc.stdout)
+    env = json.loads(proc.stdout)["data"]
     assert env["command"] == "update-evaluate"
     # Integrated semantics (wild-nic.3): evaluation no longer stops at host
     # evidence; the bootstrap consumer's farewell test breaks against 2.0.0,
@@ -205,7 +205,7 @@ def test_evaluate_refuses_candidate_supplied_authority(tmp_path: Path) -> None:
     authority["environment"]["toolchain"] = "9.9.9"
     proc = run_evaluate(plan, authority, pin, tmp_path)
     assert proc.returncode == 1
-    env = json.loads(proc.stdout)
+    env = json.loads(proc.stdout)["data"]
     assert env["decision"] == "refuse"
     assert env["assurance"] == "Unknown"
     assert any(
@@ -228,7 +228,7 @@ def test_evaluate_refuses_wrong_selected_target(tmp_path: Path) -> None:
     authority = make_authority(tmp_path, plan)
     proc = run_evaluate(plan, authority, trusted_pin(plan, authority), tmp_path)
     assert proc.returncode == 1
-    env = json.loads(proc.stdout)
+    env = json.loads(proc.stdout)["data"]
     assert env["decision"] == "refuse"
     assert any(d.get("code") == "wrong-target" for d in env.get("diagnostics", []))
 
@@ -263,7 +263,7 @@ def test_evaluate_refuses_unsupported_rust_version(tmp_path: Path) -> None:
     authority = make_authority(tmp_path, plan)
     proc = run_evaluate(plan, authority, trusted_pin(plan, authority), tmp_path)
     assert proc.returncode == 1
-    env = json.loads(proc.stdout)
+    env = json.loads(proc.stdout)["data"]
     assert env["decision"] == "refuse"
     # The constraint refuses delivery independently of compatibility.
     assert any(
