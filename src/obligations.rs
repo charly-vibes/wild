@@ -22,7 +22,7 @@
 use crate::check::{contract_slots, is_subtype};
 use crate::extract::{ExtractionOutcome, LOCAL_VERSION};
 use crate::formats::{self, Value};
-use crate::harness::LawOutcome;
+use crate::harness::{LawEcho, LawOutcome};
 
 const OBLIGATIONS_REF_FIELDS: &[&str] = &["digest", "path"];
 
@@ -693,10 +693,7 @@ fn run_retained_law(
                 "no law invocation inputs supplied; the retained suite was not executed"
                     .to_string(),
             ),
-            result_digest: None,
-            contract_digest: None,
-            artifact_digest: None,
-            harness_digest: None,
+            echo: LawEcho::default(),
             runs: 0,
         });
     };
@@ -746,10 +743,10 @@ fn run_retained_law(
         &inputs,
     )?;
     // runner-derived bindings carried into the law evidence record
-    if outcome.result_digest.is_some() {
-        outcome.contract_digest = Some(law.cand_contract_digest.clone());
-        outcome.artifact_digest = Some(law.cand_commitment.clone());
-        outcome.harness_digest = Some(harness_digest.clone());
+    if outcome.echo.result.is_some() {
+        outcome.echo.contract = Some(law.cand_contract_digest.clone());
+        outcome.echo.artifact = Some(law.cand_commitment.clone());
+        outcome.echo.harness = Some(harness_digest.clone());
     }
     Ok(outcome)
 }
@@ -764,10 +761,10 @@ fn law_method_entry(id: &str, suite_digest: &str, outcome: &LawOutcome) -> Value
         ("status", text(&outcome.status)),
         ("witness", text(&outcome.witness)),
         ("reason", text(&outcome.reason)),
-        ("result_digest", text(&outcome.result_digest)),
-        ("contract", text(&outcome.contract_digest)),
-        ("implementation_artifact", text(&outcome.artifact_digest)),
-        ("harness", text(&outcome.harness_digest)),
+        ("result_digest", text(&outcome.echo.result)),
+        ("contract", text(&outcome.echo.contract)),
+        ("implementation_artifact", text(&outcome.echo.artifact)),
+        ("harness", text(&outcome.echo.harness)),
         ("runs", formats::i(outcome.runs as i64)),
     ])
 }

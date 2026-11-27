@@ -31,6 +31,27 @@ use crate::formats::{self, Value};
 use crate::update::{confined, diagnostic};
 use std::path::Path;
 
+/// The shared environment of one update evaluation: where it runs, where
+/// reports land, and the pinned baseline inputs.
+pub(crate) struct EvalEnv<'a> {
+    pub workspace: &'a Path,
+    pub output_dir: &'a Path,
+    pub cargo_home: &'a Path,
+    pub baseline_lock_text: &'a str,
+}
+
+/// The identity block every update report carries: plan/authority
+/// digests, the evaluated package/release, and the observed actual state.
+pub(crate) struct ReportId<'a> {
+    pub plan_digest: &'a str,
+    pub authority_digest: &'a str,
+    pub package: &'a str,
+    pub release: &'a str,
+    pub actual_version: Option<&'a str>,
+    pub actual_digest: Option<&'a str>,
+    pub lock_source: Option<&'a str>,
+}
+
 /// The shared identity facts for one evaluation's validation stages.
 pub(crate) struct Stage<'a> {
     pub plan: &'a Value,
@@ -38,7 +59,23 @@ pub(crate) struct Stage<'a> {
     pub authority_digest: &'a str,
     pub package: &'a str,
     pub release: &'a str,
+    pub bundle_root: &'a str,
     pub facts: &'a Facts,
+}
+
+impl<'a> Stage<'a> {
+    /// The report identity this stage records.
+    pub fn id(&self) -> ReportId<'a> {
+        ReportId {
+            plan_digest: self.plan_digest,
+            authority_digest: self.authority_digest,
+            package: self.package,
+            release: self.release,
+            actual_version: Some(&self.facts.actual_version),
+            actual_digest: self.facts.actual_digest.as_deref(),
+            lock_source: self.facts.lock_source.as_deref(),
+        }
+    }
 }
 
 impl<'a> Stage<'a> {
@@ -52,13 +89,7 @@ impl<'a> Stage<'a> {
         closure: Option<Vec<Value>>,
     ) -> Result<Evaluated, String> {
         let mut report = report_record(
-            self.plan_digest,
-            self.authority_digest,
-            self.package,
-            self.release,
-            Some(&self.facts.actual_version),
-            self.facts.actual_digest.as_deref(),
-            self.facts.lock_source.as_deref(),
+            &self.id(),
             disposition,
             diagnostics,
             Value::Null,
@@ -100,18 +131,14 @@ fn closure_values(closure: &[ClosureEntry]) -> Vec<Value> {
 /// State transitions 5-7: fixed-lock build/test, full closure coverage with
 /// uncontracted entries visible, the manifest/lock-only scope check, and
 /// the durable pinned diff. Delivery requires every stage to succeed.
-#[allow(clippy::too_many_arguments)]
 pub(crate) fn validate_and_deliver(
     plan: &Value,
     authority: &Value,
-    workspace: &Path,
-    output_dir: &Path,
     plan_digest: &str,
     authority_digest: &str,
     package: &str,
-    cargo_home: &Path,
-    baseline_lock_text: &str,
     facts: Facts,
+    env: &EvalEnv<'_>,
 ) -> Result<Evaluated, String> {
     let stage = Stage {
         plan,
@@ -119,6 +146,7 @@ pub(crate) fn validate_and_deliver(
         authority_digest,
         package,
         release: plan.str_field("release")?,
+        bundle_root: authority.str_field("bundle_root")?,
         facts: &facts,
     };
     let consumer = plan.str_field("consumer")?.to_string();
@@ -127,7 +155,7 @@ pub(crate) fn validate_and_deliver(
         .ok_or_else(|| "input-mismatch: plan carries no edit".to_string())?
         .str_field("file")?
         .to_string();
-    let bundle_root = authority.str_field("bundle_root")?.to_string();
+    let bundle_root = stage.bundle_root;
 
     let evidence = vec![evidence_value(
         "baseline-test",
@@ -159,7 +187,7 @@ pub(crate) fn validate_and_deliver(
         })
         .transpose()?
         .unwrap_or_default();
-    let removed = protected_removals(&patch, &bundle_root, package)?;
+    let removed = protected_removals(&patch, bundle_root, package)?;
     let intent_authority = authority
         .get("allowed_actions")
         .and_then(Value::as_arr)
@@ -179,7 +207,7 @@ pub(crate) fn validate_and_deliver(
             evidence,
             None,
         )?;
-        write_report(output_dir, &evaluated.report)?;
+        write_report(env.output_dir, &evaluated.report)?;
         return Ok(evaluated);
     }
     let update_class = if removed.is_empty() {
@@ -193,16 +221,16 @@ pub(crate) fn validate_and_deliver(
         // already refused above.
         "intent-change"
     };
-    apply_migration(&patch, &bundle_root, workspace)?;
+    apply_migration(&patch, bundle_root, env.workspace)?;
 
     // Fixed-lock build and test in the same frozen environment.
-    let mut state = match fixed_lock_checks(workspace, cargo_home, &stage, output_dir, evidence)? {
+    let mut state = match fixed_lock_checks(&stage, env, evidence)? {
         Ok(evidence) => evidence,
         Err(refusal) => return Ok(refusal),
     };
     // Full closure coverage: uncontracted entries stay visible as Unknown
     // and refuse delivery in this first profile.
-    let lock_text = std::fs::read_to_string(workspace.join("Cargo.lock"))
+    let lock_text = std::fs::read_to_string(env.workspace.join("Cargo.lock"))
         .map_err(|e| format!("input-mismatch: resolved lock unreadable: {e}"))?;
     let closure = closure_entries(&lock_text, baseline_lock_text, plan, package, &consumer)?;
     state = match closure_check(&closure, &stage, output_dir, state)? {
@@ -213,8 +241,7 @@ pub(crate) fn validate_and_deliver(
     // change its supplied patch targets.
     let mut allowed: Vec<&str> = vec![manifest_rel.as_str(), "Cargo.lock"];
     allowed.extend(patch.iter().map(|(t, _)| t.as_str()));
-    let evidence = match scope_check(&allowed, &bundle_root, workspace, &stage, output_dir, state)?
-    {
+    let evidence = match scope_check(&allowed, &stage, env, state)? {
         Ok(evidence) => evidence,
         Err(refusal) => return Ok(refusal),
     };
@@ -223,9 +250,6 @@ pub(crate) fn validate_and_deliver(
         output_dir,
         &stage,
         &manifest_rel,
-        &bundle_root,
-        baseline_lock_text,
-        workspace,
         &closure,
         evidence,
         &patch,
@@ -324,21 +348,19 @@ fn apply_migration(
 /// in this first profile; a failure is an adjudicated candidate
 /// incompatibility.
 fn fixed_lock_checks(
-    workspace: &Path,
-    cargo_home: &Path,
     stage: &Stage<'_>,
-    output_dir: &Path,
+    env: &EvalEnv<'_>,
     mut evidence: Vec<Value>,
 ) -> Result<Result<Vec<Value>, Evaluated>, String> {
     let build = run_cargo_cmd(
-        workspace,
-        cargo_home,
+        env.workspace,
+        env.cargo_home,
         &["build", "--offline", "--locked"],
         "fixed-lock-build",
     )?;
     let test = run_cargo_cmd(
-        workspace,
-        cargo_home,
+        env.workspace,
+        env.cargo_home,
         &["test", "--offline", "--locked"],
         "fixed-lock-test",
     )?;
@@ -373,7 +395,7 @@ fn fixed_lock_checks(
             evidence,
             None,
         )?;
-        write_report(output_dir, &evaluated.report)?;
+        write_report(env.output_dir, &evaluated.report)?;
         return Ok(Err(evaluated));
     }
     Ok(Ok(evidence))
@@ -385,7 +407,7 @@ fn fixed_lock_checks(
 fn closure_check(
     closure: &[ClosureEntry],
     stage: &Stage<'_>,
-    output_dir: &Path,
+    env: &EvalEnv<'_>,
     mut evidence: Vec<Value>,
 ) -> Result<Result<Vec<Value>, Evaluated>, String> {
     let unknown: Vec<&str> = closure
@@ -409,26 +431,23 @@ fn closure_check(
         std::mem::take(&mut evidence),
         Some(closure_values(closure)),
     )?;
-    write_report(output_dir, &evaluated.report)?;
+    write_report(env.output_dir, &evaluated.report)?;
     Ok(Err(evaluated))
 }
 
 /// A direct update changes only manifest/lock; a migration may also change
 /// its supplied patch targets. Everything else that changed in the
 /// workspace is a scope violation.
-#[allow(clippy::too_many_arguments)]
 fn scope_check(
     allowed: &[&str],
-    bundle_root: &str,
-    workspace: &Path,
     stage: &Stage<'_>,
-    output_dir: &Path,
+    env: &EvalEnv<'_>,
     evidence: Vec<Value>,
 ) -> Result<Result<Vec<Value>, Evaluated>, String> {
-    let mirror_rel = local_registry_of(workspace)?;
+    let mirror_rel = local_registry_of(env.workspace)?;
     let excludes = ["target", ".wild-cargo-home", mirror_rel.as_str()];
-    let before_files = scan_changed_files(Path::new(bundle_root), &excludes);
-    let after_files = scan_changed_files(workspace, &excludes);
+    let before_files = scan_changed_files(Path::new(stage.bundle_root), &excludes);
+    let after_files = scan_changed_files(env.workspace, &excludes);
     let before_map: std::collections::HashMap<&str, &str> = before_files
         .iter()
         .map(|(rel, digest)| (rel.as_str(), digest.as_str()))
@@ -457,27 +476,24 @@ fn scope_check(
         evidence,
         None,
     )?;
-    write_report(output_dir, &evaluated.report)?;
+    write_report(env.output_dir, &evaluated.report)?;
     Ok(Err(evaluated))
 }
 
 /// Durable pinned diff: exact post-update manifest and lock contents,
 /// re-read and digest-verified after writing. Delivery requires
 /// persistence to complete.
-#[allow(clippy::too_many_arguments)]
 fn deliver(
-    plan: &Value,
-    output_dir: &Path,
+    env: &EvalEnv<'_>,
     stage: &Stage<'_>,
     manifest_rel: &str,
-    bundle_root: &str,
-    baseline_lock_text: &str,
-    workspace: &Path,
     closure: &[ClosureEntry],
     evidence: Vec<Value>,
     patch: &[(String, Option<String>)],
     update_class: &str,
 ) -> Result<Evaluated, String> {
+    let bundle_root = stage.bundle_root;
+    let workspace = env.workspace;
     let manifest_after = std::fs::read_to_string(workspace.join(manifest_rel))
         .map_err(|e| format!("persistence-failed: manifest unreadable after update: {e}"))?;
     let lock_after = std::fs::read_to_string(workspace.join("Cargo.lock"))
@@ -491,7 +507,7 @@ fn deliver(
         ),
         (
             "Cargo.lock",
-            baseline_lock_text.to_string(),
+            env.baseline_lock_text.to_string(),
             lock_after.clone(),
         ),
     ]
@@ -549,22 +565,24 @@ fn deliver(
             evidence,
             None,
         )?;
-        write_report(output_dir, &evaluated.report)?;
+        write_report(env.output_dir, &evaluated.report)?;
         return Ok(evaluated);
     }
     let report = report_record(
-        stage.plan_digest,
-        stage.authority_digest,
-        stage.package,
-        stage.release,
-        Some(&stage.facts.actual_version),
-        stage.facts.actual_digest.as_deref(),
-        stage.facts.lock_source.as_deref(),
+        &stage.id(),
         "delivered",
         Vec::new(),
         formats::arr(Vec::new()),
-        plan.get("source_digest").cloned().unwrap_or(Value::Null),
-        plan.get("lock_version").cloned().unwrap_or(Value::Null),
+        stage
+            .plan
+            .get("source_digest")
+            .cloned()
+            .unwrap_or(Value::Null),
+        stage
+            .plan
+            .get("lock_version")
+            .cloned()
+            .unwrap_or(Value::Null),
         Vec::new(),
     );
     let report = extend(
@@ -575,7 +593,7 @@ fn deliver(
             ("update_class", formats::s(update_class)),
             (
                 "migration",
-                plan.get("migration").cloned().unwrap_or(Value::Null),
+                stage.plan.get("migration").cloned().unwrap_or(Value::Null),
             ),
             ("closure", formats::arr(closure_values(closure))),
             ("evidence", formats::arr(evidence)),
@@ -745,15 +763,8 @@ fn walk(root: &Path, dir: &Path, exclude: &[&str], out: &mut Vec<(String, String
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 pub(crate) fn report_record(
-    plan_digest: &str,
-    authority_digest: &str,
-    package: &str,
-    release: &str,
-    actual_version: Option<&str>,
-    actual_digest: Option<&str>,
-    lock_source: Option<&str>,
+    id: &ReportId<'_>,
     disposition: &str,
     diagnostics: Vec<Value>,
     pending_checks: Value,
@@ -764,14 +775,14 @@ pub(crate) fn report_record(
     let report = formats::obj(vec![
         ("version", formats::s("local-1")),
         ("kind", formats::s("update-report")),
-        ("package", formats::s(package)),
-        ("release", formats::s(release)),
-        ("plan_digest", formats::s(plan_digest)),
-        ("authority_digest", formats::s(authority_digest)),
+        ("package", formats::s(id.package)),
+        ("release", formats::s(id.release)),
+        ("plan_digest", formats::s(id.plan_digest)),
+        ("authority_digest", formats::s(id.authority_digest)),
         (
             "requested",
             formats::obj(vec![
-                ("release", formats::s(release)),
+                ("release", formats::s(id.release)),
                 ("source_digest", requested_digest),
             ]),
         ),
@@ -780,15 +791,15 @@ pub(crate) fn report_record(
             formats::obj(vec![
                 (
                     "version",
-                    actual_version.map(formats::s).unwrap_or(Value::Null),
+                    id.actual_version.map(formats::s).unwrap_or(Value::Null),
                 ),
                 (
                     "source_digest",
-                    actual_digest.map(formats::s).unwrap_or(Value::Null),
+                    id.actual_digest.map(formats::s).unwrap_or(Value::Null),
                 ),
                 (
                     "lock_source",
-                    lock_source.map(formats::s).unwrap_or(Value::Null),
+                    id.lock_source.map(formats::s).unwrap_or(Value::Null),
                 ),
             ]),
         ),

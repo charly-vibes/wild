@@ -40,7 +40,7 @@ pub(super) fn resolve_mod_file(walk: &mut SourceWalk, name: &str, cfg_gated: boo
     ];
     let Some(rel) = candidates
         .iter()
-        .find(|c| walk.loaded.contains_key(c.as_str()))
+        .find(|c| walk.ctx.loaded.contains_key(c.as_str()))
         .cloned()
     else {
         walk.gap(
@@ -57,7 +57,7 @@ pub(super) fn resolve_mod_file(walk: &mut SourceWalk, name: &str, cfg_gated: boo
             true,
         );
     }
-    let bytes = match walk.loaded.get(&rel) {
+    let bytes = match walk.ctx.loaded.get(&rel) {
         Some(bytes) => bytes,
         None => unreachable!("candidate membership checked above"),
     };

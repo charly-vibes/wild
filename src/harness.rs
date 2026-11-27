@@ -83,13 +83,20 @@ pub struct LawOutcome {
     pub status: Option<String>,
     pub witness: Option<String>,
     pub reason: Option<String>,
-    pub result_digest: Option<String>,
-    /// Runner-derived bindings the executed result must carry; null when
-    /// no execution evidence was obtained.
-    pub contract_digest: Option<String>,
-    pub artifact_digest: Option<String>,
-    pub harness_digest: Option<String>,
+    /// Echoed digests; populated only with execution evidence — the
+    /// runner-derived bindings the executed result must carry, plus the
+    /// canonical law_result digest.
+    pub echo: LawEcho,
     pub runs: u32,
+}
+
+/// The digest set one law execution echoes into the evidence record.
+#[derive(Default)]
+pub struct LawEcho {
+    pub result: Option<String>,
+    pub contract: Option<String>,
+    pub artifact: Option<String>,
+    pub harness: Option<String>,
 }
 
 /// Enforced sandbox capabilities recorded in the invocation commitment.
@@ -216,10 +223,7 @@ pub fn run_law(
             status: None,
             witness: None,
             reason: Some(reason),
-            result_digest: None,
-            contract_digest: None,
-            artifact_digest: None,
-            harness_digest: None,
+            echo: LawEcho::default(),
             runs: 1,
         },
         RunResult::SandboxUnavailable(reason) => LawOutcome {
@@ -228,10 +232,7 @@ pub fn run_law(
             status: None,
             witness: None,
             reason: Some(reason),
-            result_digest: None,
-            contract_digest: None,
-            artifact_digest: None,
-            harness_digest: None,
+            echo: LawEcho::default(),
             runs: 1,
         },
         RunResult::Valid(first) => {
@@ -249,10 +250,7 @@ pub fn run_law(
                         "nondeterministic suite output: the two runs did not agree on canonical law_result bytes"
                             .to_string(),
                     ),
-                    result_digest: None,
-                    contract_digest: None,
-                    artifact_digest: None,
-                    harness_digest: None,
+                    echo: LawEcho::default(),
                     runs: 2,
                 },
                 other => inconclusive_from("inconsistent outcomes across runs", &other),
@@ -278,10 +276,10 @@ fn executed_outcome(
         status: Some(parsed.status.clone()),
         witness,
         reason,
-        result_digest: Some(formats::sha256_digest(parsed.canonical.as_bytes())),
-        contract_digest: None,
-        artifact_digest: None,
-        harness_digest: None,
+        echo: LawEcho {
+            result: Some(formats::sha256_digest(parsed.canonical.as_bytes())),
+            ..LawEcho::default()
+        },
         runs: 2,
     }
 }
@@ -314,10 +312,7 @@ fn inconclusive_from(fallback: &str, run: &RunResult) -> LawOutcome {
         status: Some("inconclusive".to_string()),
         witness: None,
         reason: Some(reason),
-        result_digest: None,
-        contract_digest: None,
-        artifact_digest: None,
-        harness_digest: None,
+        echo: LawEcho::default(),
         runs: 2,
     }
 }

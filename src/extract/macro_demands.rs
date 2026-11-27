@@ -134,7 +134,7 @@ impl<'a> SourceWalk<'a> {
                 }
                 if let Some(target) = self.alias_map.get(&ident) {
                     let head = target.split("::").next().unwrap_or("");
-                    if self.dep_names.iter().any(|d| *d == head) {
+                    if self.ctx.dep_names.iter().any(|d| *d == head) {
                         self.gap(
                             "incomplete-demand",
                             format!(
@@ -145,8 +145,8 @@ impl<'a> SourceWalk<'a> {
                         continue;
                     }
                 }
-                if !self.capture_idents.contains(&ident) {
-                    self.capture_idents.push(ident);
+                if !self.out.capture_idents.contains(&ident) {
+                    self.out.capture_idents.push(ident);
                 }
             }
             break;

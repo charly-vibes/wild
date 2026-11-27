@@ -55,7 +55,7 @@ use crate::formats::{self, Value};
 use crate::obligations::{
     build_law_context, evaluate_obligations, finalize_transition, invocation_commitment_value,
     law_required_findings, load_obligations, obligation_diagnostic, parse_law_inputs,
-    validate_obligations_ref, validate_transition_shape, Obligation,
+    validate_obligations_ref, validate_transition_shape, LawInputsRaw, Obligation, Transition,
 };
 use std::collections::BTreeSet;
 
@@ -855,75 +855,164 @@ fn load_request_obligations(request: &Value) -> Result<Vec<Obligation>, String> 
     }
 }
 
+/// One extracted contract side: committed root, file digests, and the
+/// extraction outcome the check evaluates.
+struct EvalSide {
+    root: String,
+    files: Vec<(String, String)>,
+    outcome: ExtractionOutcome,
+}
+
+/// The validated request plus both extracted sides: the shared evaluation
+/// state for slot judging, obligation evaluation, and the decision pass.
+struct CheckEval<'a> {
+    request: &'a Value,
+    consumer: String,
+    checker_digest: String,
+    on_absent: Vec<String>,
+    base: EvalSide,
+    candidate: EvalSide,
+    obligations: Vec<Obligation>,
+    transition: Option<Transition>,
+}
+
+/// Slot judging and side-summary results shared between the obligation
+/// pass and the decision/report pass.
+struct SlotResults {
+    verdicts: Vec<Value>,
+    demanded_names: Vec<String>,
+    passed: i64,
+    total: i64,
+    conveyance: ConveyanceFindings,
+    claim_records: Vec<Value>,
+    absent_new_inputs: Vec<Value>,
+    base_contract_bytes: Vec<u8>,
+    cand_contract_bytes: Vec<u8>,
+    cand_commitment: String,
+}
+
+/// Obligation and law-evaluation results feeding the decision pass.
+struct ObligationResults {
+    entries: Vec<Value>,
+    changes: Vec<Value>,
+    covered: Vec<String>,
+    law_methods: Vec<Value>,
+    definite: bool,
+    unknown: bool,
+    law_inputs: Option<LawInputsRaw>,
+    law_required_reasons: Vec<String>,
+}
+
+fn eval_side(
+    request: &Value,
+    label: &str,
+    side: &(String, Vec<(String, String)>),
+    conveys: &[String],
+    on_absent: &[String],
+) -> Result<EvalSide, String> {
+    let outcome = extract_side(request, label, &side.0, &side.1, conveys, on_absent)?;
+    Ok(EvalSide {
+        root: side.0.clone(),
+        files: side.1.clone(),
+        outcome,
+    })
+}
+
 /// Check one validated request; `Err` classifies as error (exit 2).
 pub fn check(request: &Value) -> Result<CheckOutcome, String> {
-    let (
-        consumer,
-        (base_root, base_files),
-        (cand_root, cand_files),
-        checker_digest,
-        conveys,
-        on_absent,
-    ) = validate_check_request(request)?;
+    let (consumer, base_side, cand_side, checker_digest, conveys, on_absent) =
+        validate_check_request(request)?;
     let obligations = load_request_obligations(request)?;
     let transition = finalize_transition(request, &obligations)?;
-    let base = extract_side(
+    let base = eval_side(request, "base", &base_side, &conveys, &on_absent)?;
+    let candidate = eval_side(request, "candidate", &cand_side, &conveys, &on_absent)?;
+    let eval = CheckEval {
         request,
-        "base",
-        &base_root,
-        &base_files,
-        &conveys,
-        &on_absent,
-    )?;
-    let candidate = extract_side(
-        request,
-        "candidate",
-        &cand_root,
-        &cand_files,
-        &conveys,
-        &on_absent,
-    )?;
+        consumer,
+        checker_digest,
+        on_absent,
+        base,
+        candidate,
+        obligations,
+        transition,
+    };
+    let slots = evaluate_slots(&eval)?;
+    let obl = evaluate_obligations_for(&eval, &slots)?;
+    Ok(decide(&eval, &slots, &obl))
+}
 
+/// Judge the demanded slots, gather the scoped conveyance and absence
+/// claims, and digest the side contracts.
+fn evaluate_slots(eval: &CheckEval<'_>) -> Result<SlotResults, String> {
     let (verdicts, demanded_names, passed, total, _has_break_or_unknown, judge_absence_claims) =
-        judge_slots(&consumer, &base, &candidate, &on_absent)?;
+        judge_slots(
+            &eval.consumer,
+            &eval.base.outcome,
+            &eval.candidate.outcome,
+            &eval.on_absent,
+        )?;
 
     // Scoped conveyance claims (wild-hyk): forwarded-not-interpreted demand
     // under a declared path, recorded per side; candidate-side claims at
     // paths the base never demanded carry their own refusal diagnostics
     // (scoped_substitution unchanged).
-    let conveyance = conveyance_findings(&base, &candidate);
+    let conveyance = conveyance_findings(&eval.base.outcome, &eval.candidate.outcome);
 
     // Scoped fallible-absence claims (wild-adc): demand entries recording a
     // handled absent outcome on either side, merged with the absence claims
     // from slot judging. The claim never exempts scoped_substitution: a
     // newly introduced absent demand on the candidate side carries its own
     // refusal diagnostic.
-    let absence = absence_findings(&base, &candidate);
-    let claim_records = merge_absence_claims(absence.claim_records, judge_absence_claims);
+    let AbsenceFindings {
+        claim_records: absence_records,
+        new_input_diagnostics: absent_new_inputs,
+    } = absence_findings(&eval.base.outcome, &eval.candidate.outcome);
+    let claim_records = merge_absence_claims(absence_records, judge_absence_claims);
 
-    let base_contract_bytes = formats::canonical(&base.contract).into_bytes();
-    let cand_contract_bytes = formats::canonical(&candidate.contract).into_bytes();
+    let base_contract_bytes = formats::canonical(&eval.base.outcome.contract).into_bytes();
+    let cand_contract_bytes = formats::canonical(&eval.candidate.outcome.contract).into_bytes();
 
     // Runner-derived commitment digests the executed law results must echo:
     // the boundary contract digest comes from the candidate extraction and
     // the implementation-artifact digest is the candidate bundle commitment
     // (sha256 over the canonical per-file digest map — path-independent).
     let cand_files_value = formats::obj(
-        cand_files
+        eval.candidate
+            .files
             .iter()
             .map(|(rel, digest)| (rel.as_str(), formats::s(digest)))
             .collect(),
     );
     let cand_commitment = formats::sha256_digest(formats::canonical(&cand_files_value).as_bytes());
 
-    let law_inputs = parse_law_inputs(request)?;
+    Ok(SlotResults {
+        verdicts,
+        demanded_names,
+        passed,
+        total,
+        conveyance,
+        claim_records,
+        absent_new_inputs,
+        base_contract_bytes,
+        cand_contract_bytes,
+        cand_commitment,
+    })
+}
+
+/// Evaluate accepted and proposed obligations against the candidate and
+/// execute retained law suites through the sandboxed runner.
+fn evaluate_obligations_for(
+    eval: &CheckEval<'_>,
+    slots: &SlotResults,
+) -> Result<ObligationResults, String> {
+    let law_inputs = parse_law_inputs(eval.request)?;
     let law = law_inputs.as_ref().map(|inputs| {
         build_law_context(
-            &base_root,
-            &cand_root,
-            base_files.clone(),
-            formats::sha256_digest(&cand_contract_bytes),
-            cand_commitment.clone(),
+            &eval.base.root,
+            &eval.candidate.root,
+            eval.candidate.files.clone(),
+            formats::sha256_digest(&slots.cand_contract_bytes),
+            slots.cand_commitment.clone(),
             inputs,
         )
     });
@@ -948,16 +1037,31 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
     // A policy that requires law evidence cannot be satisfied by a proposed
     // obligation: the evidence requirement is unmet (Unknown), never an
     // error, and the proposed obligation is still not enforced.
-    let (law_required_reasons, obl_unknown) =
-        law_required_findings(request, &obligations, &consumer, obl_unknown);
+    let (law_required_reasons, unknown) =
+        law_required_findings(eval.request, &eval.obligations, &eval.consumer, unknown);
 
-    let mut diagnostics = assemble_diagnostics(
-        &base,
-        &candidate,
-        &obl_changes,
-        &law_methods,
+    Ok(ObligationResults {
+        entries,
+        changes,
+        covered,
+        law_methods,
+        definite,
+        unknown,
+        law_inputs,
         law_required_reasons,
-        obl_unknown,
+    })
+}
+
+/// The decision pass: combine slot verdicts, obligation outcomes, and the
+/// scoped-gap flags into the final report.
+fn decide(eval: &CheckEval<'_>, slots: &SlotResults, obl: &ObligationResults) -> CheckOutcome {
+    let mut diagnostics = assemble_diagnostics(
+        &eval.base.outcome,
+        &eval.candidate.outcome,
+        &obl.changes,
+        &obl.law_methods,
+        obl.law_required_reasons.clone(),
+        obl.unknown,
     );
 
     // The scoped claim rests on declaration visibility: a side whose
@@ -984,18 +1088,19 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
         (verdict == "removed" || verdict == "broken")
             && !v
                 .str_field("called")
-                .map(|called| covered.iter().any(|c| c == called))
+                .map(|called| obl.covered.iter().any(|c| c == called))
                 .unwrap_or(false)
     });
-    let any_type_unknown = verdicts
+    let any_type_unknown = slots
+        .verdicts
         .iter()
         .any(|v| v.str_field("verdict").unwrap_or_default() == "unknown");
     let (decision, assurance): (&'static str, &'static str) =
-        if obl_definite || any_removed_or_broken {
+        if obl.definite || any_removed_or_broken {
             ("refuse", "Reject")
         } else if has_side_gap
             || any_type_unknown
-            || obl_unknown
+            || obl.unknown
             || has_conveyed_new_input
             || has_absent_new_input
         {
@@ -1003,8 +1108,9 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
         } else {
             ("accept", "PassDeclared")
         };
-    let transition_applied = transition.is_some()
-        && obl_entries
+    let transition_applied = eval.transition.is_some()
+        && obl
+            .entries
             .iter()
             .any(|e| e.str_field("verdict").unwrap_or_default() == "transition-accepted");
     let disposition = if transition_applied && decision == "accept" {
@@ -1017,29 +1123,36 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
     let report = formats::obj(vec![
         ("version", formats::s(LOCAL_VERSION)),
         ("kind", formats::s("check-report")),
-        ("conveyance_claims", formats::arr(conveyance.claim_records)),
-        ("absence_claims", formats::arr(claim_records)),
+        (
+            "conveyance_claims",
+            formats::arr(slots.conveyance.claim_records.clone()),
+        ),
+        ("absence_claims", formats::arr(slots.claim_records.clone())),
         ("profile", formats::s(PROFILE)),
-        ("consumer", formats::s(&consumer)),
+        ("consumer", formats::s(&eval.consumer)),
         (
             "policy",
-            request.get("policy").cloned().unwrap_or(Value::Null),
+            eval.request.get("policy").cloned().unwrap_or(Value::Null),
         ),
-        ("law_methods", formats::arr(law_methods)),
+        ("law_methods", formats::arr(obl.law_methods.clone())),
         (
             "base",
             side_summary(&base_root, &base, &base_contract_bytes),
         ),
         (
             "candidate",
-            side_summary(&cand_root, &candidate, &cand_contract_bytes),
+            side_summary(
+                &eval.candidate.root,
+                &eval.candidate.outcome,
+                &slots.cand_contract_bytes,
+            ),
         ),
-        ("demanded_slots", formats::arr(verdicts)),
-        ("obligations", formats::arr(obl_entries)),
-        ("obligation_changes", formats::arr(obl_changes)),
+        ("demanded_slots", formats::arr(slots.verdicts.clone())),
+        ("obligations", formats::arr(obl.entries.clone())),
+        ("obligation_changes", formats::arr(obl.changes.clone())),
         (
             "transition",
-            transition
+            eval.transition
                 .as_ref()
                 .map(|t| t.to_value())
                 .unwrap_or(Value::Null),
@@ -1047,11 +1160,11 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
         (
             "invocation_commitment",
             invocation_commitment_value(
-                request,
-                &checker_digest,
-                &formats::sha256_digest(&base_contract_bytes),
-                &formats::sha256_digest(&cand_contract_bytes),
-                law_inputs.as_ref(),
+                eval.request,
+                &eval.checker_digest,
+                &formats::sha256_digest(&slots.base_contract_bytes),
+                &formats::sha256_digest(&slots.cand_contract_bytes),
+                obl.law_inputs.as_ref(),
             ),
         ),
         ("disposition", formats::s(disposition)),
@@ -1060,16 +1173,16 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
         ("diagnostics", formats::arr(diagnostics.clone())),
     ]);
 
-    let facts = fact_records(&base, &candidate);
+    let facts = fact_records(&eval.base.outcome, &eval.candidate.outcome);
 
-    Ok(CheckOutcome {
+    CheckOutcome {
         report,
         decision,
         assurance,
         exit_code,
         diagnostics,
-        demanded: demanded_names,
-        coverage: (passed, total),
+        demanded: slots.demanded_names.clone(),
+        coverage: (slots.passed, slots.total),
         facts,
-    })
+    }
 }

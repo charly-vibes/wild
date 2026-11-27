@@ -21,11 +21,11 @@ impl<'a> SourceWalk<'a> {
     /// time instead of being resolved by identifier guessing here.
     pub(super) fn module_relative_target(&self, joined: &str) -> String {
         if self.module_prefix.is_empty() {
-            format!("{}::{joined}", self.crate_name)
+            format!("{}::{joined}", self.ctx.crate_name)
         } else {
             format!(
                 "{}::{}::{joined}",
-                self.crate_name,
+                self.ctx.crate_name,
                 self.module_prefix.join("::")
             )
         }
@@ -52,7 +52,7 @@ impl<'a> SourceWalk<'a> {
                 .get(head)
                 .map(|t| (t.clone(), Some(head.to_string())));
         }
-        if self.dep_names.iter().any(|d| d == head) {
+        if self.ctx.dep_names.iter().any(|d| d == head) {
             return Some((format!("{head}::{}", rest.join("::")), None));
         }
         if let Some(target) = self.alias_map.get(head) {
@@ -90,7 +90,7 @@ impl<'a> SourceWalk<'a> {
     ) {
         if let Some(provider_slot) = self.meaning_of(target) {
             let mut entry = vec![
-                ("consumer", formats::s(&self.crate_name)),
+                ("consumer", formats::s(&self.ctx.crate_name)),
                 ("called", formats::s(target)),
                 (
                     "alias",
@@ -103,27 +103,27 @@ impl<'a> SourceWalk<'a> {
             ];
             // the declared absence policy rides on the demand entry
             // (wild-adc) so the contract slot carries it
-            if let Some(scope) = super::conveyed_scope(self.on_absent, target) {
+            if let Some(scope) = super::conveyed_scope(self.ctx.on_absent, target) {
                 entry.push(("on_absent", formats::s("fallible")));
                 entry.push(("scope", formats::s(&scope)));
             }
-            self.demand.push(formats::obj(entry));
+            self.out.demand.push(formats::obj(entry));
             let loc = span.start();
-            self.locations.push(formats::obj(vec![
+            self.out.locations.push(formats::obj(vec![
                 ("slot", formats::s(target)),
                 ("file", formats::s(&self.current_file)),
                 ("line", formats::i(loc.line as i64)),
                 ("col", formats::i(loc.column as i64)),
             ]));
-        } else if let Some(scope) = super::conveyed_scope(self.conveys, target) {
+        } else if let Some(scope) = super::conveyed_scope(self.ctx.conveys, target) {
             // wild-hyk: the target sits under a declared conveys input path,
             // so the unknown slot is forwarded not interpreted: record a
             // conveyance claim scoped to the covering declared path instead
             // of the incomplete-demand refusal. The claim never exempts
             // validation — the forwarded input stays a required opaque
             // in-slot, and check still refuses a newly introduced one.
-            self.demand.push(formats::obj(vec![
-                ("consumer", formats::s(&self.crate_name)),
+            self.out.demand.push(formats::obj(vec![
+                ("consumer", formats::s(&self.ctx.crate_name)),
                 ("called", formats::s(target)),
                 (
                     "alias",
@@ -137,13 +137,13 @@ impl<'a> SourceWalk<'a> {
                 ("scope", formats::s(&scope)),
             ]));
             let loc = span.start();
-            self.locations.push(formats::obj(vec![
+            self.out.locations.push(formats::obj(vec![
                 ("slot", formats::s(target)),
                 ("file", formats::s(&self.current_file)),
                 ("line", formats::i(loc.line as i64)),
                 ("col", formats::i(loc.column as i64)),
             ]));
-        } else if let Some(scope) = super::conveyed_scope(self.on_absent, target) {
+        } else if let Some(scope) = super::conveyed_scope(self.ctx.on_absent, target) {
             // wild-adc: the target sits under a declared on_absent input
             // path, so the absent demand records a scoped fallible-absence
             // outcome instead of the incomplete-demand refusal — the
@@ -151,8 +151,8 @@ impl<'a> SourceWalk<'a> {
             // handles that. The claim never exempts validation: the slot
             // stays a required in-slot, and check still refuses a newly
             // introduced one.
-            self.demand.push(formats::obj(vec![
-                ("consumer", formats::s(&self.crate_name)),
+            self.out.demand.push(formats::obj(vec![
+                ("consumer", formats::s(&self.ctx.crate_name)),
                 ("called", formats::s(target)),
                 (
                     "alias",
@@ -167,7 +167,7 @@ impl<'a> SourceWalk<'a> {
                 ("scope", formats::s(&scope)),
             ]));
             let loc = span.start();
-            self.locations.push(formats::obj(vec![
+            self.out.locations.push(formats::obj(vec![
                 ("slot", formats::s(target)),
                 ("file", formats::s(&self.current_file)),
                 ("line", formats::i(loc.line as i64)),
@@ -237,9 +237,9 @@ fn recorded_return_ty(output: &syn::ReturnType) -> Option<String> {
 
 fn qualify(walk: &SourceWalk, prefix: &[String], suffix: &str) -> String {
     if prefix.is_empty() {
-        format!("{}::{suffix}", walk.crate_name)
+        format!("{}::{suffix}", walk.ctx.crate_name)
     } else {
-        format!("{}::{}::{suffix}", walk.crate_name, prefix.join("::"))
+        format!("{}::{}::{suffix}", walk.ctx.crate_name, prefix.join("::"))
     }
 }
 
@@ -251,7 +251,7 @@ fn scan_items(walk: &mut SourceWalk, items: &[syn::Item], prefix: Vec<String>) {
                     if let Some(ty) = recorded_return_ty(&f.sig.output) {
                         // key: fn target; value: crate-qualified type target
                         // (declaring module base + return type name)
-                        walk.fn_return_tys.insert(
+                        walk.out.fn_return_tys.insert(
                             qualify(walk, &prefix, &f.sig.ident.to_string()),
                             qualify(walk, &prefix, &ty),
                         );
@@ -349,7 +349,7 @@ impl<'a> SourceWalk<'a> {
                         let head = parts.drain(..1).next().unwrap_or_default();
                         let rest: Vec<&str> = parts.iter().map(String::as_str).collect();
                         if let Some((fn_target, _)) = self.bounded_target(&head, &rest) {
-                            if let Some(type_target) = self.fn_return_tys.get(&fn_target) {
+                            if let Some(type_target) = self.out.fn_return_tys.get(&fn_target) {
                                 return ReceiverOutcome::ResolvedType(type_target.clone());
                             }
                         }

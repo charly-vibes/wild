@@ -67,6 +67,7 @@ pub struct ExtractionOutcome {
     pub slot_names: Vec<String>,
 }
 
+#[derive(Clone)]
 struct Diagnostic {
     code: &'static str,
     severity: &'static str,
@@ -405,29 +406,15 @@ fn opaque_type(item: &impl ToTokens) -> Value {
     ])
 }
 
-/// Walk one crate's source with syn, collecting slots, demand, and gaps.
-struct SourceWalk<'a> {
+/// Immutable per-crate walk inputs, borrowed for the walk's lifetime.
+struct WalkCtx<'a> {
     crate_name: String,
     dep_names: &'a [String],
     versions: &'a BTreeMap<String, String>,
-    alias_map: BTreeMap<String, String>,
-    module_prefix: Vec<String>,
-    slots: Vec<SlotRecord>,
-    demand: Vec<Value>,
-    diagnostics: Vec<Diagnostic>,
-    locations: Vec<Value>,
-    complete: bool,
-    callee_spans: BTreeSet<(usize, usize)>,
-    current_file: String,
     /// committed bundle bytes, consulted to resolve non-inline module
     /// files (wild-cdp.4) — resolution happens only against files the
     /// bundle actually carries, never the host filesystem
     loaded: &'a BTreeMap<String, Vec<u8>>,
-    /// capture identifiers parsed from whitelisted macro format-string
-    /// literals (add-format-args-demand-support, design decision 4). Alias
-    /// named captures are disclosed in the walk; these feed the leaf-name
-    /// check at demand-resolution time.
-    capture_idents: Vec<String>,
     /// declared conveys input paths (wild-hyk): unknown demand targets at
     /// these paths record a scoped conveyance claim instead of the
     /// incomplete-demand refusal
@@ -436,6 +423,22 @@ struct SourceWalk<'a> {
     /// paths record a scoped fallible-absence outcome instead of the
     /// incomplete-demand refusal; the slot stays required
     on_absent: &'a [String],
+}
+
+/// Mutable per-crate walk outputs, merged into the accumulator after the
+/// walk.
+struct WalkOut {
+    slots: Vec<SlotRecord>,
+    demand: Vec<Value>,
+    diagnostics: Vec<Diagnostic>,
+    locations: Vec<Value>,
+    complete: bool,
+    callee_spans: BTreeSet<(usize, usize)>,
+    /// capture identifiers parsed from whitelisted macro format-string
+    /// literals (add-format-args-demand-support, design decision 4). Alias
+    /// named captures are disclosed in the walk; these feed the leaf-name
+    /// check at demand-resolution time.
+    capture_idents: Vec<String>,
     /// syntactic return types of inventoried public free fns and public
     /// inherent impl methods (wild-158 D1): fn target → crate-qualified
     /// type target, recorded by a per-file pre-pass so one-hop constructor
@@ -443,24 +446,38 @@ struct SourceWalk<'a> {
     fn_return_tys: BTreeMap<String, String>,
 }
 
+/// Walk one crate's source with syn, collecting slots, demand, and gaps.
+struct SourceWalk<'a> {
+    ctx: WalkCtx<'a>,
+    alias_map: BTreeMap<String, String>,
+    module_prefix: Vec<String>,
+    current_file: String,
+    out: WalkOut,
+}
+
 impl<'a> SourceWalk<'a> {
-    fn gap(&mut self, code: &'static str, reason: String, complete_killer: bool) {
+    /// Record a gap diagnostic; returns what was recorded. A
+    /// complete-killer marks the inventory incomplete (explicit and
+    /// uncuring).
+    fn gap(&mut self, code: &'static str, reason: String, complete_killer: bool) -> Diagnostic {
         if complete_killer {
-            self.complete = false;
+            self.out.complete = false;
         }
-        self.diagnostics.push(Diagnostic {
+        let diagnostic = Diagnostic {
             code,
             severity: if complete_killer { "error" } else { "warning" },
             source: Some(self.current_file.clone()),
             reason,
-        });
+        };
+        self.out.diagnostics.push(diagnostic.clone());
+        diagnostic
     }
 
     /// meaning id for a `crate::path` target from crate identity.
     fn meaning_of(&self, target: &str) -> Option<String> {
         let mut parts = target.split("::");
         let crate_name = parts.next()?;
-        let version = self.versions.get(crate_name)?;
+        let version = self.ctx.versions.get(crate_name)?;
         let mut meaning = format!("{crate_name}.{version}");
         for seg in parts {
             meaning.push('.');
@@ -475,12 +492,20 @@ impl<'a> SourceWalk<'a> {
     /// crate is somehow unversioned.
     fn meaning_for_slot(&self, slot_name: &str) -> String {
         self.meaning_of(slot_name)
-            .unwrap_or_else(|| format!("{}.{}", self.crate_name, slot_name.replace("::", ".")))
+            .unwrap_or_else(|| format!("{}.{}", self.ctx.crate_name, slot_name.replace("::", ".")))
     }
 
-    fn record_slot(&mut self, name: String, meaning: String, ty: Value, span: proc_macro2::Span) {
+    /// Record one slot with its provenance location; returns the location
+    /// record.
+    fn record_slot(
+        &mut self,
+        name: String,
+        meaning: String,
+        ty: Value,
+        span: proc_macro2::Span,
+    ) -> Value {
         let loc = span.start();
-        self.slots.push(SlotRecord {
+        self.out.slots.push(SlotRecord {
             name,
             meaning,
             ty,
@@ -491,35 +516,25 @@ impl<'a> SourceWalk<'a> {
             ("file", formats::s(&self.current_file)),
             ("line", formats::i(loc.line as i64)),
             ("col", formats::i(loc.column as i64)),
-        ]));
+        ]);
+        self.out.locations.push(location.clone());
+        location
     }
 
     /// Inventory a public non-function declaration as an opaque slot with
     /// a formatting-invariant fingerprint; cfg-gated declarations also
     /// produce a gap because visibility cannot be established for a
-    /// conditionally compiled item.
+    /// conditionally compiled item. Returns the location record.
     fn opaque_pub_item(
         &mut self,
         ident: &proc_macro2::Ident,
         node: &impl ToTokens,
         cfg_gated: bool,
-    ) {
+    ) -> Value {
         let slot_name = self.slot_name(&ident.to_string());
-        let meaning = format!("{}.{}", self.crate_name, slot_name.replace("::", "."));
-        let span = ident.span();
-        let loc = span.start();
-        self.slots.push(SlotRecord {
-            ty: opaque_type(node),
-            name: slot_name.clone(),
-            meaning,
-            on_absent: None,
-        });
-        self.locations.push(formats::obj(vec![
-            ("slot", formats::s(&slot_name)),
-            ("file", formats::s(&self.current_file)),
-            ("line", formats::i(loc.line as i64)),
-            ("col", formats::i(loc.column as i64)),
-        ]));
+        let meaning = format!("{}.{}", self.ctx.crate_name, slot_name.replace("::", "."));
+        let location =
+            self.record_slot(slot_name.clone(), meaning, opaque_type(node), ident.span());
         if cfg_gated {
             self.gap(
                 "unsupported-construct",
@@ -527,24 +542,110 @@ impl<'a> SourceWalk<'a> {
                 true,
             );
         }
+        location
     }
 
     fn slot_name(&self, suffix: &str) -> String {
         if self.module_prefix.is_empty() {
-            format!("{}::{suffix}", self.crate_name)
+            format!("{}::{suffix}", self.ctx.crate_name)
         } else {
             format!(
                 "{}::{}::{suffix}",
-                self.crate_name,
+                self.ctx.crate_name,
                 self.module_prefix.join("::")
             )
         }
     }
+}
 
-    fn path_key(path: &syn::Path) -> (usize, usize) {
-        let start = path.span().start();
-        (start.line, start.column)
+/// Span identity of a path expression: (line, column) of its start, used
+/// to recognize already-recorded callees.
+fn path_key(path: &syn::Path) -> (usize, usize) {
+    let start = path.span().start();
+    (start.line, start.column)
+}
+
+/// Pure: the `::`-joined callee of a path expression.
+fn path_callee(path: &syn::Path) -> String {
+    path.segments
+        .iter()
+        .map(|s| s.ident.to_string())
+        .collect::<Vec<_>>()
+        .join("::")
+}
+
+/// Pure classification of an expression path against demand resolution:
+/// a demand-shaped path never seen as a direct callee is an unsupported
+/// function-pointer flow (gap); a multi-segment path outside that shape
+/// records demand through bounded resolution (wild-158 D2); anything
+/// else is ignored here.
+enum PathDemand {
+    Gap(String),
+    Record(String),
+    Ignored,
+}
+
+fn expr_path_demand(
+    path: &syn::Path,
+    alias_map: &BTreeMap<String, String>,
+    dep_names: &[String],
+    callee_spans: &BTreeSet<(usize, usize)>,
+) -> PathDemand {
+    let callee = path_callee(path);
+    let recorded = callee_spans.contains(&path_key(path));
+    let is_demand_shaped = alias_map.contains_key(callee.as_str())
+        || dep_names
+            .iter()
+            .any(|d| callee.starts_with(&format!("{d}::")));
+    if is_demand_shaped && !recorded {
+        PathDemand::Gap(format!(
+            "function-pointer flow `{callee}` is outside the supported demand profile"
+        ))
+    } else if !is_demand_shaped && callee.contains("::") && !recorded {
+        // multi-segment expression paths (e.g. enum-variant paths in
+        // expression position, wild-158 D2) record demand through the
+        // same bounded resolution as direct calls — never silently
+        // skipped, never invented
+        PathDemand::Record(callee)
+    } else {
+        PathDemand::Ignored
     }
+}
+
+/// Pure: a struct-literal path records demand through bounded resolution
+/// when it is crate-qualified and carries no qualified-self (wild-158 D2).
+fn struct_demand(node: &syn::ExprStruct) -> Option<String> {
+    if node.qself.is_some() {
+        return None;
+    }
+    let callee = path_callee(&node.path);
+    if callee.contains("::") {
+        Some(callee)
+    } else {
+        None
+    }
+}
+
+/// Pure: the reasons a macro item records — its unexpanded body may hide
+/// declarations and usages the profile cannot inventory. Never descended.
+fn item_macro_reasons(node: &syn::ItemMacro) -> Vec<(&'static str, String)> {
+    let head = node
+        .mac
+        .path
+        .segments
+        .last()
+        .map(|s| s.ident.to_string())
+        .unwrap_or_default();
+    vec![
+        (
+            "unsupported-construct",
+            format!("macro `{head}!` may generate declarations the profile cannot inventory"),
+        ),
+        (
+            "incomplete-demand",
+            format!("macro `{head}!` may introduce usages the profile cannot inventory"),
+        ),
+    ]
 }
 
 // The visit lifetime ('b) is independent of the borrowed-context
@@ -553,107 +654,12 @@ impl<'a> SourceWalk<'a> {
 // visitor (add-std-macro-demand-support, design decision 3).
 impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
     fn visit_item_mod(&mut self, node: &'b syn::ItemMod) {
-        let name = node.ident.to_string();
-        let is_public = matches!(node.vis, syn::Visibility::Public(_));
-        let cfg_gated = node.attrs.iter().any(attr_is_cfg);
-        if is_public && cfg_gated {
-            self.gap(
-                "unsupported-construct",
-                format!("cfg-gated module `{name}` is outside cfg-dependent analysis"),
-                true,
-            );
-        }
-        match &node.content {
-            Some((_, _items)) if is_public && !cfg_gated => {
-                self.module_prefix.push(name);
-                syn::visit::visit_item_mod(self, node);
-                self.module_prefix.pop();
-            }
-            None => {
-                if !is_public {
-                    // private modules carry no public API surface, exactly
-                    // like the private inline branch below
-                    return;
-                }
-                mod_files::resolve_mod_file(self, &name, cfg_gated);
-            }
-            // private modules carry no public API surface
-            Some((_, _items)) => {}
-        }
+        self.enter_item_mod(node);
     }
 
     fn visit_item_fn(&mut self, node: &'b syn::ItemFn) {
-        let is_public = matches!(node.vis, syn::Visibility::Public(_));
-        let name = node.sig.ident.to_string();
-        if is_public {
-            let has_cfg = node.attrs.iter().any(attr_is_cfg);
-            let shape_supported = !has_cfg
-                && node.sig.generics.params.is_empty()
-                && node.sig.constness.is_none()
-                && node.sig.asyncness.is_none()
-                && node.sig.unsafety.is_none()
-                && node.sig.abi.is_none();
-            let mut args_ok = true;
-            let mut arg_types: Vec<Value> = Vec::new();
-            for input in &node.sig.inputs {
-                if matches!(input, syn::FnArg::Receiver(_)) {
-                    args_ok = false;
-                    break;
-                }
-                match input {
-                    syn::FnArg::Typed(typed) => match scalar_type(&typed.ty) {
-                        Some(t) => arg_types.push(t),
-                        None => {
-                            args_ok = false;
-                            break;
-                        }
-                    },
-                    _ => {
-                        args_ok = false;
-                        break;
-                    }
-                }
-            }
-            let result_ok = match &node.sig.output {
-                syn::ReturnType::Default => Some(scalar_named("unit")),
-                syn::ReturnType::Type(_, ty) => scalar_type(ty),
-            };
-            // wild-73j: a non-scalar return type is as unsupported as a
-            // non-scalar argument — it must take the opaque-slot gap branch,
-            // never reach the supported branch below.
-            if let Some(result_ok) = result_ok.filter(|_| shape_supported && args_ok) {
-                let qualified = if self.module_prefix.is_empty() {
-                    name.clone()
-                } else {
-                    format!("{}::{}", self.module_prefix.join("::"), name)
-                };
-                let target = format!("{}::{}", self.crate_name, qualified);
-                let meaning = self
-                    .meaning_of(&target)
-                    .unwrap_or_else(|| format!("{}.{}", self.crate_name, qualified));
-                self.record_slot(
-                    self.slot_name(&name),
-                    meaning,
-                    function_type(arg_types, result_ok),
-                    node.sig.ident.span(),
-                );
-            } else {
-                let slot_name = self.slot_name(&name);
-                let meaning = format!("{}.{}", self.crate_name, slot_name.replace("::", "."));
-                self.slots.push(SlotRecord {
-                    ty: opaque_type(node),
-                    name: slot_name.clone(),
-                    meaning,
-                    on_absent: None,
-                });
-                self.gap(
-                    "unsupported-construct",
-                    format!(
-                        "public function `{slot_name}` is outside the {PROFILE} signature subset"
-                    ),
-                    true,
-                );
-            }
+        if matches!(node.vis, syn::Visibility::Public(_)) {
+            self.record_fn_slot(node);
         }
         syn::visit::visit_item_fn(self, node);
     }
@@ -711,23 +717,9 @@ impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
     }
 
     fn visit_item_macro(&mut self, node: &'b syn::ItemMacro) {
-        let head = node
-            .mac
-            .path
-            .segments
-            .last()
-            .map(|s| s.ident.to_string())
-            .unwrap_or_default();
-        self.gap(
-            "unsupported-construct",
-            format!("macro `{head}!` may generate declarations the profile cannot inventory"),
-            true,
-        );
-        self.gap(
-            "incomplete-demand",
-            format!("macro `{head}!` may introduce usages the profile cannot inventory"),
-            true,
-        );
+        for (code, reason) in item_macro_reasons(node) {
+            self.gap(code, reason, true);
+        }
         // deliberately not descended: macro bodies are unexpanded input
     }
 
@@ -767,33 +759,19 @@ impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
     }
 
     fn visit_expr_path(&mut self, node: &'b syn::ExprPath) {
-        let callee: String = node
-            .path
-            .segments
-            .iter()
-            .map(|s| s.ident.to_string())
-            .collect::<Vec<_>>()
-            .join("::");
-        let is_demand_shaped = self.alias_map.contains_key(callee.as_str())
-            || self
-                .dep_names
-                .iter()
-                .any(|d| callee.starts_with(&format!("{d}::")));
-        if is_demand_shaped && !self.callee_spans.contains(&Self::path_key(&node.path)) {
-            self.gap(
-                "incomplete-demand",
-                format!("function-pointer flow `{callee}` is outside the supported demand profile"),
-                true,
-            );
-        } else if !is_demand_shaped
-            && callee.contains("::")
-            && !self.callee_spans.contains(&Self::path_key(&node.path))
-        {
-            // multi-segment expression paths (e.g. enum-variant paths in
-            // expression position, wild-158 D2) record demand through the
-            // same bounded resolution as direct calls — never silently
-            // skipped, never invented
-            self.record_demand(&callee, node.path.span());
+        match expr_path_demand(
+            &node.path,
+            &self.alias_map,
+            self.ctx.dep_names,
+            &self.out.callee_spans,
+        ) {
+            PathDemand::Gap(reason) => {
+                self.gap("incomplete-demand", reason, true);
+            }
+            PathDemand::Record(callee) => {
+                self.record_demand(&callee, node.path.span());
+            }
+            PathDemand::Ignored => {}
         }
         syn::visit::visit_expr_path(self, node);
     }
@@ -937,35 +915,39 @@ fn walk_crates(
             out.complete = false;
         }
         let mut walk = SourceWalk {
-            crate_name: manifest.name.clone(),
-            dep_names: &manifest.deps,
-            versions,
+            ctx: WalkCtx {
+                crate_name: manifest.name.clone(),
+                dep_names: &manifest.deps,
+                versions,
+                loaded,
+                conveys: &conveys,
+                on_absent: &on_absent,
+            },
             alias_map,
             module_prefix: Vec::new(),
-            slots: Vec::new(),
-            demand: Vec::new(),
-            diagnostics: Vec::new(),
-            locations: Vec::new(),
-            complete: true,
-            callee_spans: BTreeSet::new(),
             current_file: manifest.source_path.clone(),
-            loaded,
-            capture_idents: Vec::new(),
-            fn_return_tys: BTreeMap::new(),
-            conveys: &conveys,
-            on_absent: &on_absent,
+            out: WalkOut {
+                slots: Vec::new(),
+                demand: Vec::new(),
+                diagnostics: Vec::new(),
+                locations: Vec::new(),
+                complete: true,
+                callee_spans: BTreeSet::new(),
+                capture_idents: Vec::new(),
+                fn_return_tys: BTreeMap::new(),
+            },
         };
         // per-file pre-pass: record syntactic return types before the
         // demand walk so use sites see declarations declared later in the
         // same file (wild-158 D1, bounded shapes only)
         SourceWalk::scan_fn_returns(&mut walk, &file.items);
         walk.visit_file(&file);
-        out.complete = out.complete && walk.complete;
-        out.slots.append(&mut walk.slots);
-        out.demand.append(&mut walk.demand);
-        out.diagnostics.append(&mut walk.diagnostics);
-        out.locations.append(&mut walk.locations);
-        for ident in walk.capture_idents {
+        out.complete = out.complete && walk.out.complete;
+        out.slots.append(&mut walk.out.slots);
+        out.demand.append(&mut walk.out.demand);
+        out.diagnostics.append(&mut walk.out.diagnostics);
+        out.locations.append(&mut walk.out.locations);
+        for ident in walk.out.capture_idents {
             out.captures.push(CaptureRef {
                 ident,
                 crate_name: manifest.name.clone(),

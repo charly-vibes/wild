@@ -212,13 +212,15 @@ fn resolve_and_inspect(
     if !baseline.status.success() {
         let stderr = tail(&baseline.stderr);
         let report = report_record(
-            plan_digest,
-            authority_digest,
-            &package,
-            &release,
-            None,
-            None,
-            None,
+            &ReportId {
+                plan_digest,
+                authority_digest,
+                package: &package,
+                release: &release,
+                actual_version: None,
+                actual_digest: None,
+                lock_source: None,
+            },
             "refused",
             vec![diagnostic(
                 "baseline-failed",
@@ -268,13 +270,15 @@ fn resolve_and_inspect(
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
         let report = report_record(
-            plan_digest,
-            authority_digest,
-            &package,
-            &release,
-            None,
-            None,
-            None,
+            &ReportId {
+                plan_digest,
+                authority_digest,
+                package: &package,
+                release: &release,
+                actual_version: None,
+                actual_digest: None,
+                lock_source: None,
+            },
             "refused",
             vec![diagnostic(
                 "host-resolution-failed",
@@ -316,14 +320,16 @@ fn resolve_and_inspect(
     let evaluated = validate_and_deliver(
         plan,
         authority,
-        workspace,
-        output_dir,
         plan_digest,
         authority_digest,
         &package,
-        &cargo_home,
-        &baseline_lock_text,
         facts,
+        &EvalEnv {
+            workspace,
+            output_dir,
+            cargo_home: &cargo_home,
+            baseline_lock_text: &baseline_lock_text,
+        },
     )?;
     write_report(output_dir, &evaluated.report)?;
     Ok(evaluated)
@@ -444,13 +450,15 @@ fn inspect_facts(
 
     if !diagnostics.is_empty() {
         let report = report_record(
-            plan_digest,
-            authority_digest,
-            package,
-            release,
-            Some(&actual_version),
-            actual_digest.as_deref(),
-            lock_source.as_deref(),
+            &ReportId {
+                plan_digest,
+                authority_digest,
+                package,
+                release,
+                actual_version: Some(&actual_version),
+                actual_digest: actual_digest.as_deref(),
+                lock_source: lock_source.as_deref(),
+            },
             "refused",
             diagnostics,
             plan.get("pending_checks").cloned().unwrap_or(Value::Null),
