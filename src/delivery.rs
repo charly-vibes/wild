@@ -232,8 +232,8 @@ pub(crate) fn validate_and_deliver(
     // and refuse delivery in this first profile.
     let lock_text = std::fs::read_to_string(env.workspace.join("Cargo.lock"))
         .map_err(|e| format!("input-mismatch: resolved lock unreadable: {e}"))?;
-    let closure = closure_entries(&lock_text, baseline_lock_text, plan, package, &consumer)?;
-    state = match closure_check(&closure, &stage, output_dir, state)? {
+    let closure = closure_entries(&lock_text, env.baseline_lock_text, plan, package, &consumer)?;
+    state = match closure_check(&closure, &stage, env, state)? {
         Ok(evidence) => evidence,
         Err(refusal) => return Ok(refusal),
     };
@@ -246,8 +246,7 @@ pub(crate) fn validate_and_deliver(
         Err(refusal) => return Ok(refusal),
     };
     deliver(
-        plan,
-        output_dir,
+        env,
         &stage,
         &manifest_rel,
         &closure,
@@ -556,7 +555,12 @@ fn deliver(
     }
     let diff_digest =
         formats::sha256_digest(formats::canonical(&formats::arr(diff.clone())).as_bytes());
-    if let Err(msg) = persist_pinned(output_dir, &manifest_after, &lock_after, &migration_files) {
+    if let Err(msg) = persist_pinned(
+        env.output_dir,
+        &manifest_after,
+        &lock_after,
+        &migration_files,
+    ) {
         // Failed output persistence cannot deliver: record the error cause
         // with zero delivered-update claim.
         let evaluated = stage.refusal(

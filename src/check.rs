@@ -1017,23 +1017,26 @@ fn evaluate_obligations_for(
         )
     });
 
-    let (obl_entries, obl_changes, covered, law_methods, obl_definite, obl_unknown) =
-        evaluate_obligations(
-            &obligations,
-            transition.as_ref(),
-            &consumer,
-            &base,
-            &candidate,
-            &base_files
-                .iter()
-                .map(|(_, d)| d.clone())
-                .collect::<Vec<_>>(),
-            &cand_files
-                .iter()
-                .map(|(_, d)| d.clone())
-                .collect::<Vec<_>>(),
-            law.as_ref(),
-        )?;
+    let (entries, changes, covered, law_methods, definite, unknown) = evaluate_obligations(
+        &eval.obligations,
+        eval.transition.as_ref(),
+        &eval.consumer,
+        &eval.base.outcome,
+        &eval.candidate.outcome,
+        &eval
+            .base
+            .files
+            .iter()
+            .map(|(_, d)| d.clone())
+            .collect::<Vec<_>>(),
+        &eval
+            .candidate
+            .files
+            .iter()
+            .map(|(_, d)| d.clone())
+            .collect::<Vec<_>>(),
+        law.as_ref(),
+    )?;
     // A policy that requires law evidence cannot be satisfied by a proposed
     // obligation: the evidence requirement is unmet (Unknown), never an
     // error, and the proposed obligation is still not enforced.
@@ -1078,12 +1081,13 @@ fn decide(eval: &CheckEval<'_>, slots: &SlotResults, obl: &ObligationResults) ->
     // conveyance claim narrows what is interpreted, never what is validated:
     // a newly introduced conveyed required input refuses like any gap
     // (wild-hyk, scoped_substitution unchanged).
-    let has_side_gap = !base.complete_inventory || !candidate.complete_inventory;
-    let has_conveyed_new_input = !conveyance.new_input_diagnostics.is_empty();
-    let has_absent_new_input = !absence.new_input_diagnostics.is_empty();
-    diagnostics.extend(conveyance.new_input_diagnostics);
-    diagnostics.extend(absence.new_input_diagnostics);
-    let any_removed_or_broken = verdicts.iter().any(|v| {
+    let has_side_gap =
+        !eval.base.outcome.complete_inventory || !eval.candidate.outcome.complete_inventory;
+    let has_conveyed_new_input = !slots.conveyance.new_input_diagnostics.is_empty();
+    let has_absent_new_input = !slots.absent_new_inputs.is_empty();
+    diagnostics.extend(slots.conveyance.new_input_diagnostics.clone());
+    diagnostics.extend(slots.absent_new_inputs.clone());
+    let any_removed_or_broken = slots.verdicts.iter().any(|v| {
         let verdict = v.str_field("verdict").unwrap_or_default();
         (verdict == "removed" || verdict == "broken")
             && !v
@@ -1137,7 +1141,11 @@ fn decide(eval: &CheckEval<'_>, slots: &SlotResults, obl: &ObligationResults) ->
         ("law_methods", formats::arr(obl.law_methods.clone())),
         (
             "base",
-            side_summary(&base_root, &base, &base_contract_bytes),
+            side_summary(
+                &eval.base.root,
+                &eval.base.outcome,
+                &slots.base_contract_bytes,
+            ),
         ),
         (
             "candidate",

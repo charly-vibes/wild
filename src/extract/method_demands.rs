@@ -61,8 +61,11 @@ impl<'a> SourceWalk<'a> {
                 Some(head.to_string()),
             ));
         }
-        if head == "crate" || head == self.crate_name {
-            return Some((format!("{}::{}", self.crate_name, rest.join("::")), None));
+        if head == "crate" || head == self.ctx.crate_name {
+            return Some((
+                format!("{}::{}", self.ctx.crate_name, rest.join("::")),
+                None,
+            ));
         }
         if head == "self" || head == "Self" || head == "super" {
             // `self`/`Self`/`super`-qualified paths need scope knowledge the
@@ -296,7 +299,8 @@ fn scan_impl(walk: &mut SourceWalk, imp: &syn::ItemImpl, prefix: &[String]) {
         }
         let target = qualify(walk, prefix, &format!("{ty_name}::{}", m.sig.ident));
         if let Some(ty) = recorded_return_ty(&m.sig.output) {
-            walk.fn_return_tys
+            walk.out
+                .fn_return_tys
                 .insert(target, qualify(walk, prefix, &ty));
         }
     }

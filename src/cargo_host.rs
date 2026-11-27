@@ -26,7 +26,7 @@
 //   slice already uses a fresh CARGO_HOME, offline mode, bounded waits,
 //   and never passes --ignore-rust-version.
 
-use crate::delivery::{report_record, validate_and_deliver};
+use crate::delivery::{report_record, validate_and_deliver, EvalEnv, ReportId};
 use crate::formats::{self, Value};
 use crate::update::{confined, diagnostic};
 use std::path::{Path, PathBuf};

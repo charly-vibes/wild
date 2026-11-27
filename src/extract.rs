@@ -511,8 +511,11 @@ impl<'a> SourceWalk<'a> {
             ty,
             on_absent: None,
         });
-        self.locations.push(formats::obj(vec![
-            ("slot", formats::s(&self.slots.last().expect("pushed").name)),
+        let location = formats::obj(vec![
+            (
+                "slot",
+                formats::s(&self.out.slots.last().expect("pushed").name),
+            ),
             ("file", formats::s(&self.current_file)),
             ("line", formats::i(loc.line as i64)),
             ("col", formats::i(loc.column as i64)),
@@ -744,16 +747,8 @@ impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
 
     fn visit_expr_call(&mut self, node: &'b syn::ExprCall) {
         if let syn::Expr::Path(path) = &*node.func {
-            let callee: String = path
-                .path
-                .segments
-                .iter()
-                .map(|s| s.ident.to_string())
-                .collect::<Vec<_>>()
-                .join("::");
-            let key = Self::path_key(&path.path);
-            self.callee_spans.insert(key);
-            self.record_demand(&callee, path.path.span());
+            self.out.callee_spans.insert(path_key(&path.path));
+            self.record_demand(&path_callee(&path.path), path.path.span());
         }
         syn::visit::visit_expr_call(self, node);
     }
@@ -777,22 +772,123 @@ impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
     }
 
     fn visit_expr_struct(&mut self, node: &'b syn::ExprStruct) {
-        if node.qself.is_none() {
-            let callee: String = node
-                .path
-                .segments
-                .iter()
-                .map(|s| s.ident.to_string())
-                .collect::<Vec<_>>()
-                .join("::");
-            if callee.contains("::") {
-                // struct-literal constructions (including enum-variant
-                // struct variants, wild-158 D2) record demand through the
-                // same bounded resolution as direct calls
-                self.record_demand(&callee, node.path.span());
-            }
+        if let Some(callee) = struct_demand(node) {
+            self.record_demand(&callee, node.path.span());
         }
         syn::visit::visit_expr_struct(self, node);
+    }
+}
+
+impl<'a> SourceWalk<'a> {
+    /// Enter a module item: record the cfg gap for cfg-gated public
+    /// modules, descend inline public modules under the pushed module
+    /// prefix, resolve non-inline public modules against committed bundle
+    /// files (wild-cdp.4), and skip private modules — they carry no
+    /// public API surface, exactly like the private inline branch.
+    /// Returns whether the inline public branch was entered (module
+    /// context pushed and popped here).
+    fn enter_item_mod(&mut self, node: &syn::ItemMod) -> bool {
+        let name = node.ident.to_string();
+        let is_public = matches!(node.vis, syn::Visibility::Public(_));
+        let cfg_gated = node.attrs.iter().any(attr_is_cfg);
+        if is_public && cfg_gated {
+            self.gap(
+                "unsupported-construct",
+                format!("cfg-gated module `{name}` is outside cfg-dependent analysis"),
+                true,
+            );
+        }
+        match &node.content {
+            Some((_, _items)) if is_public && !cfg_gated => {
+                self.module_prefix.push(name);
+                syn::visit::visit_item_mod(self, node);
+                self.module_prefix.pop();
+                true
+            }
+            None => {
+                if !is_public {
+                    return false;
+                }
+                mod_files::resolve_mod_file(self, &name, cfg_gated);
+                false
+            }
+            Some((_, _items)) => false,
+        }
+    }
+
+    /// Inventory one public function item: the supported scalar-signature
+    /// subset records a typed slot (wild-73j: a non-scalar return type is
+    /// as unsupported as a non-scalar argument — it must take the
+    /// opaque-slot gap branch, never the supported branch); everything
+    /// else records an opaque slot plus an uncuring gap. Returns whether
+    /// the fn was recorded in the supported subset.
+    fn record_fn_slot(&mut self, node: &syn::ItemFn) -> bool {
+        let name = node.sig.ident.to_string();
+        let has_cfg = node.attrs.iter().any(attr_is_cfg);
+        let shape_supported = !has_cfg
+            && node.sig.generics.params.is_empty()
+            && node.sig.constness.is_none()
+            && node.sig.asyncness.is_none()
+            && node.sig.unsafety.is_none()
+            && node.sig.abi.is_none();
+        let mut args_ok = true;
+        let mut arg_types: Vec<Value> = Vec::new();
+        for input in &node.sig.inputs {
+            if matches!(input, syn::FnArg::Receiver(_)) {
+                args_ok = false;
+                break;
+            }
+            match input {
+                syn::FnArg::Typed(typed) => match scalar_type(&typed.ty) {
+                    Some(t) => arg_types.push(t),
+                    None => {
+                        args_ok = false;
+                        break;
+                    }
+                },
+                _ => {
+                    args_ok = false;
+                    break;
+                }
+            }
+        }
+        let result_ok = match &node.sig.output {
+            syn::ReturnType::Default => Some(scalar_named("unit")),
+            syn::ReturnType::Type(_, ty) => scalar_type(ty),
+        };
+        if let Some(result_ok) = result_ok.filter(|_| shape_supported && args_ok) {
+            let qualified = if self.module_prefix.is_empty() {
+                name.clone()
+            } else {
+                format!("{}::{}", self.module_prefix.join("::"), name)
+            };
+            let target = format!("{}::{}", self.ctx.crate_name, qualified);
+            let meaning = self
+                .meaning_of(&target)
+                .unwrap_or_else(|| format!("{}.{}", self.ctx.crate_name, qualified));
+            self.record_slot(
+                self.slot_name(&name),
+                meaning,
+                function_type(arg_types, result_ok),
+                node.sig.ident.span(),
+            );
+            true
+        } else {
+            let slot_name = self.slot_name(&name);
+            let meaning = format!("{}.{}", self.ctx.crate_name, slot_name.replace("::", "."));
+            self.out.slots.push(SlotRecord {
+                ty: opaque_type(node),
+                name: slot_name.clone(),
+                meaning,
+                on_absent: None,
+            });
+            self.gap(
+                "unsupported-construct",
+                format!("public function `{slot_name}` is outside the {PROFILE} signature subset"),
+                true,
+            );
+            false
+        }
     }
 }
 
