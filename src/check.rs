@@ -51,21 +51,13 @@
 //   commitment fields with the real supplied values once laws execute.
 
 use crate::extract::{self, ExtractionOutcome, LOCAL_VERSION, PROFILE};
-use std::collections::BTreeSet;
-use crate::obligations::{
-    build_law_context,
-    evaluate_obligations,
-    finalize_transition,
-    invocation_commitment_value,
-    load_obligations,
-    obligation_diagnostic,
-    parse_law_inputs,
-    validate_obligations_ref,
-    validate_transition_shape,
-    law_required_findings,
-    Obligation,
-};
 use crate::formats::{self, Value};
+use crate::obligations::{
+    build_law_context, evaluate_obligations, finalize_transition, invocation_commitment_value,
+    law_required_findings, load_obligations, obligation_diagnostic, parse_law_inputs,
+    validate_obligations_ref, validate_transition_shape, Obligation,
+};
+use std::collections::BTreeSet;
 
 const CHECK_REQUEST_FIELDS: &[&str] = &[
     "version",
@@ -113,21 +105,20 @@ pub(crate) struct SlotInfo {
     pub(crate) ty: Value,
 }
 
+/// Parsed check request: consumer, base and candidate sides, checker id,
+/// and the two demanded-name lists.
+type CheckRequest = (
+    String,
+    CheckSide,
+    CheckSide,
+    String,
+    Vec<String>,
+    Vec<String>,
+);
+
 /// Validate the check request envelope shape; return the parsed sides and
 /// checker identity. Every refusal is an error-class input.
-fn validate_check_request(
-    request: &Value,
-) -> Result<
-    (
-        String,
-        (String, Vec<(String, String)>),
-        (String, Vec<(String, String)>),
-        String,
-        Vec<String>,
-        Vec<String>,
-    ),
-    String,
-> {
+fn validate_check_request(request: &Value) -> Result<CheckRequest, String> {
     if request.str_field("version")? != LOCAL_VERSION {
         return Err(format!(
             "unsupported protocol version `{}`; expected {LOCAL_VERSION}",
@@ -191,7 +182,9 @@ fn validate_check_request(
 type CheckSide = (String, Vec<(String, String)>);
 
 fn validate_side(request: &Value, side: &str) -> Result<CheckSide, String> {
-    let side_value = request.get(side).ok_or_else(|| format!("missing field `{side}`"))?;
+    let side_value = request
+        .get(side)
+        .ok_or_else(|| format!("missing field `{side}`"))?;
     let entries = match side_value {
         Value::Obj(entries) => entries,
         _ => return Err(format!("`{side}` must be an object")),
@@ -202,7 +195,9 @@ fn validate_side(request: &Value, side: &str) -> Result<CheckSide, String> {
         }
     }
     let bundle_root = side_value.str_field("bundle_root")?.to_string();
-    let files_obj = side_value.get("files").ok_or_else(|| format!("missing `{side}` field `files`"))?;
+    let files_obj = side_value
+        .get("files")
+        .ok_or_else(|| format!("missing `{side}` field `files`"))?;
     let files = match files_obj {
         Value::Obj(file_entries) => {
             let mut out = Vec::new();
@@ -282,10 +277,7 @@ fn synthetic_extraction_request(
         ("kind", formats::s("extraction-request")),
         ("profile", formats::s(PROFILE)),
         ("bundle_root", formats::s(bundle_root)),
-        (
-            "files",
-            Value::Obj(file_pairs.into_iter().map(|(k, v)| (k, v)).collect()),
-        ),
+        ("files", Value::Obj(file_pairs.into_iter().collect())),
         (
             "target",
             formats::s(request.str_field("target").unwrap_or_default()),
@@ -520,7 +512,8 @@ fn judge_slots(
                     continue;
                 }
                 verdict = "removed";
-                reason = "demanded slot is absent from the candidate contract inventory".to_string();
+                reason =
+                    "demanded slot is absent from the candidate contract inventory".to_string();
                 definite_break = true;
                 base_type_field = base_ty.clone();
                 cand_type_field = None;
@@ -540,18 +533,13 @@ fn judge_slots(
                 cand_type_field = None;
             }
         }
-        let mut fields: Vec<(&str, Value)> = Vec::new();
-        fields.push(("called", formats::s(called)));
-        fields.push(("verdict", formats::s(verdict)));
-        fields.push(("reason", formats::s(&reason)));
-        fields.push((
-            "base_type",
-            base_type_field.unwrap_or(Value::Null),
-        ));
-        fields.push((
-            "candidate_type",
-            cand_type_field.unwrap_or(Value::Null),
-        ));
+        let fields: Vec<(&str, Value)> = vec![
+            ("called", formats::s(called)),
+            ("verdict", formats::s(verdict)),
+            ("reason", formats::s(&reason)),
+            ("base_type", base_type_field.unwrap_or(Value::Null)),
+            ("candidate_type", cand_type_field.unwrap_or(Value::Null)),
+        ];
         verdicts.push(formats::obj(fields));
     }
     Ok((
@@ -564,21 +552,14 @@ fn judge_slots(
     ))
 }
 
-fn side_summary(
-    bundle_root: &str,
-    outcome: &ExtractionOutcome,
-    contract_bytes: &[u8],
-) -> Value {
+fn side_summary(bundle_root: &str, outcome: &ExtractionOutcome, contract_bytes: &[u8]) -> Value {
     formats::obj(vec![
         ("bundle_root", formats::s(bundle_root)),
         (
             "complete_inventory",
             Value::Bool(outcome.complete_inventory),
         ),
-        (
-            "diagnostics",
-            formats::arr(outcome.diagnostics.clone()),
-        ),
+        ("diagnostics", formats::arr(outcome.diagnostics.clone())),
         (
             "facts_digest",
             formats::s(&formats::sha256_digest(contract_bytes)),
@@ -659,10 +640,7 @@ fn conveyance_claims(outcome: &ExtractionOutcome) -> Vec<(String, String)> {
     if let Some(entries) = outcome.demand.get("entries").and_then(Value::as_arr) {
         for entry in entries {
             if entry.get("conveyed").and_then(Value::as_bool) == Some(true) {
-                let called = entry
-                    .str_field("called")
-                    .unwrap_or_default()
-                    .to_string();
+                let called = entry.str_field("called").unwrap_or_default().to_string();
                 let scope = entry.str_field("scope").unwrap_or_default().to_string();
                 if !claims.iter().any(|(c, _)| c == &called) {
                     claims.push((called, scope));
@@ -889,8 +867,22 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
     ) = validate_check_request(request)?;
     let obligations = load_request_obligations(request)?;
     let transition = finalize_transition(request, &obligations)?;
-    let base = extract_side(request, "base", &base_root, &base_files, &conveys, &on_absent)?;
-    let candidate = extract_side(request, "candidate", &cand_root, &cand_files, &conveys, &on_absent)?;
+    let base = extract_side(
+        request,
+        "base",
+        &base_root,
+        &base_files,
+        &conveys,
+        &on_absent,
+    )?;
+    let candidate = extract_side(
+        request,
+        "candidate",
+        &cand_root,
+        &cand_files,
+        &conveys,
+        &on_absent,
+    )?;
 
     let (verdicts, demanded_names, passed, total, _has_break_or_unknown, judge_absence_claims) =
         judge_slots(&consumer, &base, &candidate, &on_absent)?;
@@ -943,19 +935,21 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
             &consumer,
             &base,
             &candidate,
-            &base_files.iter().map(|(_, d)| d.clone()).collect::<Vec<_>>(),
-            &cand_files.iter().map(|(_, d)| d.clone()).collect::<Vec<_>>(),
+            &base_files
+                .iter()
+                .map(|(_, d)| d.clone())
+                .collect::<Vec<_>>(),
+            &cand_files
+                .iter()
+                .map(|(_, d)| d.clone())
+                .collect::<Vec<_>>(),
             law.as_ref(),
         )?;
     // A policy that requires law evidence cannot be satisfied by a proposed
     // obligation: the evidence requirement is unmet (Unknown), never an
     // error, and the proposed obligation is still not enforced.
-    let (law_required_reasons, obl_unknown) = law_required_findings(
-        request,
-        &obligations,
-        &consumer,
-        obl_unknown,
-    );
+    let (law_required_reasons, obl_unknown) =
+        law_required_findings(request, &obligations, &consumer, obl_unknown);
 
     let mut diagnostics = assemble_diagnostics(
         &base,
@@ -1045,7 +1039,10 @@ pub fn check(request: &Value) -> Result<CheckOutcome, String> {
         ("obligation_changes", formats::arr(obl_changes)),
         (
             "transition",
-            transition.as_ref().map(|t| t.to_value()).unwrap_or(Value::Null),
+            transition
+                .as_ref()
+                .map(|t| t.to_value())
+                .unwrap_or(Value::Null),
         ),
         (
             "invocation_commitment",
