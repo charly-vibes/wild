@@ -80,7 +80,12 @@ impl Value {
 
 /// Construct an object from ordered (key, value) pairs.
 pub fn obj(entries: Vec<(&str, Value)>) -> Value {
-    Value::Obj(entries.into_iter().map(|(k, v)| (k.to_string(), v)).collect())
+    Value::Obj(
+        entries
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v))
+            .collect(),
+    )
 }
 
 pub fn s(v: &str) -> Value {
@@ -220,7 +225,9 @@ fn parse_number(bytes: &[char], pos: &mut usize) -> Result<Value, String> {
         return Err(format!("leading zero is invalid at char {start}"));
     }
     if matches!(bytes.get(*pos), Some('.') | Some('e') | Some('E')) {
-        return Err(format!("floating-point numbers are invalid at char {start}"));
+        return Err(format!(
+            "floating-point numbers are invalid at char {start}"
+        ));
     }
     let text: String = bytes[start..*pos].iter().collect();
     let int: i64 = text
@@ -268,8 +275,7 @@ fn parse_string(bytes: &[char], pos: &mut usize) -> Result<String, String> {
                             if !(0xdc00..=0xdfff).contains(&low) {
                                 return Err("invalid low surrogate".to_string());
                             }
-                            let combined =
-                                0x10000 + ((cp - 0xd800) << 10) + (low - 0xdc00);
+                            let combined = 0x10000 + ((cp - 0xd800) << 10) + (low - 0xdc00);
                             out.push(char::from_u32(combined).ok_or("invalid surrogate pair")?);
                         } else if (0xdc00..=0xdfff).contains(&cp) {
                             return Err("unpaired low surrogate".to_string());
@@ -372,7 +378,10 @@ pub fn is_digest(text: &str) -> bool {
     let Some(hex) = text.strip_prefix("sha256:") else {
         return false;
     };
-    hex.len() == 64 && hex.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
+    hex.len() == 64
+        && hex
+            .bytes()
+            .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
 }
 
 #[cfg(test)]

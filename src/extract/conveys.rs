@@ -38,9 +38,7 @@ fn validate_path_clause(value: Option<&Value>, field: &str) -> Result<Vec<String
     };
     let items = match value {
         Value::Arr(items) => items,
-        _ => {
-            return Err(format!("`{field}` must be an array of input path strings"))
-        }
+        _ => return Err(format!("`{field}` must be an array of input path strings")),
     };
     let mut paths: Vec<String> = Vec::new();
     for item in items {

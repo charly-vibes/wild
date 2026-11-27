@@ -26,8 +26,8 @@
 //   slice already uses a fresh CARGO_HOME, offline mode, bounded waits,
 //   and never passes --ignore-rust-version.
 
-use crate::formats::{self, Value};
 use crate::delivery::{report_record, validate_and_deliver};
+use crate::formats::{self, Value};
 use crate::update::{confined, diagnostic};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -58,8 +58,9 @@ pub fn evaluate(
     // digests and the same invocation identity the authority declares. An
     // authority file supplied by candidate code carries no trusted pin.
     if pin.str_field("plan_digest")? != plan_digest {
-        return Err("authority-untrusted: the trusted pin does not commit this plan digest"
-            .to_string());
+        return Err(
+            "authority-untrusted: the trusted pin does not commit this plan digest".to_string(),
+        );
     }
     if pin.str_field("authority_digest")? != authority_digest {
         return Err(
@@ -85,8 +86,7 @@ pub fn evaluate(
         .ok_or_else(|| "authority-untrusted: authority carries no allowed actions".to_string())?;
     if !allowed.iter().any(|a| a.as_str() == Some("evaluate")) {
         return Err(
-            "authority-untrusted: the authority does not authorize the evaluate action"
-                .to_string(),
+            "authority-untrusted: the authority does not authorize the evaluate action".to_string(),
         );
     }
 
@@ -96,7 +96,14 @@ pub fn evaluate(
 
     // Disposable workspace; symlink escapes refuse with zero changes made.
     let workspace = make_workspace(&bundle_root)?;
-    let result = resolve_and_inspect(plan, authority, &workspace, output_dir, &plan_digest, &authority_digest);
+    let result = resolve_and_inspect(
+        plan,
+        authority,
+        &workspace,
+        output_dir,
+        &plan_digest,
+        &authority_digest,
+    );
     // Dispose of the workspace on every path; only requested reports remain.
     let _ = std::fs::remove_dir_all(&workspace);
     result
@@ -104,7 +111,9 @@ pub fn evaluate(
 
 fn check_kind(value: &Value, expected: &str) -> Result<(), String> {
     if value.str_field("version")? != "local-1" || value.str_field("kind")? != expected {
-        return Err(format!("input-mismatch: expected a local-1 `{expected}` record"));
+        return Err(format!(
+            "input-mismatch: expected a local-1 `{expected}` record"
+        ));
     }
     Ok(())
 }
@@ -116,10 +125,12 @@ fn verify_preconditions(plan: &Value, bundle_root: &str) -> Result<(), String> {
         .ok_or_else(|| "input-mismatch: plan carries no preconditions".to_string())?;
     for (rel, expected) in preconditions {
         let path = confined(bundle_root, rel, "precondition")?;
-        let bytes = std::fs::read(&path)
-            .map_err(|e| format!("input-mismatch: `{rel}` unreadable: {e}"))?;
+        let bytes =
+            std::fs::read(&path).map_err(|e| format!("input-mismatch: `{rel}` unreadable: {e}"))?;
         let Value::Str(expected) = expected else {
-            return Err(format!("input-mismatch: precondition for `{rel}` is not a digest"));
+            return Err(format!(
+                "input-mismatch: precondition for `{rel}` is not a digest"
+            ));
         };
         if *expected != formats::sha256_digest(&bytes) {
             return Err(format!(
@@ -166,9 +177,8 @@ fn copy_tree(src: &Path, dest: &Path) -> Result<(), String> {
         if meta.is_dir() {
             copy_tree(&path, &target)?;
         } else {
-            std::fs::copy(&path, &target).map_err(|e| {
-                format!("isolation-refused: cannot copy `{}`: {e}", path.display())
-            })?;
+            std::fs::copy(&path, &target)
+                .map_err(|e| format!("isolation-refused: cannot copy `{}`: {e}", path.display()))?;
         }
     }
     Ok(())
@@ -383,10 +393,10 @@ fn inspect_facts(
         actual_digest = Some(artifact_digest(
             workspace,
             &mirror_rel,
-            &package,
+            package,
             &actual_version,
         )?);
-        rust_version = catalog_rust_version(workspace, &mirror_rel, &package, &actual_version)?;
+        rust_version = catalog_rust_version(workspace, &mirror_rel, package, &actual_version)?;
     }
 
     let requested_digest = plan
@@ -405,14 +415,12 @@ fn inspect_facts(
         diagnostics.push(diagnostic(
             "wrong-target",
             "error",
-            &format!(
-                "cargo selected no `{package}` target at all; requested {package}@{release}"
-            ),
+            &format!("cargo selected no `{package}` target at all; requested {package}@{release}"),
         ));
     } else if actual_version != release {
         diagnostics.push(wrong_target_diagnostic(
-            &package,
-            &release,
+            package,
+            release,
             requested_digest.as_deref(),
             &actual_version,
             actual_digest.as_deref(),
@@ -420,8 +428,8 @@ fn inspect_facts(
     } else if let (Some(want), Some(got)) = (&requested_digest, &actual_digest) {
         if want != got {
             diagnostics.push(wrong_target_diagnostic(
-                &package,
-                &release,
+                package,
+                release,
                 Some(want),
                 &actual_version,
                 Some(got),
@@ -682,7 +690,10 @@ fn index_path(workspace: &Path, mirror_rel: &str, package: &str) -> PathBuf {
         0 | 1 => index.join("2").join(package),
         2 => index.join("3").join(package),
         3 => index.join(&package[0..2]).join(package),
-        _ => index.join(&package[0..2]).join(&package[2..4]).join(package),
+        _ => index
+            .join(&package[0..2])
+            .join(&package[2..4])
+            .join(package),
     }
 }
 
@@ -694,9 +705,8 @@ fn catalog_rust_version(
     version: &str,
 ) -> Result<Option<String>, String> {
     let path = index_path(workspace, mirror_rel, package);
-    let text = std::fs::read_to_string(&path).map_err(|e| {
-        format!("missing-evidence: catalog index for `{package}` unavailable: {e}")
-    })?;
+    let text = std::fs::read_to_string(&path)
+        .map_err(|e| format!("missing-evidence: catalog index for `{package}` unavailable: {e}"))?;
     for line in text.lines() {
         if line.trim().is_empty() {
             continue;

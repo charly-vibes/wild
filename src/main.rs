@@ -19,13 +19,21 @@
 //   requested plan file and never executes project or candidate code
 //   (beads wild-nic.1, state transitions 1-2 of the change design).
 
+use wild::cargo_host;
 use wild::check;
 use wild::extract::{self, PROFILE};
 use wild::formats::{self, Value};
-use wild::cargo_host;
 use wild::update;
 
-fn envelope(command: &str, decision: &str, assurance: &str, diagnostics: Vec<Value>, slots: Vec<String>, checker: Value, coverage: (i64, i64)) -> Value {
+fn envelope(
+    command: &str,
+    decision: &str,
+    assurance: &str,
+    diagnostics: Vec<Value>,
+    slots: Vec<String>,
+    checker: Value,
+    coverage: (i64, i64),
+) -> Value {
     let (numerator, denominator) = coverage;
     let ratio_ppm = if denominator > 0 {
         Value::Int(numerator * 1_000_000 / denominator)
@@ -39,7 +47,10 @@ fn envelope(command: &str, decision: &str, assurance: &str, diagnostics: Vec<Val
         ("assurance", formats::s(assurance)),
         ("decision", formats::s(decision)),
         ("tier_reports", formats::arr(Vec::new())),
-        ("slots", formats::arr(slots.into_iter().map(|s| formats::s(&s)).collect())),
+        (
+            "slots",
+            formats::arr(slots.into_iter().map(|s| formats::s(&s)).collect()),
+        ),
         (
             "coverage",
             formats::obj(vec![
@@ -113,8 +124,8 @@ fn run_extract(args: &[String]) -> i32 {
     let outcome: Result<(extract::ExtractionOutcome, Value), String> = (|| {
         let text = std::fs::read_to_string(&request_path)
             .map_err(|e| format!("input-mismatch: request unreadable: {e}"))?;
-        let request = formats::parse(&text)
-            .map_err(|e| format!("input-mismatch: malformed request: {e}"))?;
+        let request =
+            formats::parse(&text).map_err(|e| format!("input-mismatch: malformed request: {e}"))?;
         // v1 envelopes require a checker digest: bind it to the committed
         // extractor identity; an unparseable request cannot supply one
         let checker = request
@@ -204,8 +215,8 @@ fn run_check(args: &[String]) -> i32 {
     let outcome: Result<(check::CheckOutcome, Value), String> = (|| {
         let text = std::fs::read_to_string(&request_path)
             .map_err(|e| format!("input-mismatch: request unreadable: {e}"))?;
-        let request = formats::parse(&text)
-            .map_err(|e| format!("input-mismatch: malformed request: {e}"))?;
+        let request =
+            formats::parse(&text).map_err(|e| format!("input-mismatch: malformed request: {e}"))?;
         // v1 envelopes require a checker digest: bind it to the committed
         // checker identity; an unparseable request cannot supply one
         let checker = request
@@ -287,8 +298,12 @@ fn write_report_outputs(
         .ok_or_else(|| "report path has no parent directory".to_string())?;
     std::fs::create_dir_all(report_dir)
         .map_err(|e| format!("cannot create report directory: {e}"))?;
-    std::fs::write(report_path, formats::canonical(report))
-        .map_err(|e| format!("cannot write requested report `{}`: {e}", report_path.display()))?;
+    std::fs::write(report_path, formats::canonical(report)).map_err(|e| {
+        format!(
+            "cannot write requested report `{}`: {e}",
+            report_path.display()
+        )
+    })?;
     if let Ok((outcome, _)) = outcome {
         for (rel, content) in &outcome.facts {
             let path = report_dir.join("facts").join(rel);
@@ -329,8 +344,8 @@ fn run_update(args: &[String]) -> i32 {
     let outcome: Result<update::PlanOutcome, String> = (|| {
         let text = std::fs::read_to_string(&request_path)
             .map_err(|e| format!("input-mismatch: request unreadable: {e}"))?;
-        let request = formats::parse(&text)
-            .map_err(|e| format!("input-mismatch: malformed request: {e}"))?;
+        let request =
+            formats::parse(&text).map_err(|e| format!("input-mismatch: malformed request: {e}"))?;
         update::plan(&request)
     })();
 
@@ -352,13 +367,13 @@ fn run_update(args: &[String]) -> i32 {
             // Diagnostic kodu mesajın prefixindən çıxarılır (məs. "ambiguous-package: ...").
             let code = msg.split(':').next().unwrap_or("input-mismatch");
             let code_static: &'static str = match code {
-                "ambiguous-package"     => "ambiguous-package",
-                "inherited-range"       => "inherited-range",
-                "unsupported-lock"      => "unsupported-lock",
-                "unsupported-manifest"  => "unsupported-manifest",
-                "unknown-package"       => "unknown-package",
-                "base-changed"          => "base-changed",
-                _                        => "input-mismatch",
+                "ambiguous-package" => "ambiguous-package",
+                "inherited-range" => "inherited-range",
+                "unsupported-lock" => "unsupported-lock",
+                "unsupported-manifest" => "unsupported-manifest",
+                "unknown-package" => "unknown-package",
+                "base-changed" => "base-changed",
+                _ => "input-mismatch",
             };
             let reason = match msg.split_once(": ") {
                 Some((_, rest)) => rest.to_string(),
@@ -402,7 +417,8 @@ fn run_update(args: &[String]) -> i32 {
 fn run_update_evaluate(args: &[String]) -> i32 {
     // args: [prog, update, evaluate, --plan, <file>, --authority, <file>,
     //        --pin, <file>, --output, <dir>]
-    let usage = "usage: wild update evaluate --plan <file> --authority <file> --pin <file> --output <dir>";
+    let usage =
+        "usage: wild update evaluate --plan <file> --authority <file> --pin <file> --output <dir>";
     if args.len() != 11
         || args[3] != "--plan"
         || args[5] != "--authority"
@@ -464,16 +480,20 @@ fn run_update_evaluate(args: &[String]) -> i32 {
             )
         }
         Err(msg) => {
-            let code = msg.split(':').next().unwrap_or("input-mismatch").to_string();
+            let code = msg
+                .split(':')
+                .next()
+                .unwrap_or("input-mismatch")
+                .to_string();
             let code_static: &'static str = match code.as_str() {
-                "authority-untrusted"    => "authority-untrusted",
-                "base-changed"           => "base-changed",
-                "isolation-refused"      => "isolation-refused",
-                "edit-mismatch"          => "edit-mismatch",
+                "authority-untrusted" => "authority-untrusted",
+                "base-changed" => "base-changed",
+                "isolation-refused" => "isolation-refused",
+                "edit-mismatch" => "edit-mismatch",
                 "host-resolution-failed" => "host-resolution-failed",
-                "missing-evidence"       => "missing-evidence",
-                "persistence-failed"     => "persistence-failed",
-                _                        => "input-mismatch",
+                "missing-evidence" => "missing-evidence",
+                "persistence-failed" => "persistence-failed",
+                _ => "input-mismatch",
             };
             let reason = match msg.split_once(": ") {
                 Some((_, rest)) => rest.to_string(),
@@ -501,7 +521,8 @@ fn run_update_evaluate(args: &[String]) -> i32 {
             eprintln!("error: cannot create output directory: {e}");
             return 2;
         }
-        if let Err(e) = std::fs::write(output_dir.join("report.json"), formats::canonical(&report)) {
+        if let Err(e) = std::fs::write(output_dir.join("report.json"), formats::canonical(&report))
+        {
             eprintln!("error: cannot write report: {e}");
             return 2;
         }
@@ -535,10 +556,9 @@ fn run_v1(args: &[String]) -> i32 {
     let output_path = std::path::PathBuf::from(&args[5]);
 
     let outcome: Result<Value, wild::v1::ReadError> = (|| {
-        let text = std::fs::read_to_string(&input_path)
-            .map_err(|e| wild::v1::ReadError::Malformed(format!(
-                "input-mismatch: document unreadable: {e}"
-            )))?;
+        let text = std::fs::read_to_string(&input_path).map_err(|e| {
+            wild::v1::ReadError::Malformed(format!("input-mismatch: document unreadable: {e}"))
+        })?;
         wild::v1::read_document(&text)
     })();
 

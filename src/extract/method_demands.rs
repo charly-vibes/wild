@@ -62,10 +62,7 @@ impl<'a> SourceWalk<'a> {
             ));
         }
         if head == "crate" || head == self.crate_name {
-            return Some((
-                format!("{}::{}", self.crate_name, rest.join("::")),
-                None,
-            ));
+            return Some((format!("{}::{}", self.crate_name, rest.join("::")), None));
         }
         if head == "self" || head == "Self" || head == "super" {
             // `self`/`Self`/`super`-qualified paths need scope knowledge the
@@ -242,11 +239,7 @@ fn qualify(walk: &SourceWalk, prefix: &[String], suffix: &str) -> String {
     if prefix.is_empty() {
         format!("{}::{suffix}", walk.crate_name)
     } else {
-        format!(
-            "{}::{}::{suffix}",
-            walk.crate_name,
-            prefix.join("::")
-        )
+        format!("{}::{}::{suffix}", walk.crate_name, prefix.join("::"))
     }
 }
 
@@ -303,7 +296,8 @@ fn scan_impl(walk: &mut SourceWalk, imp: &syn::ItemImpl, prefix: &[String]) {
         }
         let target = qualify(walk, prefix, &format!("{ty_name}::{}", m.sig.ident));
         if let Some(ty) = recorded_return_ty(&m.sig.output) {
-            walk.fn_return_tys.insert(target, qualify(walk, prefix, &ty));
+            walk.fn_return_tys
+                .insert(target, qualify(walk, prefix, &ty));
         }
     }
 }
@@ -336,7 +330,9 @@ impl<'a> SourceWalk<'a> {
                     .map(|s| s.ident.to_string())
                     .collect::<Vec<_>>();
                 let head = parts.drain(..1).next().unwrap_or_default();
-                match self.bounded_target(&head, &parts.iter().map(String::as_str).collect::<Vec<_>>()) {
+                match self
+                    .bounded_target(&head, &parts.iter().map(String::as_str).collect::<Vec<_>>())
+                {
                     Some((target, _)) => ReceiverOutcome::ResolvedType(target),
                     None => ReceiverOutcome::Unresolved(receiver_text(receiver)),
                 }

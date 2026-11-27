@@ -26,14 +26,8 @@ use crate::harness::LawOutcome;
 
 const OBLIGATIONS_REF_FIELDS: &[&str] = &["digest", "path"];
 
-pub(crate) const OBLIGATION_FIELDS: &[&str] = &[
-    "id",
-    "scope",
-    "origin",
-    "state",
-    "authority",
-    "predicate",
-];
+pub(crate) const OBLIGATION_FIELDS: &[&str] =
+    &["id", "scope", "origin", "state", "authority", "predicate"];
 pub(crate) const AUTHORITY_FIELDS: &[&str] = &["name", "digest"];
 pub(crate) const TRANSITION_FIELDS: &[&str] = &[
     "old_digest",
@@ -142,7 +136,9 @@ pub(crate) fn validate_transition_shape(request: &Value) -> Result<(), String> {
     if consumers.iter().any(|c| c.as_str().is_none()) {
         return Err("transition `affected_consumers` must be an array of strings".to_string());
     }
-    let authority = transition.get("authority").ok_or("missing transition field `authority`")?;
+    let authority = transition
+        .get("authority")
+        .ok_or("missing transition field `authority`")?;
     let auth_entries = match authority {
         Value::Obj(entries) => entries,
         _ => return Err("transition `authority` must be an object".to_string()),
@@ -154,7 +150,9 @@ pub(crate) fn validate_transition_shape(request: &Value) -> Result<(), String> {
     }
     let auth_digest = authority.str_field("digest")?;
     if !formats::is_digest(auth_digest) {
-        return Err(format!("invalid transition authority digest `{auth_digest}`"));
+        return Err(format!(
+            "invalid transition authority digest `{auth_digest}`"
+        ));
     }
     authority.str_field("name")?;
     Ok(())
@@ -191,7 +189,9 @@ pub(crate) fn load_obligations(digest: &str, path: &str) -> Result<Vec<Obligatio
     if let Value::Obj(entries) = &doc {
         for (key, _) in entries {
             if !matches!(key.as_str(), "version" | "kind" | "obligations") {
-                return Err(format!("input-mismatch: unknown obligations document field `{key}`"));
+                return Err(format!(
+                    "input-mismatch: unknown obligations document field `{key}`"
+                ));
             }
         }
     }
@@ -244,14 +244,18 @@ fn validate_obligation_record(record: &Value) -> Result<Obligation, String> {
             "input-mismatch: unknown obligation state `{state}`; expected accepted or proposed"
         ));
     }
-    let authority = record.get("authority").ok_or("input-mismatch: obligation has no authority")?;
+    let authority = record
+        .get("authority")
+        .ok_or("input-mismatch: obligation has no authority")?;
     let auth_entries = match authority {
         Value::Obj(entries) => entries,
         _ => return Err("input-mismatch: obligation authority must be an object".to_string()),
     };
     for (key, _) in auth_entries {
         if !AUTHORITY_FIELDS.contains(&key.as_str()) {
-            return Err(format!("input-mismatch: unknown obligation authority field `{key}`"));
+            return Err(format!(
+                "input-mismatch: unknown obligation authority field `{key}`"
+            ));
         }
     }
     let auth_digest = authority.str_field("digest")?;
@@ -261,7 +265,9 @@ fn validate_obligation_record(record: &Value) -> Result<Obligation, String> {
         ));
     }
     authority.str_field("name")?;
-    let predicate = record.get("predicate").ok_or("input-mismatch: obligation has no predicate")?;
+    let predicate = record
+        .get("predicate")
+        .ok_or("input-mismatch: obligation has no predicate")?;
     let pred_entries = match predicate {
         Value::Obj(entries) => entries,
         _ => return Err("input-mismatch: obligation predicate must be an object".to_string()),
@@ -343,7 +349,9 @@ pub(crate) fn finalize_transition(
         Some(t) => t,
     };
     if obligations.is_empty() {
-        return Err("input-mismatch: transition supplied without an obligations document".to_string());
+        return Err(
+            "input-mismatch: transition supplied without an obligations document".to_string(),
+        );
     }
     let old_digest = transition.str_field("old_digest")?.to_string();
     let new_digest = transition.str_field("new_digest")?.to_string();
@@ -357,7 +365,7 @@ pub(crate) fn finalize_transition(
     let matches: Vec<&Obligation> = accepted
         .iter()
         .filter(|o| o.predicate_digest == new_digest)
-        .map(|o| *o)
+        .copied()
         .collect();
     if matches.len() != 1 {
         return Err(format!(
@@ -400,10 +408,7 @@ pub(crate) fn obligation_diagnostic(code: &str, severity: &str, reason: String) 
 }
 
 pub(crate) fn obligation_change(id: &str, change: &str) -> Value {
-    formats::obj(vec![
-        ("id", formats::s(id)),
-        ("change", formats::s(change)),
-    ])
+    formats::obj(vec![("id", formats::s(id)), ("change", formats::s(change))])
 }
 
 /// Law-invocation inputs resolved and shape-validated from the check
@@ -492,7 +497,9 @@ pub(crate) fn build_law_context(
 fn is_safe_rel(rel: &str) -> bool {
     !rel.is_empty()
         && !rel.starts_with('/')
-        && !rel.split('/').any(|c| c.is_empty() || c == "." || c == "..")
+        && !rel
+            .split('/')
+            .any(|c| c.is_empty() || c == "." || c == "..")
 }
 
 /// Shape-validate the optional law-invocation inputs (harnesses, fixtures,
@@ -515,34 +522,43 @@ pub(crate) fn parse_law_inputs(request: &Value) -> Result<Option<LawInputsRaw>, 
         }
         return Ok(None);
     }
-    let parse_file_map = |field: &str, max: Option<usize>| -> Result<Vec<(String, String)>, String> {
-        let entries = match request.get(field) {
-            Some(Value::Obj(entries)) => entries,
-            _ => return Err(format!("input-mismatch: `{field}` must be an object of rel-path to digest")),
-        };
-        let mut out: Vec<(String, String)> = Vec::new();
-        for (rel, digest) in entries {
-            if !is_safe_rel(rel) {
-                return Err(format!("input-mismatch: `{field}` path `{rel}` escapes the supplied bundle"));
+    let parse_file_map =
+        |field: &str, max: Option<usize>| -> Result<Vec<(String, String)>, String> {
+            let entries = match request.get(field) {
+                Some(Value::Obj(entries)) => entries,
+                _ => {
+                    return Err(format!(
+                        "input-mismatch: `{field}` must be an object of rel-path to digest"
+                    ))
+                }
+            };
+            let mut out: Vec<(String, String)> = Vec::new();
+            for (rel, digest) in entries {
+                if !is_safe_rel(rel) {
+                    return Err(format!(
+                        "input-mismatch: `{field}` path `{rel}` escapes the supplied bundle"
+                    ));
+                }
+                let digest = digest.as_str().ok_or_else(|| {
+                    format!("input-mismatch: `{field}` digest for `{rel}` must be a string")
+                })?;
+                if !formats::is_digest(digest) {
+                    return Err(format!(
+                        "input-mismatch: invalid `{field}` digest for `{rel}`"
+                    ));
+                }
+                out.push((rel.clone(), digest.to_string()));
             }
-            let digest = digest
-                .as_str()
-                .ok_or_else(|| format!("input-mismatch: `{field}` digest for `{rel}` must be a string"))?;
-            if !formats::is_digest(digest) {
-                return Err(format!("input-mismatch: invalid `{field}` digest for `{rel}`"));
-            }
-            out.push((rel.clone(), digest.to_string()));
-        }
-        out.sort();
-        if let Some(max) = max {
-            if out.len() > max {
-                return Err(format!(
+            out.sort();
+            if let Some(max) = max {
+                if out.len() > max {
+                    return Err(format!(
                     "input-mismatch: `{field}` must name at most {max} artifact(s) in this slice"
                 ));
+                }
             }
-        }
-        Ok(out)
-    };
+            Ok(out)
+        };
     let harnesses = parse_file_map("harnesses", Some(1))?[..].to_vec();
     if harnesses.is_empty() {
         return Err(
@@ -617,8 +633,12 @@ pub(crate) fn parse_law_inputs(request: &Value) -> Result<Option<LawInputsRaw>, 
 /// bundle, then strictly shape it (local-1, kind law-harness, name only).
 fn load_harness(base_root: &str, rel: &str, digest: &str) -> Result<String, String> {
     let path = std::path::Path::new(base_root).join(rel);
-    let bytes = std::fs::read(&path)
-        .map_err(|e| format!("input-mismatch: harness document unreadable at `{}`: {e}", path.display()))?;
+    let bytes = std::fs::read(&path).map_err(|e| {
+        format!(
+            "input-mismatch: harness document unreadable at `{}`: {e}",
+            path.display()
+        )
+    })?;
     let actual = formats::sha256_digest(&bytes);
     if actual != digest {
         return Err(format!(
@@ -632,7 +652,9 @@ fn load_harness(base_root: &str, rel: &str, digest: &str) -> Result<String, Stri
     if let Value::Obj(entries) = &doc {
         for (key, _) in entries {
             if !matches!(key.as_str(), "version" | "kind" | "name") {
-                return Err(format!("input-mismatch: unknown harness document field `{key}`"));
+                return Err(format!(
+                    "input-mismatch: unknown harness document field `{key}`"
+                ));
             }
         }
     }
@@ -804,10 +826,7 @@ pub(crate) fn evaluate_obligations(
                             ("candidate", "transition-accepted")
                         } else {
                             definite = true;
-                            changes.push(obligation_change(
-                                &o.id,
-                                "proposed-weakening",
-                            ));
+                            changes.push(obligation_change(&o.id, "proposed-weakening"));
                             ("candidate", "weakened")
                         }
                     } else {
@@ -838,10 +857,7 @@ pub(crate) fn evaluate_obligations(
                             ("base", "pass")
                         } else {
                             definite = true;
-                            changes.push(obligation_change(
-                                &o.id,
-                                "proposed-weakening",
-                            ));
+                            changes.push(obligation_change(&o.id, "proposed-weakening"));
                             ("base", "weakened")
                         }
                     }
@@ -891,7 +907,6 @@ pub(crate) fn evaluate_obligations(
     Ok((entries, changes, covered, methods, definite, unknown))
 }
 
-
 /// Build the invocation commitment record: enforcement is always local
 /// (never independent CI enforcement). Without law execution the
 /// harness/fixture/budget/evaluation-time fields stay explicit nulls; with
@@ -913,52 +928,57 @@ pub(crate) fn invocation_commitment_value(
                 .collect(),
         )
     };
-    let (harnesses, fixtures, budgets, environment, evaluation_time, sandbox) =
-        match law_inputs {
-            None => (
-                Value::Null,
-                Value::Null,
-                Value::Null,
-                Value::Null,
-                Value::Null,
-                Value::Null,
-            ),
-            Some(inputs) => {
-                let caps = crate::harness::sandbox_caps();
-                let sandbox = formats::obj(vec![
-                    ("enforced", Value::Bool(caps.enforced)),
-                    (
-                        "landlock_abi",
-                        caps.landlock_abi.map(formats::i).unwrap_or(Value::Null),
-                    ),
-                    ("network", formats::s("denied")),
-                    ("writes", formats::s("denied")),
-                    (
-                        "reads",
-                        formats::s("supplied bundles and the system runtime"),
-                    ),
-                    (
-                        "rlimits",
-                        formats::arr(
-                            ["fsize=0", "nofile=64", "nproc=128", "as=512MiB", "cpu=wall-derived"]
-                                .iter()
-                                .map(|r| formats::s(r))
-                                .collect(),
-                        ),
-                    ),
-                    ("wall_ms", formats::i(inputs.wall_ms)),
-                    ("environment", formats::s("fixed")),
-                ]);
+    let (harnesses, fixtures, budgets, environment, evaluation_time, sandbox) = match law_inputs {
+        None => (
+            Value::Null,
+            Value::Null,
+            Value::Null,
+            Value::Null,
+            Value::Null,
+            Value::Null,
+        ),
+        Some(inputs) => {
+            let caps = crate::harness::sandbox_caps();
+            let sandbox = formats::obj(vec![
+                ("enforced", Value::Bool(caps.enforced)),
                 (
-                    file_map(&inputs.harnesses),
-                    file_map(&inputs.fixtures),
-                    formats::obj(vec![("wall_ms", formats::i(inputs.wall_ms))]),
-                    formats::obj(vec![("seed", formats::i(inputs.seed))]),
-                    formats::s(&inputs.evaluation_time),
-                    sandbox,
-                )
-            }
-        };
+                    "landlock_abi",
+                    caps.landlock_abi.map(formats::i).unwrap_or(Value::Null),
+                ),
+                ("network", formats::s("denied")),
+                ("writes", formats::s("denied")),
+                (
+                    "reads",
+                    formats::s("supplied bundles and the system runtime"),
+                ),
+                (
+                    "rlimits",
+                    formats::arr(
+                        [
+                            "fsize=0",
+                            "nofile=64",
+                            "nproc=128",
+                            "as=512MiB",
+                            "cpu=wall-derived",
+                        ]
+                        .iter()
+                        .map(|r| formats::s(r))
+                        .collect(),
+                    ),
+                ),
+                ("wall_ms", formats::i(inputs.wall_ms)),
+                ("environment", formats::s("fixed")),
+            ]);
+            (
+                file_map(&inputs.harnesses),
+                file_map(&inputs.fixtures),
+                formats::obj(vec![("wall_ms", formats::i(inputs.wall_ms))]),
+                formats::obj(vec![("seed", formats::i(inputs.seed))]),
+                formats::s(&inputs.evaluation_time),
+                sandbox,
+            )
+        }
+    };
     formats::obj(vec![
         ("enforcement", formats::s("local")),
         (
@@ -975,10 +995,7 @@ pub(crate) fn invocation_commitment_value(
             request.get("policy").cloned().unwrap_or(Value::Null),
         ),
         ("base_facts_digest", formats::s(base_facts_digest)),
-        (
-            "candidate_facts_digest",
-            formats::s(candidate_facts_digest),
-        ),
+        ("candidate_facts_digest", formats::s(candidate_facts_digest)),
         ("harnesses", harnesses),
         ("fixtures", fixtures),
         ("budgets", budgets),
@@ -987,4 +1004,3 @@ pub(crate) fn invocation_commitment_value(
         ("sandbox", sandbox),
     ])
 }
-

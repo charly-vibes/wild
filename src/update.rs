@@ -74,7 +74,8 @@ pub fn plan(request: &Value) -> Result<PlanOutcome, String> {
 
     let excluded = excluded_by_original_range(&found.range, release);
     let pinned = format!("={release}");
-    let migration = supplied_migration(request, files, bundle_root, manifest_rel, lock_rel.as_str())?;
+    let migration =
+        supplied_migration(request, files, bundle_root, manifest_rel, lock_rel.as_str())?;
     let mut allowed_changed = vec![manifest_rel.to_string(), lock_rel.clone()];
     if let Some(Value::Obj(entries)) = migration.get("patch") {
         for (target, _) in entries {
@@ -88,22 +89,28 @@ pub fn plan(request: &Value) -> Result<PlanOutcome, String> {
     let diagnostics = vec![diagnostic(
         "plan-ready",
         "info",
-        &format!(
-            "plan-ready: exact pin {package}@{pinned} recorded; validation remains pending"
-        ),
+        &format!("plan-ready: exact pin {package}@{pinned} recorded; validation remains pending"),
     )];
     let plan = formats::obj(vec![
         ("version", formats::s("local-1")),
         ("kind", formats::s("update-plan")),
-        ("consumer", request.get("consumer").cloned().unwrap_or(Value::Null)),
+        (
+            "consumer",
+            request.get("consumer").cloned().unwrap_or(Value::Null),
+        ),
         ("package", formats::s(package)),
         ("release", formats::s(release)),
-        ("request_digest", formats::s(&formats::sha256_digest(formats::canonical(request).as_bytes()))),
+        (
+            "request_digest",
+            formats::s(&formats::sha256_digest(
+                formats::canonical(request).as_bytes(),
+            )),
+        ),
         ("original_range", formats::s(found.range.as_str())),
         (
             "edit",
             formats::obj(vec![
-                ("file", formats::s(&manifest_rel)),
+                ("file", formats::s(manifest_rel)),
                 ("table", formats::s(found.table)),
                 ("package", formats::s(package)),
                 ("from", formats::s(found.range.as_str())),
@@ -138,10 +145,7 @@ pub fn plan(request: &Value) -> Result<PlanOutcome, String> {
             "allowed_changed_paths",
             formats::arr(allowed_changed.iter().map(|p| formats::s(p)).collect()),
         ),
-        (
-            "migration",
-            migration,
-        ),
+        ("migration", migration),
         (
             "pending_checks",
             formats::arr(
@@ -190,12 +194,10 @@ fn supplied_migration(
             return Ok(Value::Null);
         }
         Some(patch @ Value::Obj(_)) => patch,
-        Some(_) => {
-            return Err(
-                "input-mismatch: migration_patch must be a map of target paths to source paths or null"
-                    .to_string(),
-            )
-        }
+        Some(_) => return Err(
+            "input-mismatch: migration_patch must be a map of target paths to source paths or null"
+                .to_string(),
+        ),
     };
     let files_entries = files;
     let mut bound: Vec<(String, Value)> = Vec::new();
@@ -261,10 +263,7 @@ fn supplied_migration(
 fn locate(manifest: &Toml, package: &str) -> Result<Found, String> {
     let mut hits: Vec<(&'static str, String)> = Vec::new();
     for table in DEP_TABLES {
-        let Some(spec) = manifest
-            .get(table)
-            .and_then(|t| t.get(package))
-        else {
+        let Some(spec) = manifest.get(table).and_then(|t| t.get(package)) else {
             continue;
         };
         match spec {
@@ -327,7 +326,10 @@ fn lock_version(lock_bytes: &[u8]) -> Result<String, String> {
 fn excluded_by_original_range(range: &str, release: &str) -> bool {
     let major = |text: &str| -> Option<u64> {
         let stripped = text.trim_start_matches(['^', 'v', '=']);
-        let digits: String = stripped.chars().take_while(|c| c.is_ascii_digit()).collect();
+        let digits: String = stripped
+            .chars()
+            .take_while(|c| c.is_ascii_digit())
+            .collect();
         digits.parse().ok()
     };
     match (major(range), major(release)) {
@@ -346,14 +348,22 @@ fn lock_path_of(manifest_rel: &str) -> Result<String, String> {
 }
 
 /// Refuse paths that escape the bundle (absolute, dot, dot-dot components).
-pub(crate) fn confined(bundle_root: &str, rel: &str, what: &str) -> Result<std::path::PathBuf, String> {
+pub(crate) fn confined(
+    bundle_root: &str,
+    rel: &str,
+    what: &str,
+) -> Result<std::path::PathBuf, String> {
     if rel.starts_with('/') || rel.contains('\\') {
-        return Err(format!("input-mismatch: {what} path `{rel}` must be bundle-relative"));
+        return Err(format!(
+            "input-mismatch: {what} path `{rel}` must be bundle-relative"
+        ));
     }
     let mut cleaned = std::path::PathBuf::from(bundle_root);
     for part in rel.split('/') {
         if part == "." || part == ".." || part.is_empty() {
-            return Err(format!("input-mismatch: {what} path `{rel}` escapes the bundle"));
+            return Err(format!(
+                "input-mismatch: {what} path `{rel}` escapes the bundle"
+            ));
         }
         cleaned.push(part);
     }
@@ -368,11 +378,7 @@ fn commitment_of(files: &[(String, Value)], rel: &str) -> Value {
         .unwrap_or(Value::Null)
 }
 
-fn verify_commitment(
-    files: &[(String, Value)],
-    rel: &str,
-    bytes: &[u8],
-) -> Result<(), String> {
+fn verify_commitment(files: &[(String, Value)], rel: &str, bytes: &[u8]) -> Result<(), String> {
     let Some(Value::Str(expected)) = files.iter().find(|(k, _)| k == rel).map(|(_, v)| v) else {
         return Err(format!(
             "input-mismatch: `{rel}` has no committed digest in the request"

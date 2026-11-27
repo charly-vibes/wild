@@ -24,7 +24,9 @@
 //   so its contract commitments are caller obligations audited by
 //   wild-nic.6.
 
-use crate::cargo_host::{evidence_value, local_registry_of, run_cargo_cmd, tail, write_report, Evaluated, Facts};
+use crate::cargo_host::{
+    evidence_value, local_registry_of, run_cargo_cmd, tail, write_report, Evaluated, Facts,
+};
 use crate::formats::{self, Value};
 use crate::update::{confined, diagnostic};
 use std::path::Path;
@@ -60,8 +62,14 @@ impl<'a> Stage<'a> {
             disposition,
             diagnostics,
             Value::Null,
-            self.plan.get("source_digest").cloned().unwrap_or(Value::Null),
-            self.plan.get("lock_version").cloned().unwrap_or(Value::Null),
+            self.plan
+                .get("source_digest")
+                .cloned()
+                .unwrap_or(Value::Null),
+            self.plan
+                .get("lock_version")
+                .cloned()
+                .unwrap_or(Value::Null),
             evidence,
         );
         if let Some(closure) = closure {
@@ -110,7 +118,7 @@ pub(crate) fn validate_and_deliver(
         plan_digest,
         authority_digest,
         package,
-        release: &plan.str_field("release")?.to_string(),
+        release: plan.str_field("release")?,
         facts: &facts,
     };
     let consumer = plan.str_field("consumer")?.to_string();
@@ -140,12 +148,10 @@ pub(crate) fn validate_and_deliver(
                     let source = match v {
                         Value::Str(s) => Some(s.to_string()),
                         Value::Null => None,
-                        _ => {
-                            return Err(
-                                "input-mismatch: migration patch values must be source paths or null"
-                                    .to_string(),
-                            )
-                        }
+                        _ => return Err(
+                            "input-mismatch: migration patch values must be source paths or null"
+                                .to_string(),
+                        ),
                     };
                     Ok((k.clone(), source))
                 })
@@ -177,7 +183,11 @@ pub(crate) fn validate_and_deliver(
         return Ok(evaluated);
     }
     let update_class = if removed.is_empty() {
-        if patch.is_empty() { "direct" } else { "migration" }
+        if patch.is_empty() {
+            "direct"
+        } else {
+            "migration"
+        }
     } else {
         // Only reachable with intent authority: a removal without it was
         // already refused above.
@@ -203,7 +213,8 @@ pub(crate) fn validate_and_deliver(
     // change its supplied patch targets.
     let mut allowed: Vec<&str> = vec![manifest_rel.as_str(), "Cargo.lock"];
     allowed.extend(patch.iter().map(|(t, _)| t.as_str()));
-    let evidence = match scope_check(&allowed, &bundle_root, workspace, &stage, output_dir, state)? {
+    let evidence = match scope_check(&allowed, &bundle_root, workspace, &stage, output_dir, state)?
+    {
         Ok(evidence) => evidence,
         Err(refusal) => return Ok(refusal),
     };
@@ -258,7 +269,10 @@ fn protected_removals(
 }
 
 fn count(bytes: &[u8], needle: &str) -> usize {
-    bytes.windows(needle.len()).filter(|w| *w == needle.as_bytes()).count()
+    bytes
+        .windows(needle.len())
+        .filter(|w| *w == needle.as_bytes())
+        .count()
 }
 
 fn has_assert(bytes: &[u8]) -> bool {
@@ -284,18 +298,22 @@ fn apply_migration(
         match source {
             Some(rel) => {
                 let bytes = std::fs::read(confined(bundle_root, rel, "migration source")?)
-                    .map_err(|e| format!("input-mismatch: migration source `{rel}` unreadable: {e}"))?;
+                    .map_err(|e| {
+                        format!("input-mismatch: migration source `{rel}` unreadable: {e}")
+                    })?;
                 if let Some(parent) = ws_path.parent() {
                     std::fs::create_dir_all(parent).map_err(|e| {
                         format!("isolation-refused: cannot create migration directory: {e}")
                     })?;
                 }
-                std::fs::write(&ws_path, bytes)
-                    .map_err(|e| format!("isolation-refused: cannot write migration target `{target}`: {e}"))?;
+                std::fs::write(&ws_path, bytes).map_err(|e| {
+                    format!("isolation-refused: cannot write migration target `{target}`: {e}")
+                })?;
             }
             None => {
-                std::fs::remove_file(&ws_path)
-                    .map_err(|e| format!("isolation-refused: cannot remove migration target `{target}`: {e}"))?;
+                std::fs::remove_file(&ws_path).map_err(|e| {
+                    format!("isolation-refused: cannot remove migration target `{target}`: {e}")
+                })?;
             }
         }
     }
@@ -312,10 +330,28 @@ fn fixed_lock_checks(
     output_dir: &Path,
     mut evidence: Vec<Value>,
 ) -> Result<Result<Vec<Value>, Evaluated>, String> {
-    let build = run_cargo_cmd(workspace, cargo_home, &["build", "--offline", "--locked"], "fixed-lock-build")?;
-    let test = run_cargo_cmd(workspace, cargo_home, &["test", "--offline", "--locked"], "fixed-lock-test")?;
-    evidence.push(evidence_value("fixed-lock-build", "cargo build --offline --locked", build.status.code().unwrap_or(-1) as i64));
-    evidence.push(evidence_value("fixed-lock-test", "cargo test --offline --locked", test.status.code().unwrap_or(-1) as i64));
+    let build = run_cargo_cmd(
+        workspace,
+        cargo_home,
+        &["build", "--offline", "--locked"],
+        "fixed-lock-build",
+    )?;
+    let test = run_cargo_cmd(
+        workspace,
+        cargo_home,
+        &["test", "--offline", "--locked"],
+        "fixed-lock-test",
+    )?;
+    evidence.push(evidence_value(
+        "fixed-lock-build",
+        "cargo build --offline --locked",
+        build.status.code().unwrap_or(-1) as i64,
+    ));
+    evidence.push(evidence_value(
+        "fixed-lock-test",
+        "cargo test --offline --locked",
+        test.status.code().unwrap_or(-1) as i64,
+    ));
     let failed = if !build.status.success() {
         Some(("fixed-lock-build", &build))
     } else if !test.status.success() {
@@ -453,7 +489,11 @@ fn deliver(
                 .map_err(|e| format!("persistence-failed: {e}"))?,
             manifest_after.clone(),
         ),
-        ("Cargo.lock", baseline_lock_text.to_string(), lock_after.clone()),
+        (
+            "Cargo.lock",
+            baseline_lock_text.to_string(),
+            lock_after.clone(),
+        ),
     ]
     .into_iter()
     .map(|(path, before, after)| {
@@ -483,7 +523,10 @@ fn deliver(
         };
         diff.push(formats::obj(vec![
             ("path", formats::s(target)),
-            ("before_digest", formats::s(&formats::sha256_digest(&before))),
+            (
+                "before_digest",
+                formats::s(&formats::sha256_digest(&before)),
+            ),
             ("after_digest", after_digest),
         ]));
         if let Ok(bytes) = &after {
@@ -495,9 +538,8 @@ fn deliver(
             ));
         }
     }
-    let diff_digest = formats::sha256_digest(
-        formats::canonical(&formats::arr(diff.clone())).as_bytes(),
-    );
+    let diff_digest =
+        formats::sha256_digest(formats::canonical(&formats::arr(diff.clone())).as_bytes());
     if let Err(msg) = persist_pinned(output_dir, &manifest_after, &lock_after, &migration_files) {
         // Failed output persistence cannot deliver: record the error cause
         // with zero delivered-update claim.
@@ -531,7 +573,10 @@ fn deliver(
             ("scope", formats::s("local")),
             ("resolution", formats::s("host-selected")),
             ("update_class", formats::s(update_class)),
-            ("migration", plan.get("migration").cloned().unwrap_or(Value::Null)),
+            (
+                "migration",
+                plan.get("migration").cloned().unwrap_or(Value::Null),
+            ),
             ("closure", formats::arr(closure_values(closure))),
             ("evidence", formats::arr(evidence)),
             ("diff", formats::arr(diff)),
@@ -623,8 +668,8 @@ fn closure_entries(
     consumer: &str,
 ) -> Result<Vec<ClosureEntry>, String> {
     let parse_pkgs = |text: &str| -> Result<Vec<(String, String)>, String> {
-        let lock: toml::Value =
-            toml::from_str(text).map_err(|e| format!("input-mismatch: lock is not valid TOML: {e}"))?;
+        let lock: toml::Value = toml::from_str(text)
+            .map_err(|e| format!("input-mismatch: lock is not valid TOML: {e}"))?;
         Ok(lock
             .get("package")
             .and_then(toml::Value::as_array)
@@ -762,4 +807,3 @@ pub(crate) fn report_record(
     }
     Value::Obj(entries)
 }
-

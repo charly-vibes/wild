@@ -1,6 +1,6 @@
+use wild::formats::{self, Value};
 #[warn(unused)]
 use wild::v1::*;
-use wild::formats::{self, Value};
 use wild::v1::*;
 
 fn scalar_int(min: i64, max: i64) -> Value {
@@ -13,12 +13,18 @@ fn scalar_int(min: i64, max: i64) -> Value {
 }
 
 fn scalar_str() -> Value {
-    formats::obj(vec![("shape", formats::s("scalar")), ("name", formats::s("string"))])
+    formats::obj(vec![
+        ("shape", formats::s("scalar")),
+        ("name", formats::s("string")),
+    ])
 }
 
 fn opaque(fp: &str) -> Value {
     let fingerprint = formats::s(fp);
-    formats::obj(vec![("shape", formats::s("opaque")), ("fingerprint", fingerprint)])
+    formats::obj(vec![
+        ("shape", formats::s("opaque")),
+        ("fingerprint", fingerprint),
+    ])
 }
 
 fn example_contract() -> Value {
@@ -73,7 +79,10 @@ fn integer_slot(name: &str, polarity: &str, required: bool, ty: Value) -> Value 
 
 #[test]
 fn canonical_reader_examples_match_the_format_document() {
-    assert_eq!(formats::canonical(&formats::parse(r#"{"b":2,"a":1}"#).unwrap()), r#"{"a":1,"b":2}"#);
+    assert_eq!(
+        formats::canonical(&formats::parse(r#"{"b":2,"a":1}"#).unwrap()),
+        r#"{"a":1,"b":2}"#
+    );
     assert_eq!(
         formats::canonical(&formats::parse(r#"{ "text": "\u0061" }"#).unwrap()),
         r#"{"text":"a"}"#
@@ -94,8 +103,14 @@ fn empty_contract_is_valid() {
 
 #[test]
 fn integer_subtype_uses_interval_containment() {
-    assert_eq!(subtype(&scalar_int(0, 10), &scalar_int(0, 20)), Verdict::Holds);
-    assert_eq!(subtype(&scalar_int(0, 20), &scalar_int(0, 10)), Verdict::Breaks);
+    assert_eq!(
+        subtype(&scalar_int(0, 10), &scalar_int(0, 20)),
+        Verdict::Holds
+    );
+    assert_eq!(
+        subtype(&scalar_int(0, 20), &scalar_int(0, 10)),
+        Verdict::Breaks
+    );
     assert_eq!(subtype(&scalar_str(), &scalar_int(0, 1)), Verdict::Breaks);
 }
 
@@ -157,23 +172,13 @@ fn function_arguments_are_contravariant() {
 
 #[test]
 fn identical_contract_accretes() {
-    let contract = contract_with_slot(integer_slot(
-        "value",
-        "out",
-        true,
-        scalar_int(0, 10),
-    ));
+    let contract = contract_with_slot(integer_slot("value", "out", true, scalar_int(0, 10)));
     assert_eq!(accretes(&contract, &contract), Ok(Verdict::Holds));
 }
 
 #[test]
 fn removed_output_always_breaks() {
-    let old = contract_with_slot(integer_slot(
-        "value",
-        "out",
-        true,
-        scalar_int(0, 10),
-    ));
+    let old = contract_with_slot(integer_slot("value", "out", true, scalar_int(0, 10)));
     let new = example_contract();
     assert_eq!(accretes(&old, &new), Ok(Verdict::Breaks));
 }
@@ -181,38 +186,25 @@ fn removed_output_always_breaks() {
 #[test]
 fn new_required_input_breaks_but_optional_is_permitted() {
     let old = example_contract();
-    let new_required = contract_with_slot(integer_slot(
-        "extra",
-        "in",
-        true,
-        scalar_int(0, 10),
-    ));
+    let new_required = contract_with_slot(integer_slot("extra", "in", true, scalar_int(0, 10)));
     assert_eq!(accretes(&old, &new_required), Ok(Verdict::Breaks));
-    let optional = contract_with_slot(integer_slot(
-        "extra",
-        "in",
-        false,
-        scalar_int(0, 10),
-    ));
+    let optional = contract_with_slot(integer_slot("extra", "in", false, scalar_int(0, 10)));
     assert_eq!(accretes(&old, &optional), Ok(Verdict::Holds));
 }
 
 #[test]
 fn removed_input_requires_a_tombstone() {
-    let old = contract_with_slot(integer_slot(
-        "legacy",
-        "in",
-        true,
-        scalar_int(0, 10),
-    ));
+    let old = contract_with_slot(integer_slot("legacy", "in", true, scalar_int(0, 10)));
     let new_without_tombstone = example_contract();
     assert_eq!(accretes(&old, &new_without_tombstone), Ok(Verdict::Breaks));
     let tombstone = integer_slot("legacy", "in", false, scalar_int(0, 10));
-    let new_with_tombstone =
-        with_key("tombstones", formats::arr(vec![tombstone.clone()]));
+    let new_with_tombstone = with_key("tombstones", formats::arr(vec![tombstone.clone()]));
     assert_eq!(accretes(&old, &new_with_tombstone), Ok(Verdict::Holds));
     // Fabricated tombstones without history are refused.
-    assert_eq!(accretes(&example_contract(), &new_with_tombstone), Ok(Verdict::Breaks));
+    assert_eq!(
+        accretes(&example_contract(), &new_with_tombstone),
+        Ok(Verdict::Breaks)
+    );
 }
 
 #[test]
@@ -224,7 +216,10 @@ fn changed_input_default_is_conservatively_a_break() {
             entries.retain(|(k, _)| k != "default");
             entries.push((
                 "default".to_string(),
-                formats::obj(vec![("present", Value::Bool(true)), ("value", formats::i(0))]),
+                formats::obj(vec![
+                    ("present", Value::Bool(true)),
+                    ("value", formats::i(0)),
+                ]),
             ));
         }
         slot
@@ -238,7 +233,10 @@ fn changed_input_default_is_conservatively_a_break() {
 fn dropped_law_breaks_and_new_required_relation_breaks() {
     let law = formats::obj(vec![
         ("id", formats::s("example.law")),
-        ("suite_digest", formats::s(&format!("sha256:{}", "1".repeat(64)))),
+        (
+            "suite_digest",
+            formats::s(&format!("sha256:{}", "1".repeat(64))),
+        ),
         ("slots", formats::arr(Vec::new())),
     ]);
     let old = with_key("laws", formats::arr(vec![law.clone()]));

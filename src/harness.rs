@@ -147,8 +147,7 @@ pub fn run_law(
         .map_err(|e| format!("input-mismatch: law suite unreadable: {e}"))?;
     if formats::sha256_digest(&suite_bytes) != suite_digest {
         return Err(
-            "input-mismatch: law suite bytes do not hash to the bound suite digest"
-                .to_string(),
+            "input-mismatch: law suite bytes do not hash to the bound suite digest".to_string(),
         );
     }
     let fixture_map = formats::obj(
@@ -293,7 +292,12 @@ fn validated_outcome(parsed: &ParsedResult) -> LawOutcome {
         "counterexample" => {
             executed_outcome(parsed, "law-counterexample", parsed.witness.clone(), None)
         }
-        _ => executed_outcome(parsed, "law-executed-inconclusive", None, parsed.reason.clone()),
+        _ => executed_outcome(
+            parsed,
+            "law-executed-inconclusive",
+            None,
+            parsed.reason.clone(),
+        ),
     }
 }
 
@@ -364,11 +368,7 @@ fn run_once(
         .env("LANG", "C")
         .env("LC_ALL", "C")
         .env("TZ", "UTC")
-        .current_dir(
-            suite_path
-                .parent()
-                .unwrap_or_else(|| Path::new("/")),
-        )
+        .current_dir(suite_path.parent().unwrap_or_else(|| Path::new("/")))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
@@ -445,13 +445,12 @@ fn run_once(
         ));
     }
     if !status.success() {
-        let stderr_note = String::from_utf8_lossy(&stderr_bytes[stderr_bytes
-            .len()
-            .saturating_sub(400)..])
-            .lines()
-            .last()
-            .unwrap_or("")
-            .to_string();
+        let stderr_note =
+            String::from_utf8_lossy(&stderr_bytes[stderr_bytes.len().saturating_sub(400)..])
+                .lines()
+                .last()
+                .unwrap_or("")
+                .to_string();
         return Ok(RunResult::Inconclusive(format!(
             "suite crashed with exit status {}{}",
             status.code().unwrap_or(-1),
@@ -517,7 +516,9 @@ fn validate_result(text: &str, expected: &ExpectedEcho) -> Result<RunResult, Str
         Err(e) => return reason(format!("missing law_result field: {e}")),
     };
     if version != "1" {
-        return reason(format!("unsupported law_result version `{version}`; expected `1`"));
+        return reason(format!(
+            "unsupported law_result version `{version}`; expected `1`"
+        ));
     }
     if value.str_field("kind").unwrap_or_default() != "law_result" {
         return reason("law_result kind mismatch".to_string());
@@ -541,7 +542,9 @@ fn validate_result(text: &str, expected: &ExpectedEcho) -> Result<RunResult, Str
             for item in items {
                 match item.as_str() {
                     Some(d) => out.push(d.to_string()),
-                    None => return reason("law_result fixtures must be digest strings".to_string()),
+                    None => {
+                        return reason("law_result fixtures must be digest strings".to_string())
+                    }
                 }
             }
             out
@@ -549,7 +552,9 @@ fn validate_result(text: &str, expected: &ExpectedEcho) -> Result<RunResult, Str
         None => return reason("law_result fixtures must be an array".to_string()),
     };
     if got_fixtures != expected.fixture_digests {
-        return reason("law_result fixture digests do not match the runner's ordered fixture list".to_string());
+        return reason(
+            "law_result fixture digests do not match the runner's ordered fixture list".to_string(),
+        );
     }
     match value.get("seed").and_then(Value::as_int) {
         Some(seed) if seed == expected.seed => {}
@@ -582,11 +587,15 @@ fn validate_result(text: &str, expected: &ExpectedEcho) -> Result<RunResult, Str
         }
     }
     if status == "counterexample" && !matches!(witness, Some(Value::Str(_))) {
-        return reason("a counterexample requires a witness digest naming the failing input".to_string());
+        return reason(
+            "a counterexample requires a witness digest naming the failing input".to_string(),
+        );
     }
     if status == "inconclusive" {
         if !matches!(reason_field, Some(Value::Str(r)) if !r.is_empty()) {
-            return reason("an inconclusive result requires a non-empty diagnostic reason".to_string());
+            return reason(
+                "an inconclusive result requires a non-empty diagnostic reason".to_string(),
+            );
         }
         if !matches!(witness, Some(Value::Null) | None) {
             return reason("an inconclusive result must not claim a witness".to_string());
@@ -725,7 +734,12 @@ unsafe fn apply_landlock(roots: &[CString]) -> std::io::Result<()> {
             return Err(std::io::Error::last_os_error());
         }
     }
-    if libc::syscall(SYS_LANDLOCK_RESTRICT_SELF, ruleset_fd as libc::c_int, 0 as libc::c_uint) < 0 {
+    if libc::syscall(
+        SYS_LANDLOCK_RESTRICT_SELF,
+        ruleset_fd as libc::c_int,
+        0 as libc::c_uint,
+    ) < 0
+    {
         libc::close(ruleset_fd as libc::c_int);
         return Err(std::io::Error::last_os_error());
     }

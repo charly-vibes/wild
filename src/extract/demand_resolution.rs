@@ -98,10 +98,10 @@ pub(super) fn resolve_in_slots(
         }
         // The declared absence policy rides on the demand entry (wild-adc):
         // the contract slot carries it so the clause is contract-level.
-        let on_absent = match entry.get("on_absent").and_then(Value::as_str) {
-            Some(value) => Some(value.to_string()),
-            None => None,
-        };
+        let on_absent = entry
+            .get("on_absent")
+            .and_then(Value::as_str)
+            .map(|value| value.to_string());
         let ty = match by_meaning.get(provider_slot) {
             Some(record) => record.ty.clone(),
             None => formats::obj(vec![

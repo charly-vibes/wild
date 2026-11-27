@@ -190,7 +190,9 @@ pub(super) fn account_impl(walk: &mut SourceWalk, node: &syn::ItemImpl) {
                     _ => {
                         walk.gap(
                             "unsupported-construct",
-                            format!("impl item inside `{ty_name}` is outside the supported profile"),
+                            format!(
+                                "impl item inside `{ty_name}` is outside the supported profile"
+                            ),
                             true,
                         );
                     }
