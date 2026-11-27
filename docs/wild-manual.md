@@ -183,6 +183,8 @@ check acme.billing  (rev 4f2a… → 91c0…)   checker 0.1
   known consumers: 3 declared. Undeclared consumers are not covered.
 ```
 
+**Method-call demand profile.** Extraction records a `<crate>::<Type>::<method>` demand for every method call whose receiver it can name. The resolvable receiver shapes are: a path expression; a call whose head is a constructor or free function with a recorded return type (recorded bundle-wide, so cross-file constructors resolve); a let-bound single-assignment local initialized from such a call; a field access whose field type is inventoried from a public struct field; `self`/`Self` inside a public inherent impl of that type; and a method chain whose every hop resolves by these rules with recorded return types. A receiver outside these shapes — trait objects, macro-produced receivers, re-bound locals, chains that outrun recorded returns, or unknown identifiers — stays visible as an incomplete-demand gap naming the receiver; it is disclosed, never silently dropped. Demands naming other crates (for example `std::time::Duration::from_millis`) stay unresolvable until a provider source for that crate is supplied.
+
 ## 7. Writing a contract *(illustrative TOML sketch)*
 
 The wire format is versioned JSON in [wild v1 formats](wild-formats-v1.md), with [structural examples](../schemas/examples-v1.json). The TOML sketch below explains the concepts and is not accepted as v1 wire input. Extractors produce draft contracts; manual declarations fill semantic meaning, laws, limits, defaults, and unsupported constructs.

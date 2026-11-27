@@ -2,7 +2,7 @@
 
 ### Requirement: Bounded method-call resolution
 
-A method call whose receiver resolves through the declared receiver rules SHALL create the demand `<crate>::<Type>::<method>`: resolution against the inventoried impl-method or typed slots yields supported demand, and a method absent from the inventory SHALL keep the incomplete-demand gap naming the full path. The declared receiver rules are: a path expression resolving through the bounded demand rules; a call expression whose head resolves to a constructor or free function with a recorded syntactic return type, recorded bundle-wide so cross-file constructors resolve; a let-bound single-assignment local whose initializer is such a resolved call; a field-access receiver whose field type is inventoried from a public struct-field declaration; a `self` or `Self` receiver inside a public inherent impl body of that type; and a method chain whose every hop resolves by these rules and whose callee targets have recorded return types.
+A method call whose receiver resolves through the declared receiver rules SHALL create the demand `<crate>::<Type>::<method>`: resolution against the inventoried impl-method or typed slots yields supported demand, and a method absent from the inventory SHALL keep the incomplete-demand gap naming the full path. The declared receiver rules are stated one per scenario below.
 
 #### Scenario: Resolved method call becomes supported demand
 - **GIVEN** a consumer whose method call's receiver is a call resolving to an inventoried same-crate constructor with a recorded syntactic return type (e.g. `Meter::new().tick()` where `new` returns `Meter`)

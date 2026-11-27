@@ -202,8 +202,31 @@ pub(super) fn account_impl(walk: &mut SourceWalk, node: &syn::ItemImpl) {
     }
     // walk the bodies: demands and method calls inside impl methods were
     // silently skipped before wild-158; per-construct accounting walks them
-    // like free-fn bodies
+    // like free-fn bodies. A public inherent impl on a single-segment
+    // named path type sets the impl-type context so `self`/`Self`
+    // receivers resolve to that type (widen-method-receiver-demands rule
+    // 4); a private-only impl carries no public API surface (exactly like
+    // private free fns) and trait or non-path self types stay outside the
+    // profile, both keeping the honest receiver gap.
+    let computed_impl_type = match (&node.trait_, node.self_ty.as_ref()) {
+        (
+            None,
+            syn::Type::Path(path),
+        ) if path.qself.is_none()
+            && path.path.segments.len() == 1
+            && node
+                .items
+                .iter()
+                .any(|i| matches!(i, syn::ImplItem::Fn(m) if matches!(m.vis, syn::Visibility::Public(_)))) =>
+        {
+            let ty_name = path.path.segments.last().unwrap().ident.to_string();
+            Some(walk.slot_name(&ty_name))
+        }
+        _ => None,
+    };
+    let prev_impl_type = std::mem::replace(&mut walk.current_impl_type, computed_impl_type);
     syn::visit::visit_item_impl(walk, node);
+    walk.current_impl_type = prev_impl_type;
 }
 
 fn account_non_fn_impl_item(

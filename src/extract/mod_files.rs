@@ -11,6 +11,30 @@
 
 use super::*;
 
+/// The bundle-relative candidate paths for one non-inline module
+/// declaration in the file at `path`, by rustc's mod-path rule: mod.rs
+/// and the crate-entry files (lib.rs, main.rs) resolve their modules in
+/// their own directory; any other file resolves them in a sibling
+/// directory named after its stem (`src/outer.rs` declares into
+/// `src/outer/`). Shared by the demand walk (resolve_mod_file) and the
+/// bundle-wide pre-pass (widen-method-receiver-demands rule 1).
+pub(super) fn mod_file_candidates(path: &Path, name: &str) -> [String; 2] {
+    let dir = path.parent().unwrap_or_else(|| Path::new(""));
+    let stem = path
+        .file_stem()
+        .map(|s| s.to_string_lossy().to_string())
+        .unwrap_or_default();
+    let base = if matches!(stem.as_str(), "mod" | "lib" | "main") {
+        dir.to_path_buf()
+    } else {
+        dir.join(&stem)
+    };
+    [
+        join_rel(&base, &format!("{name}.rs")),
+        join_rel(&base, &format!("{name}/mod.rs")),
+    ]
+}
+
 /// Resolve a public non-inline module (`pub mod name;`) to its file
 /// inside the committed bundle and walk it as part of the public
 /// inventory (wild-cdp.4). Candidates follow Rust's mod-path rules
@@ -19,25 +43,7 @@ use super::*;
 /// (`src/outer.rs` declares into `src/outer/`). An absent file keeps
 /// the honest gap — missing files never cure silently.
 pub(super) fn resolve_mod_file(walk: &mut SourceWalk, name: &str, cfg_gated: bool) {
-    let path = Path::new(&walk.current_file);
-    let dir = path.parent().unwrap_or_else(|| Path::new(""));
-    let stem = path
-        .file_stem()
-        .map(|s| s.to_string_lossy().to_string())
-        .unwrap_or_default();
-    // rustc's mod-path rule: mod.rs and the crate-entry files (lib.rs,
-    // main.rs) resolve their modules in their own directory; any other
-    // file resolves them in a sibling directory named after its stem
-    // (`src/outer.rs` declares into `src/outer/`)
-    let base = if matches!(stem.as_str(), "mod" | "lib" | "main") {
-        dir.to_path_buf()
-    } else {
-        dir.join(&stem)
-    };
-    let candidates = [
-        join_rel(&base, &format!("{name}.rs")),
-        join_rel(&base, &format!("{name}/mod.rs")),
-    ];
+    let candidates = mod_file_candidates(Path::new(&walk.current_file), name);
     let Some(rel) = candidates
         .iter()
         .find(|c| walk.ctx.loaded.contains_key(c.as_str()))
@@ -99,9 +105,9 @@ pub(super) fn resolve_mod_file(walk: &mut SourceWalk, name: &str, cfg_gated: boo
     let prev_file = std::mem::replace(&mut walk.current_file, rel);
     let prev_aliases = std::mem::replace(&mut walk.alias_map, scoped);
     walk.module_prefix.push(name.to_string());
-    // per-file pre-pass for the resolved module file (wild-158 D1): the
-    // module prefix is already pushed, so keys match the demand walk's
-    SourceWalk::scan_fn_returns(walk, &file.items);
+    // the bundle-wide pre-pass (widen-method-receiver-demands rule 1)
+    // already scanned this file's return types and public field types
+    // with the same module prefix, so keys match the demand walk's
     walk.visit_file(&file);
     walk.module_prefix.pop();
     walk.alias_map = prev_aliases;

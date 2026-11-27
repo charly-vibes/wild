@@ -444,9 +444,14 @@ struct WalkOut {
     capture_idents: Vec<String>,
     /// syntactic return types of inventoried public free fns and public
     /// inherent impl methods (wild-158 D1): fn target → crate-qualified
-    /// type target, recorded by a per-file pre-pass so one-hop constructor
-    /// receivers resolve without type inference.
+    /// type target, recorded by the bundle-wide pre-pass so one-hop
+    /// constructor receivers resolve without type inference.
     fn_return_tys: BTreeMap<String, String>,
+    /// public named-field types of public structs
+    /// (widen-method-receiver-demands rule 1): type target → field name
+    /// → crate-qualified field type target, recorded by the bundle-wide
+    /// pre-pass so field-access receivers resolve without inference.
+    field_tys: BTreeMap<String, BTreeMap<String, String>>,
 }
 
 /// Walk one crate's source with syn, collecting slots, demand, and gaps.
@@ -455,6 +460,11 @@ struct SourceWalk<'a> {
     alias_map: BTreeMap<String, String>,
     module_prefix: Vec<String>,
     current_file: String,
+    /// let-bound local types in scope order (rule 2): a stack of scope
+    /// maps pushed at block entry and popped at block exit
+    bindings: Vec<BTreeMap<String, String>>,
+    /// the named path type of the inherent impl body being walked (rule 4)
+    current_impl_type: Option<String>,
     out: WalkOut,
 }
 
@@ -649,6 +659,32 @@ impl<'a, 'b> Visit<'b> for SourceWalk<'a> {
     // (add-std-macro-demand-support, design decision 3a)
     fn visit_stmt_macro(&mut self, node: &'b syn::StmtMacro) {
         self.handle_invocation_macro(&node.mac);
+    }
+
+    // widen-method-receiver-demands rule 2: let bindings resolve their
+    // initializer through the declared shapes and feed receivers for the
+    // remainder of the scope block; blocks push and pop their scope maps
+    fn visit_block(&mut self, node: &'b syn::Block) {
+        self.bindings.push(BTreeMap::new());
+        syn::visit::visit_block(self, node);
+        self.bindings.pop();
+    }
+
+    fn visit_local(&mut self, node: &'b syn::Local) {
+        SourceWalk::record_let_binding(self, node);
+        syn::visit::visit_local(self, node);
+    }
+
+    // rule 2 residual: a re-assignment invalidates the local's binding
+    // from that point on (source order — never retroactively cured)
+    fn visit_expr_assign(&mut self, node: &'b syn::ExprAssign) {
+        if let syn::Expr::Path(p) = &*node.left {
+            if p.qself.is_none() && p.path.segments.len() == 1 && p.path.get_ident().is_some() {
+                let ident = p.path.segments[0].ident.to_string();
+                self.clear_binding(&ident);
+            }
+        }
+        syn::visit::visit_expr_assign(self, node);
     }
 
     fn visit_expr_method_call(&mut self, node: &'b syn::ExprMethodCall) {
@@ -890,6 +926,15 @@ fn walk_crates(
     // accumulator stays exclusively borrowed during the walk
     let conveys = out.conveys.clone();
     let on_absent = out.on_absent.clone();
+
+    // pass 1: parse every bundle file, collect its import aliases, and
+    // run the bundle-wide pre-pass (widen-method-receiver-demands rule 1):
+    // syntactic return types and public struct-field types recorded
+    // across ALL bundle files before any demand walk, so cross-file
+    // constructor and field references resolve (wild-158 D1, generalized)
+    let mut shared_fn_tys: BTreeMap<String, String> = BTreeMap::new();
+    let mut shared_field_tys: BTreeMap<String, BTreeMap<String, String>> = BTreeMap::new();
+    let mut parsed: Vec<(syn::File, BTreeMap<String, String>, Vec<String>)> = Vec::new();
     for manifest in manifests {
         let source_bytes = loaded.get(&manifest.source_path).ok_or_else(|| {
             format!(
@@ -914,6 +959,20 @@ fn walk_crates(
                 collect_use_tree(&use_item.tree, String::new(), &mut alias_map, &mut use_gaps);
             }
         }
+        method_demands::BundlePrepass::scan_crate(
+            &manifest.name,
+            &manifest.source_path,
+            &file,
+            loaded,
+            &mut shared_fn_tys,
+            &mut shared_field_tys,
+        );
+        parsed.push((file, alias_map, use_gaps));
+    }
+
+    // pass 2: per-file demand walk, diagnostics and accumulation order
+    // unchanged from the single-pass shape
+    for (manifest, (file, alias_map, use_gaps)) in manifests.iter().zip(parsed) {
         for reason in use_gaps {
             out.diagnostics.push(Diagnostic {
                 code: "unsupported-construct",
@@ -935,6 +994,8 @@ fn walk_crates(
             alias_map,
             module_prefix: Vec::new(),
             current_file: manifest.source_path.clone(),
+            bindings: Vec::new(),
+            current_impl_type: None,
             out: WalkOut {
                 slots: Vec::new(),
                 demand: Vec::new(),
@@ -943,13 +1004,10 @@ fn walk_crates(
                 complete: true,
                 callee_spans: BTreeSet::new(),
                 capture_idents: Vec::new(),
-                fn_return_tys: BTreeMap::new(),
+                fn_return_tys: shared_fn_tys.clone(),
+                field_tys: shared_field_tys.clone(),
             },
         };
-        // per-file pre-pass: record syntactic return types before the
-        // demand walk so use sites see declarations declared later in the
-        // same file (wild-158 D1, bounded shapes only)
-        SourceWalk::scan_fn_returns(&mut walk, &file.items);
         walk.visit_file(&file);
         out.complete = out.complete && walk.out.complete;
         out.slots.append(&mut walk.out.slots);

@@ -1,0 +1,11 @@
+id = "self-receiver-inside-an-inherent-impl-body-resolves"
+description = "a method call on self or Self inside a public inherent impl on a named path type -> the demand resolves against that impl's inventoried type with no incomplete-demand gap"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_self_receiver_in_inherent_impl_resolves", timeout_seconds = 300},
+]

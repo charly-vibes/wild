@@ -1,0 +1,11 @@
+id = "let-bound-local-resolves-through-its-initializer"
+description = "a consumer with a single let-binding whose initializer is a resolved call with a recorded return type (e.g. let r = Meter::new(); r.tick();) -> the demand Meter::tick is recorded with no incomplete-demand gap"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_let_bound_constructor_local_resolves", timeout_seconds = 300},
+]

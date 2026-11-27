@@ -1,0 +1,11 @@
+id = "chain-with-recorded-return-types-resolves-hop-by-hop"
+description = "a consumer with a multi-hop chain whose every callee target has a recorded return type (e.g. Meter::new().tick().double()) -> every hop's demand is recorded with no incomplete-demand gap"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_chain_with_recorded_returns_resolves", timeout_seconds = 300},
+]

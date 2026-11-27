@@ -1,0 +1,12 @@
+id = "cross-file-constructor-flow-resolves"
+description = "a bundle where a public fn or public inherent method with a recorded return type is declared in one file and a consumer module calls it and then calls a method on the bound result -> the method demand resolves against the inventoried slot with no incomplete-demand gap"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_cross_file_constructor_resolves", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_cross_file_field_type_resolves", timeout_seconds = 300},
+]

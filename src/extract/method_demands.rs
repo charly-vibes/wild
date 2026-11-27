@@ -6,12 +6,16 @@
 //   multi-segment candidates validated at demand-resolution time), the
 //   demand-entry recording shared by direct calls, expression paths,
 //   struct literals, and method calls, and the method-receiver resolution
-//   shapes (constructor calls with recorded return types, plain type
-//   paths) — never type inference beyond those shapes.
+//   shapes (constructor calls with bundle-wide recorded return types,
+//   plain type paths, let-bound single-assignment locals, inventoried
+//   field access, self/Self in inherent impl bodies, and hop-folded
+//   chains — widen-method-receiver-demands) — never type inference beyond
+//   those shapes.
 // Rationale: keeping resolution semantics out of extract.rs honors the
 //   pretender line-count ratchet (mirroring extract/mod_files.rs) and makes
 //   the "gaps never cure silently" rule auditable in one place.
 
+use super::mod_files::mod_file_candidates;
 use super::*;
 
 impl<'a> SourceWalk<'a> {
@@ -217,14 +221,11 @@ fn receiver_text(receiver: &syn::Expr) -> String {
     receiver.to_token_stream().to_string()
 }
 
-/// The syntactic return-type name of a signature when it is a
-/// single-segment, uppercase-initial path type (`-> Meter`); scalars and
-/// complex types record nothing. This is written syntax, not inference.
-fn recorded_return_ty(output: &syn::ReturnType) -> Option<String> {
-    let syn::ReturnType::Type(_, ty) = output else {
-        return None;
-    };
-    let syn::Type::Path(path) = ty.as_ref() else {
+/// The written type name when the type is a single-segment,
+/// uppercase-initial path type (`Meter`); scalars, generics, and complex
+/// types record nothing. This is written syntax, not inference.
+fn recorded_path_ty(ty: &syn::Type) -> Option<String> {
+    let syn::Type::Path(path) = ty else {
         return None;
     };
     if path.qself.is_some() || path.path.segments.len() != 1 {
@@ -238,94 +239,241 @@ fn recorded_return_ty(output: &syn::ReturnType) -> Option<String> {
     }
 }
 
-fn qualify(walk: &SourceWalk, prefix: &[String], suffix: &str) -> String {
+/// The syntactic return-type name of a signature when it is a
+/// single-segment, uppercase-initial path type (`-> Meter`); scalars and
+/// complex types record nothing. This is written syntax, not inference.
+fn recorded_return_ty(output: &syn::ReturnType) -> Option<String> {
+    let syn::ReturnType::Type(_, ty) = output else {
+        return None;
+    };
+    recorded_path_ty(ty)
+}
+
+fn qualify(crate_name: &str, prefix: &[String], suffix: &str) -> String {
     if prefix.is_empty() {
-        format!("{}::{suffix}", walk.ctx.crate_name)
+        format!("{}::{suffix}", crate_name)
     } else {
-        format!("{}::{}::{suffix}", walk.ctx.crate_name, prefix.join("::"))
+        format!("{}::{}::{suffix}", crate_name, prefix.join("::"))
     }
 }
 
-fn scan_items(walk: &mut SourceWalk, items: &[syn::Item], prefix: Vec<String>) {
-    for item in items {
-        match item {
-            syn::Item::Fn(f) => {
-                if matches!(f.vis, syn::Visibility::Public(_)) {
-                    if let Some(ty) = recorded_return_ty(&f.sig.output) {
-                        // key: fn target; value: crate-qualified type target
-                        // (declaring module base + return type name)
-                        walk.out.fn_return_tys.insert(
-                            qualify(walk, &prefix, &f.sig.ident.to_string()),
-                            qualify(walk, &prefix, &ty),
-                        );
+// ---- bundle-wide pre-pass (widen-method-receiver-demands, rule 1) ----
+
+/// The bundle-wide pre-pass state: crate identity plus the loaded bundle
+/// files for public non-inline module resolution. It records written
+/// syntax only — return types of public fns and public inherent impl
+/// methods, and public named-field types of public structs — into the
+/// shared maps consumed by every per-file demand walk.
+pub(super) struct BundlePrepass<'a> {
+    crate_name: &'a str,
+    loaded: &'a BTreeMap<String, Vec<u8>>,
+    current_file: String,
+    /// fn target → crate-qualified type target (wild-158 D1)
+    fn_return_tys: BTreeMap<String, String>,
+    /// type target → field name → crate-qualified field type target
+    field_tys: BTreeMap<String, BTreeMap<String, String>>,
+}
+
+impl<'a> BundlePrepass<'a> {
+    /// Scan one crate root file and (recursively) its public non-inline
+    /// module files, accumulating into the shared bundle maps before any
+    /// demand walk runs (widen-method-receiver-demands, rule 1). No
+    /// inference: written syntax only, validated at demand-resolution time.
+    pub(super) fn scan_crate(
+        crate_name: &'a str,
+        source_path: &str,
+        file: &syn::File,
+        loaded: &'a BTreeMap<String, Vec<u8>>,
+        fn_return_tys: &mut BTreeMap<String, String>,
+        field_tys: &mut BTreeMap<String, BTreeMap<String, String>>,
+    ) {
+        let mut pre = BundlePrepass {
+            crate_name,
+            loaded,
+            current_file: source_path.to_string(),
+            fn_return_tys: BTreeMap::new(),
+            field_tys: BTreeMap::new(),
+        };
+        pre.scan_items(&file.items, Vec::new());
+        pre.scan_mod_declarations(&file.items, Vec::new());
+        let pre_fn = std::mem::take(&mut pre.fn_return_tys);
+        fn_return_tys.extend(pre_fn);
+        let pre_fields = std::mem::take(&mut pre.field_tys);
+        for (ty, fields) in pre_fields {
+            field_tys.entry(ty).or_default().extend(fields);
+        }
+    }
+
+    fn qualify(&self, prefix: &[String], suffix: &str) -> String {
+        qualify(self.crate_name, prefix, suffix)
+    }
+
+    fn scan_items(&mut self, items: &[syn::Item], prefix: Vec<String>) {
+        for item in items {
+            match item {
+                syn::Item::Fn(f) => {
+                    if matches!(f.vis, syn::Visibility::Public(_)) {
+                        if let Some(ty) = recorded_return_ty(&f.sig.output) {
+                            // key: fn target; value: crate-qualified type
+                            // target (declaring module base + return type)
+                            self.fn_return_tys.insert(
+                                self.qualify(&prefix, &f.sig.ident.to_string()),
+                                self.qualify(&prefix, &ty),
+                            );
+                        }
                     }
                 }
-            }
-            syn::Item::Impl(imp) => scan_impl(walk, imp, &prefix),
-            syn::Item::Mod(m) => {
-                if let Some((_, nested)) = &m.content {
-                    let mut nested_prefix = prefix.clone();
-                    nested_prefix.push(m.ident.to_string());
-                    scan_items(walk, nested, nested_prefix);
+                syn::Item::Impl(imp) => self.scan_impl(imp, &prefix),
+                syn::Item::Struct(s) => self.scan_struct_fields(s, &prefix),
+                syn::Item::Mod(m) => {
+                    if let Some((_, nested)) = &m.content {
+                        let mut nested_prefix = prefix.clone();
+                        nested_prefix.push(m.ident.to_string());
+                        self.scan_items(nested, nested_prefix);
+                    }
                 }
+                _ => {}
             }
-            _ => {}
         }
     }
-}
 
-/// Record constructor return types from one inherent impl on a named path
-/// type; trait impls are outside the profile and record nothing.
-fn scan_impl(walk: &mut SourceWalk, imp: &syn::ItemImpl, prefix: &[String]) {
-    if imp.trait_.is_some() {
-        return;
-    }
-    let syn::Type::Path(path) = imp.self_ty.as_ref() else {
-        return;
-    };
-    if path.qself.is_some() {
-        return;
-    }
-    let Some(seg) = path.path.segments.last() else {
-        return;
-    };
-    let ty_name = seg.ident.to_string();
-    for impl_item in &imp.items {
-        let syn::ImplItem::Fn(m) = impl_item else {
-            continue;
-        };
-        if !matches!(m.vis, syn::Visibility::Public(_)) {
-            continue;
+    /// Public struct fields with single-segment, uppercase-initial path
+    /// types record field_name → type per defining type (rule 1). A field
+    /// typed by one of the struct's generic parameters records nothing:
+    /// a generic parameter is not a type target, and a generic-typed
+    /// receiver keeps the honest gap.
+    fn scan_struct_fields(&mut self, s: &syn::ItemStruct, prefix: &[String]) {
+        if !matches!(s.vis, syn::Visibility::Public(_)) {
+            return;
         }
-        let target = qualify(walk, prefix, &format!("{ty_name}::{}", m.sig.ident));
-        if let Some(ty) = recorded_return_ty(&m.sig.output) {
-            walk.out
-                .fn_return_tys
-                .insert(target, qualify(walk, prefix, &ty));
+        let syn::Fields::Named(named) = &s.fields else {
+            return;
+        };
+        let generic_params: BTreeSet<String> = s
+            .generics
+            .params
+            .iter()
+            .filter_map(|p| match p {
+                syn::GenericParam::Type(t) => Some(t.ident.to_string()),
+                _ => None,
+            })
+            .collect();
+        let ty_target = self.qualify(prefix, &s.ident.to_string());
+        for field in &named.named {
+            if !matches!(field.vis, syn::Visibility::Public(_)) {
+                continue;
+            }
+            let Some(field_ty) = recorded_path_ty(&field.ty) else {
+                continue;
+            };
+            if generic_params.contains(&field_ty) {
+                continue;
+            }
+            let field_name = field.ident.as_ref().expect("named field").to_string();
+            let qualified = self.qualify(prefix, &field_ty);
+            self.field_tys
+                .entry(ty_target.clone())
+                .or_default()
+                .insert(field_name, qualified);
+        }
+    }
+
+    /// Record constructor return types from one inherent impl on a named
+    /// path type; trait impls are outside the profile and record nothing.
+    fn scan_impl(&mut self, imp: &syn::ItemImpl, prefix: &[String]) {
+        if imp.trait_.is_some() {
+            return;
+        }
+        let syn::Type::Path(path) = imp.self_ty.as_ref() else {
+            return;
+        };
+        if path.qself.is_some() {
+            return;
+        }
+        let Some(seg) = path.path.segments.last() else {
+            return;
+        };
+        let ty_name = seg.ident.to_string();
+        for impl_item in &imp.items {
+            let syn::ImplItem::Fn(m) = impl_item else {
+                continue;
+            };
+            if !matches!(m.vis, syn::Visibility::Public(_)) {
+                continue;
+            }
+            let target = self.qualify(prefix, &format!("{ty_name}::{}", m.sig.ident));
+            if let Some(ty) = recorded_return_ty(&m.sig.output) {
+                self.fn_return_tys.insert(target, self.qualify(prefix, &ty));
+            }
+        }
+    }
+
+    /// Public non-inline module declarations resolve against the loaded
+    /// bundle files with the rustc mod-path rule (mirroring
+    /// mod_files::resolve_mod_file) and are scanned under their module
+    /// prefix, so cross-file constructor and field references resolve
+    /// bundle-wide before any demand walk.
+    fn scan_mod_declarations(&mut self, items: &[syn::Item], prefix: Vec<String>) {
+        for item in items {
+            let syn::Item::Mod(m) = item else {
+                continue;
+            };
+            if m.content.is_some() || !matches!(m.vis, syn::Visibility::Public(_)) {
+                continue;
+            }
+            let name = m.ident.to_string();
+            let Some(rel) = mod_file_candidates(Path::new(&self.current_file), &name)
+                .into_iter()
+                .find(|c| self.loaded.contains_key(c.as_str()))
+            else {
+                continue;
+            };
+            let Ok(text) =
+                std::str::from_utf8(self.loaded.get(rel.as_str()).expect("membership checked"))
+            else {
+                continue;
+            };
+            let Ok(file) = syn::parse_file(text) else {
+                continue;
+            };
+            let mut nested_prefix = prefix.clone();
+            nested_prefix.push(name);
+            let prev_file = std::mem::replace(&mut self.current_file, rel);
+            self.scan_items(&file.items, nested_prefix.clone());
+            self.scan_mod_declarations(&file.items, nested_prefix);
+            self.current_file = prev_file;
         }
     }
 }
 
 impl<'a> SourceWalk<'a> {
-    /// Pre-pass over one file's items recording the syntactic return types
-    /// of public free fns and public inherent impl methods (single-segment,
-    /// uppercase-initial path types only) so one-hop constructor receivers
-    /// resolve without type inference (wild-158 D1). Called before the
-    /// demand walk of the same file so use sites see declarations declared
-    /// later in the file; cross-file and cross-crate constructors keep the
-    /// honest gap (D7 threshold — file a follow-up, never approximate).
-    pub(super) fn scan_fn_returns(walk: &mut SourceWalk, items: &[syn::Item]) {
-        scan_items(walk, items, walk.module_prefix.clone());
-    }
-
-    /// Resolve a method-call receiver in the bounded shapes (wild-158 D1):
-    /// a path expression resolving through the bounded demand rules, or a
-    /// call expression whose head resolves to an inventoried constructor
-    /// with a recorded return type. Everything else — chains, field
-    /// access, macro output, literals, bare unknown identifiers — stays
-    /// honestly unresolved.
+    /// Resolve a method-call receiver in the declared receiver shapes
+    /// (widen-method-receiver-demands): a path expression resolving
+    /// through the bounded demand rules — including a let-bound
+    /// single-assignment local (rule 2) and `self`/`Self` inside an
+    /// inherent impl body (rule 4); a call expression whose head resolves
+    /// to a constructor or free function with a bundle-wide recorded
+    /// return type; a field-access receiver whose field type is
+    /// inventoried from a public struct-field declaration (rule 3); and a
+    /// method chain folded hop-by-hop through recorded return types
+    /// (rule 5). Everything else — trait objects, generics, macro output,
+    /// closures, re-assigned locals, unknown identifiers — stays honestly
+    /// unresolved.
     pub(super) fn resolve_method_receiver(&self, receiver: &syn::Expr) -> ReceiverOutcome {
         match receiver {
+            // rule 5: chains fold hop-by-hop; a hop whose callee target has
+            // no recorded return type keeps the gap naming the receiver,
+            // while the already-resolved hops keep their recorded demands
+            syn::Expr::MethodCall(inner) => match self.resolve_method_receiver(&inner.receiver) {
+                ReceiverOutcome::ResolvedType(type_target) => {
+                    let hop_target = format!("{type_target}::{}", inner.method);
+                    match self.out.fn_return_tys.get(&hop_target) {
+                        Some(returned) => ReceiverOutcome::ResolvedType(returned.clone()),
+                        None => ReceiverOutcome::Unresolved(receiver_text(receiver)),
+                    }
+                }
+                ReceiverOutcome::Unresolved(r) => ReceiverOutcome::Unresolved(r),
+            },
             syn::Expr::Path(p) if p.qself.is_none() => {
                 let mut parts = p
                     .path
@@ -334,13 +482,82 @@ impl<'a> SourceWalk<'a> {
                     .map(|s| s.ident.to_string())
                     .collect::<Vec<_>>();
                 let head = parts.drain(..1).next().unwrap_or_default();
-                match self
-                    .bounded_target(&head, &parts.iter().map(String::as_str).collect::<Vec<_>>())
-                {
+                let rest = parts.iter().map(String::as_str).collect::<Vec<_>>();
+                if rest.is_empty() {
+                    // rule 2: a let-bound single-assignment local shadows
+                    // any same-named alias for its receiver uses
+                    if let Some(ty) = self.binding_type(&head) {
+                        return ReceiverOutcome::ResolvedType(ty);
+                    }
+                    // rule 4: self/Self inside an inherent impl body
+                    if head == "self" || head == "Self" {
+                        if let Some(ty) = &self.current_impl_type {
+                            return ReceiverOutcome::ResolvedType(ty.clone());
+                        }
+                    }
+                }
+                match self.bounded_target(&head, &rest) {
                     Some((target, _)) => ReceiverOutcome::ResolvedType(target),
                     None => ReceiverOutcome::Unresolved(receiver_text(receiver)),
                 }
             }
+            // rule 3: field access resolves via the inventoried public
+            // field type; tuple indexing and unknown/private fields stay
+            // unresolved
+            syn::Expr::Field(f) => match &f.member {
+                syn::Member::Named(ident) => match self.resolve_method_receiver(&f.base) {
+                    ReceiverOutcome::ResolvedType(type_target) => {
+                        match self
+                            .out
+                            .field_tys
+                            .get(&type_target)
+                            .and_then(|m| m.get(&ident.to_string()))
+                        {
+                            Some(ty) => ReceiverOutcome::ResolvedType(ty.clone()),
+                            None => ReceiverOutcome::Unresolved(receiver_text(receiver)),
+                        }
+                    }
+                    ReceiverOutcome::Unresolved(r) => ReceiverOutcome::Unresolved(r),
+                },
+                syn::Member::Unnamed(_) => ReceiverOutcome::Unresolved(receiver_text(receiver)),
+            },
+            syn::Expr::Call(_) => match self.resolve_let_init(receiver) {
+                Some(ty) => ReceiverOutcome::ResolvedType(ty),
+                None => ReceiverOutcome::Unresolved(receiver_text(receiver)),
+            },
+            _ => ReceiverOutcome::Unresolved(receiver_text(receiver)),
+        }
+    }
+
+    /// The type of a let-bound single-assignment local, innermost scope
+    /// first (rule 2).
+    fn binding_type(&self, ident: &str) -> Option<String> {
+        self.bindings
+            .iter()
+            .rev()
+            .find_map(|scope| scope.get(ident).cloned())
+    }
+
+    /// Invalidate a local's binding at its re-assignment site: the walk
+    /// runs in source order, so calls before the re-assignment were
+    /// already resolved against the then-correct type and calls after it
+    /// keep the honest gap (rule 2 residual, never retroactively cured).
+    pub(super) fn clear_binding(&mut self, ident: &str) {
+        for scope in self.bindings.iter_mut().rev() {
+            if scope.remove(ident).is_some() {
+                break;
+            }
+        }
+    }
+
+    /// The recorded type of a let initializer in the declared shapes: a
+    /// call whose head resolves through the bounded demand rules and whose
+    /// callee target has a bundle-wide recorded return type (rule 2), or a
+    /// field access whose field type is inventoried from a public
+    /// struct-field declaration. Method-call initializers, macro output,
+    /// and everything else record nothing.
+    fn resolve_let_init(&self, init: &syn::Expr) -> Option<String> {
+        match init {
             syn::Expr::Call(call) => {
                 if let syn::Expr::Path(func) = &*call.func {
                     if func.qself.is_none() {
@@ -353,15 +570,53 @@ impl<'a> SourceWalk<'a> {
                         let head = parts.drain(..1).next().unwrap_or_default();
                         let rest: Vec<&str> = parts.iter().map(String::as_str).collect();
                         if let Some((fn_target, _)) = self.bounded_target(&head, &rest) {
-                            if let Some(type_target) = self.out.fn_return_tys.get(&fn_target) {
-                                return ReceiverOutcome::ResolvedType(type_target.clone());
+                            if let Some(ty) = self.out.fn_return_tys.get(&fn_target) {
+                                return Some(ty.clone());
                             }
                         }
                     }
                 }
-                ReceiverOutcome::Unresolved(receiver_text(receiver))
+                None
             }
-            _ => ReceiverOutcome::Unresolved(receiver_text(receiver)),
+            syn::Expr::Field(f) => {
+                let syn::Member::Named(ident) = &f.member else {
+                    return None;
+                };
+                match self.resolve_method_receiver(&f.base) {
+                    ReceiverOutcome::ResolvedType(type_target) => self
+                        .out
+                        .field_tys
+                        .get(&type_target)
+                        .and_then(|m| m.get(&ident.to_string()))
+                        .cloned(),
+                    ReceiverOutcome::Unresolved(_) => None,
+                }
+            }
+            _ => None,
+        }
+    }
+
+    /// Rule 2: a `let` binding whose initializer resolves through the
+    /// declared shapes records the binding's type for the remainder of the
+    /// scope block. `let mut` binds too — single assignment means the
+    /// local is never re-assigned, which the walk enforces at the
+    /// assignment site. An initializer outside the shapes, a non-ident
+    /// pattern, or a `ref` binding records nothing.
+    pub(super) fn record_let_binding(walk: &mut SourceWalk, node: &syn::Local) {
+        let Some(init) = node.init.as_ref().map(|i| &*i.expr) else {
+            return;
+        };
+        let syn::Pat::Ident(pat) = &node.pat else {
+            return;
+        };
+        if pat.by_ref.is_some() {
+            return;
+        }
+        let Some(ty) = walk.resolve_let_init(init) else {
+            return;
+        };
+        if let Some(scope) = walk.bindings.last_mut() {
+            scope.insert(pat.ident.to_string(), ty);
         }
     }
 

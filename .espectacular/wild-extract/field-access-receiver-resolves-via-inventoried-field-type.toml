@@ -1,0 +1,11 @@
+id = "field-access-receiver-resolves-via-inventoried-field-type"
+description = "a consumer calling a method on a field-access receiver whose public field type is inventoried from the struct declaration (e.g. store.meter.tick() where meter: Meter is a public field) -> the demand Meter::tick is recorded with no incomplete-demand gap"
+archetype = "PF"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_field_access_receiver_resolves", timeout_seconds = 300},
+]

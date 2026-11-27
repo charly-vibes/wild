@@ -1,0 +1,12 @@
+id = "non-syntactic-receivers-stay-disclosed"
+description = "a consumer with a method call on a trait-object receiver, a macro-produced receiver, or a re-bound local -> the report retains the incomplete-demand gap naming the receiver and refuses scoped acceptance with Unknown structural assurance"
+archetype = "NR"
+status = "active"
+superseded_by = ""
+authored_with = "0.10.0"
+
+[tests]
+pytest = [
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_reassigned_local_keeps_gap", timeout_seconds = 300},
+  {flags = "tests/runtime/test_extract.py::TestExtraction::test_widen_tuple_index_and_literal_initializer_keeps_gap", timeout_seconds = 300},
+]
