@@ -35,25 +35,9 @@ phase: design
 ### git_status
 
 ```
- M .wai/pipeline-runs/tdd-ro5-2026-11-27-wild-lof-genesis-envelope-wrap-of-v1.yml
  M .wai/projects/wild/handoffs/2026-11-27-session-end.md
- M .wai/resources/pipelines/.last-run
- M CHANGELOG.md
- M src/lib.rs
- M src/main.rs
-?? .wai/pipeline-runs/tdd-ro5-2026-11-27-feedback-subcommand-adopting-genesis-feedback-additive-bd-wild-8g8.yml
-?? .wai/projects/wild/designs/2026-11-27-green-src-feedback-rs-new-genesis-contract-port.md
-?? .wai/projects/wild/designs/2026-11-27-refactor-none-single-module-no-duplication-int.md
-?? .wai/projects/wild/plans/2026-11-27-behavior-wild-feedback-kind-title-t-dr.md
-?? .wai/projects/wild/research/2026-11-27-orient-bd-wild-8g8-genesis-fleet-lane-add-fleet.md
-?? .wai/projects/wild/research/2026-11-27-quality-ledger-feedback-subcommand-changed-sr.md
-?? .wai/projects/wild/research/2026-11-27-red-new-tests-runtime-test-feedback-py-9-cases.md
-?? .wai/projects/wild/research/2026-11-27-red-tests-runtime-test-feedback-py-9-cases-bef.md
-?? .wai/projects/wild/research/2026-11-27-ro5u-fixes-no-critical-high-medium-findings-low-4.md
-?? .wai/projects/wild/reviews/2026-11-27-ro5u-feedback-subcommand-genesis-adoption.md
+?? .wai/projects/wild/research/2026-11-27-ro5u-fixes-no-critical-high-findings-mediums-def.md
 ?? cv/
-?? src/feedback.rs
-?? tests/runtime/test_feedback.py
 ```
 
 ### open_issues
@@ -94,6 +78,5 @@ Total: 29 issues (29 open, 0 in progress)
 
 Status: ○ open  ◐ in_progress  ● blocked  ✓ closed  ❄ deferred
 Priority: P0–P4 (label only; not a status icon)
-
 ```
 
