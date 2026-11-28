@@ -231,13 +231,8 @@ fn title_and_body_from_stdin(kind: &str) -> Result<(String, Vec<String>), String
     // Multi-line input promotes the first line to the title; single-line
     // input keeps the generic `[{kind}] feedback report` title (genesis rule).
     let (title, description) = match trimmed.split_once('\n').map(|(f, r)| (f.trim(), r.trim())) {
-        Some((first, rest)) if !first.is_empty() => {
-            (format!("[{kind}] {first}"), rest.to_string())
-        }
-        _ => (
-            format!("[{kind}] feedback report"),
-            trimmed.to_string(),
-        ),
+        Some((first, rest)) if !first.is_empty() => (format!("[{kind}] {first}"), rest.to_string()),
+        _ => (format!("[{kind}] feedback report"), trimmed.to_string()),
     };
     let body = if description.is_empty() {
         Vec::new()
@@ -310,7 +305,10 @@ fn context_bundle_section(
         command.unwrap_or_default(),
         exit_code.map(|e| e.to_string()).unwrap_or_default()
     );
-    out.push_str(&format!("- repro_hash: `{}`\n", formats::sha256_digest(repro.as_bytes())));
+    out.push_str(&format!(
+        "- repro_hash: `{}`\n",
+        formats::sha256_digest(repro.as_bytes())
+    ));
     out
 }
 
@@ -370,7 +368,10 @@ fn reports_dir() -> PathBuf {
         return PathBuf::from(cache).join(tool).join("reports");
     }
     if let Some(home) = std::env::var("HOME").ok().filter(|v| !v.is_empty()) {
-        return PathBuf::from(home).join(".cache").join(tool).join("reports");
+        return PathBuf::from(home)
+            .join(".cache")
+            .join(tool)
+            .join("reports");
     }
     std::env::temp_dir().join(tool).join("reports")
 }
@@ -428,26 +429,35 @@ mod tests {
 
     #[test]
     fn rejects_unknown_kind_with_valid_list() {
-        let err = run_with_stdin(None, &FeedbackArgs {
-            kind: "bugg".to_string(),
-            title: None,
-            dry_run: true,
-            from_last_error: false,
-        })
+        let err = run_with_stdin(
+            None,
+            &FeedbackArgs {
+                kind: "bugg".to_string(),
+                title: None,
+                dry_run: true,
+                from_last_error: false,
+            },
+        )
         .unwrap_err();
         assert!(err.contains("unknown kind: 'bugg'"), "{err}");
-        assert!(err.contains("Valid kinds: bug, feature, question, chore, aix-gap"), "{err}");
+        assert!(
+            err.contains("Valid kinds: bug, feature, question, chore, aix-gap"),
+            "{err}"
+        );
     }
 
     #[test]
     fn accepts_every_valid_kind() {
         for kind in VALID_KINDS {
-            assert!(run_with_stdin(None, &FeedbackArgs {
-                kind: (*kind).to_string(),
-                title: None,
-                dry_run: true,
-                from_last_error: false,
-            })
+            assert!(run_with_stdin(
+                None,
+                &FeedbackArgs {
+                    kind: (*kind).to_string(),
+                    title: None,
+                    dry_run: true,
+                    from_last_error: false,
+                }
+            )
             .is_ok());
         }
     }
@@ -471,13 +481,13 @@ mod tests {
     fn title_and_body_from_stdin_parts(input: &str) -> (String, Vec<String>) {
         let kind = "bug";
         let trimmed = input.trim();
-        let (title, description) =
-            match trimmed.split_once('\n').map(|(f, r)| (f.trim(), r.trim())) {
-                Some((first, rest)) if !first.is_empty() => {
-                    (format!("[{kind}] {first}"), rest.to_string())
-                }
-                _ => (format!("[{kind}] feedback report"), trimmed.to_string()),
-            };
+        let (title, description) = match trimmed.split_once('\n').map(|(f, r)| (f.trim(), r.trim()))
+        {
+            Some((first, rest)) if !first.is_empty() => {
+                (format!("[{kind}] {first}"), rest.to_string())
+            }
+            _ => (format!("[{kind}] feedback report"), trimmed.to_string()),
+        };
         let body = if description.is_empty() {
             Vec::new()
         } else {

@@ -177,18 +177,18 @@ pub fn classify(delta: &Delta) -> Option<(&'static str, &'static str)> {
 fn corpus_files(tree: &Path) -> Result<Vec<PathBuf>, String> {
     let corpus = tree.join(CORPUS_DIR);
     let mut files = Vec::new();
-    let entries = std::fs::read_dir(&corpus).map_err(|e| {
-        format!(
-            "candidate corpus unreadable at {}: {e}",
-            corpus.display()
-        )
-    })?;
+    let entries = std::fs::read_dir(&corpus)
+        .map_err(|e| format!("candidate corpus unreadable at {}: {e}", corpus.display()))?;
     for entry in entries.flatten() {
         let path = entry.path();
         if path.is_dir() {
             if let Ok(inner) = std::fs::read_dir(&path) {
                 for f in inner.flatten() {
-                    if f.path().file_name().map(|n| n == "spec.md").unwrap_or(false) {
+                    if f.path()
+                        .file_name()
+                        .map(|n| n == "spec.md")
+                        .unwrap_or(false)
+                    {
                         files.push(f.path());
                     }
                 }
@@ -228,7 +228,11 @@ fn base_corpus(tree: &Path, base: &str) -> Result<BTreeMap<String, Vec<Requireme
         &["ls-tree", "-r", "--name-only", "-z", base, CORPUS_DIR],
     )?;
     let mut out = BTreeMap::new();
-    for name in listing.trim_matches('\0').split('\0').filter(|s| !s.is_empty()) {
+    for name in listing
+        .trim_matches('\0')
+        .split('\0')
+        .filter(|s| !s.is_empty())
+    {
         let text = git(tree, &["show", &format!("{base}:{name}")])?;
         let rel = name.trim_start_matches(CORPUS_DIR).trim_start_matches('/');
         out.insert(rel.to_string(), parse_requirements(&text));
@@ -290,9 +294,19 @@ pub fn apply_override(
             ),
             "info",
         ));
-        return (proposed.to_string(), proposed_reason.to_string(), false, diagnostics);
+        return (
+            proposed.to_string(),
+            proposed_reason.to_string(),
+            false,
+            diagnostics,
+        );
     }
-    (confirm.to_string(), reason.unwrap().to_string(), true, diagnostics)
+    (
+        confirm.to_string(),
+        reason.unwrap().to_string(),
+        true,
+        diagnostics,
+    )
 }
 
 fn diagnostic(code: &str, reason: String, severity: &str) -> Value {
@@ -360,10 +374,7 @@ pub fn record(
         ("confirmed", s_opt(confirmed)),
         ("reason", s_opt(reason)),
         ("overridden", Value::Bool(overridden)),
-        (
-            "diagnostics",
-            formats::arr(diagnostics.to_vec()),
-        ),
+        ("diagnostics", formats::arr(diagnostics.to_vec())),
     ])
 }
 
@@ -404,8 +415,8 @@ pub fn derive(
         }
     };
     let delta = derive_delta(&base_map, &candidate);
-    let (proposed, proposed_reason) = classify(&delta)
-        .expect("classify is total over well-formed deltas");
+    let (proposed, proposed_reason) =
+        classify(&delta).expect("classify is total over well-formed deltas");
     let (confirmed, reason_text, overridden, mut override_diag) =
         apply_override(proposed, proposed_reason, confirm, reason);
     diagnostics.append(&mut override_diag);
@@ -485,7 +496,10 @@ mod tests {
         let base = corpus(&[("a.md", &[req("Alpha", "same body")])]);
         let cand = corpus(&[("a.md", &[req("Gamma", "same body")])]);
         let delta = derive_delta(&base, &cand);
-        assert_eq!(delta.renamed, vec![("Alpha".to_string(), "Gamma".to_string())]);
+        assert_eq!(
+            delta.renamed,
+            vec![("Alpha".to_string(), "Gamma".to_string())]
+        );
         assert!(delta.added.is_empty() && delta.removed.is_empty());
         assert_eq!(classify(&delta), Some(("major", "revokes")));
     }

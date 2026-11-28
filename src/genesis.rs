@@ -68,14 +68,8 @@ mod tests {
             Some(formats::canonical(&v1))
         );
         assert_eq!(wrapped.get("ok"), Some(&Value::Bool(true)));
-        assert_eq!(
-            wrapped.get("envelope_kind"),
-            Some(&formats::s("ok"))
-        );
-        assert_eq!(
-            wrapped.get("envelope_version"),
-            Some(&formats::s("1"))
-        );
+        assert_eq!(wrapped.get("envelope_kind"), Some(&formats::s("ok")));
+        assert_eq!(wrapped.get("envelope_version"), Some(&formats::s("1")));
     }
 
     #[test]

@@ -340,10 +340,7 @@ fn omitted_open_resolves_open() {
     // An omitted-open sum accepts unknown labels as opaque payloads.
     let sum_ty = formats::obj(vec![
         ("shape", formats::s("sum")),
-        (
-            "variants",
-            formats::obj(vec![("known", scalar_str())]),
-        ),
+        ("variants", formats::obj(vec![("known", scalar_str())])),
     ]);
     assert!(inhabits(
         &formats::obj(vec![("unknown", formats::i(1))]),
@@ -431,12 +428,18 @@ fn justified_closed_sum_growth_is_break() {
     let sum_ty = |variant: Option<&str>| {
         let mut variants = vec![(
             "known",
-            formats::obj(vec![("shape", formats::s("scalar")), ("name", formats::s("string"))]),
+            formats::obj(vec![
+                ("shape", formats::s("scalar")),
+                ("name", formats::s("string")),
+            ]),
         )];
         if let Some(extra) = variant {
             variants.push((
                 extra,
-                formats::obj(vec![("shape", formats::s("scalar")), ("name", formats::s("string"))]),
+                formats::obj(vec![
+                    ("shape", formats::s("scalar")),
+                    ("name", formats::s("string")),
+                ]),
             ));
         }
         formats::obj(vec![

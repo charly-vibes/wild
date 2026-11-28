@@ -753,7 +753,10 @@ fn record_subtype(a: &Value, b: &Value) -> Verdict {
         // Optional A fields: if B has a typed field with the same name it
         // was checked above; otherwise A may emit the extra optional field,
         // which an open B accepts and a closed B cannot interpret.
-        if !a_required && !b_entries.iter().any(|(b_name, _)| b_name == a_name) && !effective_openness(b) {
+        if !a_required
+            && !b_entries.iter().any(|(b_name, _)| b_name == a_name)
+            && !effective_openness(b)
+        {
             verdict = Verdict::Unknown.and(verdict);
         }
     }

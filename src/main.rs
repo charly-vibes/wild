@@ -838,8 +838,7 @@ fn run_v1_accretes(args: &[String]) -> i32 {
 /// readable preview/path goes to stderr; stdout carries only the genesis
 /// shell.
 fn run_feedback(args: &[String]) -> i32 {
-    let usage =
-        "usage: wild feedback <kind> [--title <title>] [--dry-run] [--from-last-error]";
+    let usage = "usage: wild feedback <kind> [--title <title>] [--dry-run] [--from-last-error]";
     if args.len() < 3 || args[2].starts_with("--") {
         eprintln!("{usage}");
         let envelope_value = envelope(
@@ -1008,9 +1007,7 @@ fn run_bump(args: &[String]) -> i32 {
         return emit_usage("--base is required".to_string());
     };
     if confirm.is_some() != reason.is_some() {
-        return emit_usage(
-            "--confirm and --reason are required together".to_string(),
-        );
+        return emit_usage("--confirm and --reason are required together".to_string());
     }
     for class in confirm.iter() {
         if !matches!(class.as_str(), "patch" | "minor" | "major") {
@@ -1022,8 +1019,7 @@ fn run_bump(args: &[String]) -> i32 {
         .unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
     let confirm_class = confirm.as_deref();
     let reason_text = reason.as_deref();
-    match wild::bump::derive(&tree, &base, release.as_deref(), confirm_class, reason_text)
-    {
+    match wild::bump::derive(&tree, &base, release.as_deref(), confirm_class, reason_text) {
         Ok((record, assurance)) => {
             if let Some(out_path) = out.as_deref() {
                 let path = std::path::Path::new(out_path);
