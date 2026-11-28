@@ -971,7 +971,7 @@ fn run_bump(args: &[String]) -> i32 {
         let take = |flags: &mut std::slice::Iter<String>, name: &str| {
             flags
                 .next()
-                .map(|v| v.clone())
+                .cloned()
                 .unwrap_or_else(|| format!("{name} requires a value"))
         };
         match flag.as_str() {

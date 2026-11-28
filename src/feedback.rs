@@ -138,13 +138,14 @@ fn home_dir() -> Option<PathBuf> {
         .map(PathBuf::from)
 }
 
+/// Issue context produced by the content source: (title, body parts,
+/// scratch command, scratch exit code).
+type IssueContext = (String, Vec<String>, Option<String>, Option<i64>);
+
 /// Derive the issue title and body sections from the content source:
 /// the last scratch error (`--from-last-error`) or piped stdin.
 /// Returns (title, body parts, scratch command, scratch exit code).
-fn issue_title_and_body(
-    args: &FeedbackArgs,
-    tool_name: &str,
-) -> Result<(String, Vec<String>, Option<String>, Option<i64>), String> {
+fn issue_title_and_body(args: &FeedbackArgs, tool_name: &str) -> Result<IssueContext, String> {
     if args.from_last_error {
         title_and_body_from_error(&args.kind, tool_name)
     } else {
@@ -155,10 +156,7 @@ fn issue_title_and_body(
 /// Title/body from the last recorded error for `tool_name`, read from
 /// the genesis-compatible scratch file
 /// (`$XDG_CACHE_HOME|~/.cache`/`<tool>/errors.jsonl`).
-fn title_and_body_from_error(
-    kind: &str,
-    tool_name: &str,
-) -> Result<(String, Vec<String>, Option<String>, Option<i64>), String> {
+fn title_and_body_from_error(kind: &str, tool_name: &str) -> Result<IssueContext, String> {
     let path = scratch_path(tool_name);
     let text = std::fs::read_to_string(&path)
         .map_err(|_| format!("No recent error recorded for '{tool_name}'. Run a command that produces an error first."))?;

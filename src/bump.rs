@@ -389,10 +389,7 @@ pub fn derive(
     reason: Option<&str>,
 ) -> Result<(Value, String), String> {
     let mut diagnostics: Vec<Value> = Vec::new();
-    let candidate = match candidate_corpus(tree) {
-        Ok(c) => c,
-        Err(e) => return Err(e),
-    };
+    let candidate = candidate_corpus(tree)?;
     let base_map = match base_corpus(tree, base) {
         Ok(b) => b,
         Err(e) => {

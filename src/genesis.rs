@@ -64,7 +64,7 @@ mod tests {
         ]);
         let wrapped = wrap(&v1);
         assert_eq!(
-            wrapped.get("data").map(|d| formats::canonical(d)),
+            wrapped.get("data").map(formats::canonical),
             Some(formats::canonical(&v1))
         );
         assert_eq!(wrapped.get("ok"), Some(&Value::Bool(true)));
